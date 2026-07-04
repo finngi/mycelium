@@ -6,6 +6,13 @@ from mcm.cli.grammar import GrammarError, canonicalize
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
 
+    if "-h" in argv or "--help" in argv or argv[:1] == ["help"]:
+        from mcm.cli import commands
+        from mcm.cli.help import render
+
+        print(render(commands.HANDLERS))
+        return 0
+
     try:
         cmd = canonicalize(argv)
     except GrammarError as e:
