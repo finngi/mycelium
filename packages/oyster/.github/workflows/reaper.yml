@@ -1,0 +1,44 @@
+name: reaper
+
+# Lost-runner recovery at trial granularity: a running trial whose heartbeat
+# went stale (closed lid, killed service) is requeued while attempts remain,
+# failed after 3. The next herder tick redistributes it.
+on:
+  schedule:
+    - cron: "13 * * * *"
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: mat
+
+jobs:
+  reap:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: mat
+
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/mycelium
+          path: mycelium
+
+      - name: Set up environment
+        run: |
+          pip install --quiet uv
+          uv venv && uv pip install -e .
+
+      - name: Configure git identity
+        run: |
+          git config user.name "mat-reaper"
+          git config user.email "reaper@mat.local"
+
+      - name: Requeue stale trials
+        env:
+          MCM_STORE: ${{ github.workspace }}/mat/store
+        run: .venv/bin/mcm mesh reap --timeout-min 90

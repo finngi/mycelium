@@ -1,0 +1,56 @@
+name: herder
+
+# Spreading load: count claimable trials and ready idle runners, dispatch
+# min(trials, runners) generic workers. Runs on GitHub-hosted ubuntu for
+# seconds only. Assignment stays pull-based -- the herder only wakes
+# machines, it never binds work to them.
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+jobs:
+  herd:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Count planned trials
+        id: trials
+        run: |
+          n=$(python3 - <<'EOF'
+          import json, pathlib
+          trials = pathlib.Path("store/trials").glob("*.json")
+          print(sum(1 for p in trials
+                    if json.loads(p.read_text()).get("status") == "planned"))
+          EOF
+          )
+          echo "count=$n" >> "$GITHUB_OUTPUT"
+          echo "[INFO] planned trials: $n"
+
+      - name: Count ready idle runners
+        id: runners
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          n=$(gh api "repos/${{ github.repository }}/actions/runners" --paginate --jq '
+            [.runners[]
+             | select(.status == "online" and .busy == false)
+             | select([.labels[].name] | contains(["mlx", "ready"]))
+            ] | length')
+          echo "count=$n" >> "$GITHUB_OUTPUT"
+          echo "[INFO] ready idle mlx runners: $n"
+
+      - name: Dispatch workers
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          t=${{ steps.trials.outputs.count }}
+          r=${{ steps.runners.outputs.count }}
+          n=$(( t < r ? t : r ))
+          echo "[INFO] dispatching $n worker(s) (trials=$t, runners=$r)"
+          for i in $(seq 1 "$n"); do
+            gh workflow run worker.yml --ref main
+          done
