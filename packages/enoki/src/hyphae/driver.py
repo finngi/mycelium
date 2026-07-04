@@ -1,4 +1,4 @@
-"""In-cluster entrypoint: recipe -> trials -> trainer adapter -> manifests.
+"""In-cluster entrypoint: recipe -> trials -> trainer -> manifests.
 
 This module and the mcm CLI are the only places allowed to know Ray exists.
 Ray is imported lazily so the driver can plan trials on a laptop without the
@@ -11,7 +11,7 @@ import mcm.tasks  # noqa: F401  (populate the task registry)
 from mcm.primitives import trial
 from mcm.primitives.recipe import Recipe
 
-from hyphae import adapters
+from hyphae import trainers
 
 
 def run(recipe_path: str) -> int:
@@ -22,12 +22,12 @@ def run(recipe_path: str) -> int:
     print(f"[OK] planned {len(trials)} trial(s) for recipe '{recipe.name}'", file=sys.stderr)
 
     try:
-        adapters.get(recipe.accelerator)
+        trainers.get(recipe.accelerator)
     except KeyError as e:
         print(f"[FAIL] {e}", file=sys.stderr)
         return 1
 
-    # Adapter execution (one Ray task per trial) lands with the first adapter.
+    # Trainer execution (one Ray task per trial) lands with the first trainer.
     raise NotImplementedError
 
 
