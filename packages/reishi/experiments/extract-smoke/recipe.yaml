@@ -1,0 +1,10 @@
+name: extract-smoke
+task: extract
+base_model: LiquidAI/LFM2.5-1.2B-Base
+dataset: sample-040726
+accelerator: l4
+seeds: 3
+trainer:
+  method: lora
+  rank: 16
+  iters: 4000
