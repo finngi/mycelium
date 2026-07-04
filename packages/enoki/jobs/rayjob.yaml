@@ -1,0 +1,43 @@
+# RayJob template — filled in by `mcm experiment submit`.
+# {{name}}, {{image}}, {{recipe}} and the worker group are substituted;
+# everything else is fixed policy for the `train` namespace.
+apiVersion: ray.io/v1
+kind: RayJob
+metadata:
+  name: mcm-{{name}}
+  namespace: train
+spec:
+  entrypoint: python -m hyphae.driver /recipes/{{recipe}}
+  shutdownAfterJobFinishes: true
+  ttlSecondsAfterFinished: 600
+  rayClusterSpec:
+    headGroupSpec:
+      rayStartParams: {}
+      template:
+        spec:
+          containers:
+            - name: ray-head
+              image: {{image}}
+              resources:
+                requests: {cpu: "2", memory: 8Gi}
+                limits: {cpu: "2", memory: 8Gi}
+    workerGroupSpecs:
+      # One group per submit, chosen by the recipe's accelerator:
+      #   l4   -> nvidia.com/gpu: 1, nodeSelector cloud.google.com/gke-accelerator: nvidia-l4
+      #   h100 -> nvidia.com/gpu: 1, nodeSelector cloud.google.com/gke-accelerator: nvidia-h100-80gb
+      #   v5e  -> google.com/tpu: 4, nodeSelector cloud.google.com/gke-tpu-accelerator: tpu-v5-lite-podslice
+      - groupName: {{accelerator}}
+        replicas: 1
+        minReplicas: 1
+        maxReplicas: 1
+        rayStartParams: {}
+        template:
+          spec:
+            nodeSelector:
+              cloud.google.com/gke-accelerator: {{gke_accelerator}}
+            containers:
+              - name: ray-worker
+                image: {{image}}
+                resources:
+                  requests: {cpu: "8", memory: 32Gi, nvidia.com/gpu: "1"}
+                  limits: {cpu: "8", memory: 32Gi, nvidia.com/gpu: "1"}
