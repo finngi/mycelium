@@ -1,0 +1,72 @@
+name: worker
+
+# Generic "be a worker" job: which trials it runs is decided by mat's claim
+# loop at execution time, never by GitHub's runner pick. Dispatched by
+# herder.yml (or by hand); safe to over-dispatch -- a worker with nothing
+# claimable exits in seconds.
+# Runners are unmetered (self-hosted); never switch runs-on to a GitHub-hosted label.
+on:
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: mat
+
+jobs:
+  claim-and-train:
+    runs-on: [self-hosted, macOS, mlx, ready]
+    timeout-minutes: 2880
+    permissions:
+      contents: write
+    steps:
+      # Belt-and-braces gate for jobs already assigned before a drain took
+      # effect: fail fast so the machine is freed without burning a retry.
+      - name: Check node availability
+        working-directory: .
+        run: |
+          if [ -f "$HOME/.mycelium-busy" ]; then
+            echo "[FAIL] node marked busy ($HOME/.mycelium-busy exists) -> refusing job"; exit 1
+          fi
+          if pgrep -fl "mlx_lm|bench\.py|train\.py" | grep -v "actions-runner"; then
+            echo "[FAIL] a training process is already running on this node -> refusing job"; exit 1
+          fi
+          echo "[OK] node idle"
+
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: mat
+
+      # mcm is a path dependency (../mycelium) -- check it out alongside.
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/mycelium
+          path: mycelium
+
+      - name: Set up environment
+        run: |
+          uv venv --python 3.12
+          uv pip install -e .
+
+      - name: Configure git identity (claims and results are commits)
+        run: |
+          git config user.name "mat-worker"
+          git config user.email "worker@mat.local"
+
+      # HF_TOKEN enables checkpoint push/resume once the MLX trainer lands.
+      - name: Claim and train
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          PYTHONUNBUFFERED: "1"
+          MCM_STORE: ${{ github.workspace }}/mat/store
+        run: .venv/bin/mcm mesh work
+
+      - name: Failure summary
+        if: failure()
+        run: |
+          {
+            echo "## [FAIL] worker on $(hostname -s)"
+            echo '```'
+            .venv/bin/mcm mesh -o json 2>/dev/null || echo "status unavailable"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
