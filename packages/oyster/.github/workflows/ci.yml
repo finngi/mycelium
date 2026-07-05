@@ -31,6 +31,7 @@ jobs:
         with:
           repository: ${{ github.repository_owner }}/mcm-reishi
           path: mcm-reishi
+          token: ${{ secrets.MCM_SIBLING_REPO_TOKEN }}
       - uses: astral-sh/setup-uv@v3
         with:
           python-version: "3.12"
