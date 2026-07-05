@@ -6,7 +6,7 @@ board only because they were scored by the same function.
 """
 
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass(frozen=True)

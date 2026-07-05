@@ -14,8 +14,11 @@ identically, comparable on one board — regardless of what executes it.
 | **Trial** | One recipe x seed execution (Ray Tune's term) — a manifest, not a log line. |
 | **Board** | Aggregation over trial manifests; computed, never stored as truth. |
 
-Execution lives in sibling repos — [enoki](../mcm-enoki) (KubeRay: `l4`,
-`h100`, `v5e`) and [oyster](../mcm-oyster) (the self-hosted Mac mesh: `mlx`);
+Execution lives in sibling repos —
+[enoki](https://github.com/finngi/mcm-enoki)
+(KubeRay: `l4`, `h100`, `v5e`) and
+[oyster](https://github.com/finngi/mcm-oyster)
+(the self-hosted Mac mesh: `mlx`);
 mcm never imports Ray or MLX. Executors consume recipe manifests and write
 trial manifests — the store is the only interface.
 
