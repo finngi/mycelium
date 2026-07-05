@@ -9,7 +9,7 @@ dependencies = ["mcm", "pyyaml>=6.0.3"]
 oyster = "oyster.mcm_plugin"
 
 [dependency-groups]
-dev = ["pytest>=8"]
+dev = ["pytest>=9.1.1"]
 
 [tool.uv.sources]
 mcm = { path = "../mcm-reishi", editable = true }
