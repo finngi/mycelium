@@ -32,13 +32,13 @@ jobs:
           fi
           echo "[OK] node idle"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: main
           path: mcm-oyster
 
       # mcm is a path dependency (../mcm-reishi) -- check it out alongside.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           repository: ${{ github.repository_owner }}/mcm-reishi
           path: mcm-reishi
