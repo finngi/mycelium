@@ -1,6 +1,6 @@
 """Dataset: a versioned storage prefix plus its card and leak contract."""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from mcm import store
 
