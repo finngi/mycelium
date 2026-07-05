@@ -3,7 +3,7 @@ cluster instead of on a laptop.
 
 Kept out of mcm core so the contract layer stays free of database clients --
 enoki is the one place allowed to know Postgres exists, same rule that
-already applies to Ray. The driver swaps this in via mcm.store.use_backend()
+already applies to Ray. The driver swaps this in via reishi.store.use_backend()
 before it plans or claims any trial; mcm's primitives never change.
 
 One JSONB table for every kind (trials/datasets/recipes): the manifest stays

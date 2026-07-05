@@ -32,13 +32,15 @@ spec:
                 requests: {cpu: "2", memory: 8Gi}
                 limits: {cpu: "2", memory: 8Gi}
     workerGroupSpecs:
-      # One group per submit, chosen by the recipe's accelerator. GPU node
-      # selectors/tolerations verified against a live workload already
-      # running in `train` (card-qwen17-retrain) rather than assumed. Only
-      # l4 is wired up in mcm's _GPU_NODE_SELECTORS today -- h100 uses a
-      # different compute-class ('gpu', not 'gpu-l4') and isn't supported
-      # by `mcm experiment submit` yet, so don't copy this row for h100
-      # without updating that value too:
+      # One group per submit, chosen by the recipe's accelerator. Node
+      # selectors/tolerations must be verified against a real, currently
+      # running workload before being added here, never assumed from docs
+      # -- GKE compute-class values and their taints drift across releases
+      # and node pools. mcm's _GPU_NODE_SELECTORS gates on exactly which
+      # accelerators have a verified entry, so an unverified row here is
+      # inert, not silently wrong. Each accelerator's compute-class differs
+      # ('gpu-l4' vs plain 'gpu'), so don't copy one row for another without
+      # re-verifying:
       #   l4      -> compute-class: gpu-l4 + nvidia.com/gpu, on spot (NAP
       #              provisions gpu-l4-timeshare / nap-a3-highgpu-1g-spot-*
       #              on demand -- every GPU workload in this namespace runs
@@ -46,7 +48,8 @@ spec:
       #              worker checkpoints and resumes, so it does)
       #   h100    -> compute-class: gpu (not gpu-l4) + nvidia.com/gpu, on spot
       #   v5e     -> gke-tpu-accelerator: tpu-v5-lite-podslice, NOT on spot
-      #              (no TPU workload in this namespace uses spot today)
+      #              (no TPU trainer exists yet to prove checkpoint/resume
+      #              survives a preemption; stay off spot until one does)
       - groupName: {{accelerator}}
         replicas: 1
         minReplicas: 1

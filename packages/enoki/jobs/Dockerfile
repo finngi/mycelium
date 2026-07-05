@@ -2,7 +2,7 @@
 # CUDA base for l4/h100; the v5e (TPU) variant lands with the XLA/JAX adapter.
 #
 # Build context must be the `ml/` parent directory, not `mcm-enoki/` alone --
-# pyproject.toml resolves mcm via [tool.uv.sources] path = "../mcm-reishi",
+# pyproject.toml resolves reishi via [tool.uv.sources] path = "../mcm-reishi",
 # a sibling repo outside mcm-enoki's own tree that a plain `docker build mcm-enoki`
 # can never see. From ml/:
 #   docker build -f mcm-enoki/jobs/Dockerfile -t <tag> .
