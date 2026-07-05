@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v3
+      - uses: astral-sh/setup-uv@v7
       - run: uvx ruff check .
 
   test:
@@ -29,7 +29,7 @@ jobs:
           repository: ${{ github.repository_owner }}/mcm-enoki
           path: mcm-enoki
           token: ${{ secrets.MCM_SIBLING_REPO_TOKEN }}
-      - uses: astral-sh/setup-uv@v3
+      - uses: astral-sh/setup-uv@v7
         with:
           python-version: "3.12"
       - run: uv venv && uv pip install -e . --group dev
