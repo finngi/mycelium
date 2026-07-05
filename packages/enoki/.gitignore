@@ -5,3 +5,5 @@ __pycache__/
 .mcm/
 uv.lock
 .DS_Store
+# staged dataset copies -- real store of record is gs://, not git
+data/

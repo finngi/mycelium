@@ -1,12 +1,12 @@
-# hyphae
+# enoki
 
-Execution layer for [mycelium (mcm)](../mycelium) on KubeRay (GKE `train`
-namespace). mcm defines the shapes — recipes in, trial manifests out — hyphae
+Execution layer for [reishi (mcm)](../mcm-reishi) on KubeRay (GKE `train`
+namespace). mcm defines the shapes — recipes in, trial manifests out — enoki
 is the thing that actually trains.
 
 The boundary, in both directions:
 
-- hyphae **consumes** recipe manifests and **writes** trial manifests to the
+- enoki **consumes** recipe manifests and **writes** trial manifests to the
   mcm store. It never defines shapes of its own.
 - mcm **never imports Ray**. Everything Ray-shaped (RayJob templating, the
   driver, trainers) lives here.
@@ -17,21 +17,26 @@ The boundary, in both directions:
 |---|---|
 | `jobs/rayjob.yaml` | RayJob template, filled in by `mcm experiment submit` — worker group per accelerator (`l4`, `h100`, `v5e`) |
 | `jobs/Dockerfile` | Training image, pushed to the `training-images` Artifact Registry repo |
-| `src/hyphae/driver.py` | In-cluster entrypoint: recipe manifest -> one trial per seed -> trainer -> trial manifests + artifacts |
-| `src/hyphae/trainers/` | Trainers, selected by the recipe's `accelerator` field ("adapter" is reserved for the LoRA artifact) |
+| `src/enoki/driver.py` | In-cluster entrypoint: recipe manifest -> one trial per seed -> trainer -> trial manifests + artifacts |
+| `src/enoki/trainers/` | Trainers, selected by the recipe's `accelerator` field ("adapter" is reserved for the LoRA artifact) |
 
 ## Setup
 
 ```
 uv venv && uv pip install -e . --group dev
-uv run python -m hyphae.driver <recipe.yaml>   # plans trials, then fails: no trainer yet
+uv run python -m enoki.driver <recipe.yaml>   # plans trials; running an l4 trial needs --group cluster too
 ```
 
-Ray itself is in the `cluster` dependency group — it only needs to exist
-inside the training image, not on your laptop.
+Ray and the LoRA trainer stack (torch/transformers/peft) are in the
+`cluster` dependency group — they only need to exist inside the training
+image, not on your laptop, so `--group dev` alone plans trials but a
+laptop run of an `l4` recipe fails inside `train_l4` on the missing heavy
+deps (or falls back to running in-process, without Ray, if `ray` itself
+isn't installed either).
 
 ## Not here yet
 
-The TRL/PEFT trainer (CUDA: `l4`, `h100`), the XLA/JAX trainer (`v5e`),
-image build/push, and the `mcm experiment submit` wiring that templates
-`jobs/rayjob.yaml`.
+The `h100` trainer (the `l4` LoRA trainer is real: plain transformers +
+peft, see `src/enoki/trainers/`), the XLA/JAX trainer (`v5e`), and image
+build/push. `mcm experiment submit` (in mcm-reishi) now templates and
+applies `jobs/rayjob.yaml` for `l4`.
