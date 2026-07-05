@@ -3,7 +3,7 @@ name = "enoki"
 version = "0.1.0"
 description = "enoki — KubeRay (cloud) execution layer for mcm recipes"
 requires-python = ">=3.11"
-dependencies = ["mcm", "pyyaml>=6"]
+dependencies = ["mcm", "pyyaml>=6.0.3"]
 
 [dependency-groups]
 dev = ["pytest>=8"]
@@ -29,7 +29,7 @@ dev = ["pytest>=8"]
 cluster = [
     "torch==2.4.1",
     "ray[default]>=2.9",
-    "psycopg[binary]>=3.1",
+    "psycopg[binary]>=3.3.4",
     "transformers>=4.46,<5",
     "peft>=0.13,<0.14",
     "accelerate>=0.34,<1",
