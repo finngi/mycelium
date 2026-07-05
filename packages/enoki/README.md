@@ -1,6 +1,6 @@
 # enoki
 
-Execution layer for [reishi (mcm)](../mcm-reishi) on KubeRay (GKE `train`
+Execution layer for [reishi (mcm)](https://github.com/finngi/mcm-reishi) on KubeRay (GKE `train`
 namespace). mcm defines the shapes — recipes in, trial manifests out — enoki
 is the thing that actually trains.
 
