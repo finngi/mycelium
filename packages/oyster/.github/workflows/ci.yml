@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: mcm-oyster
-      - uses: astral-sh/setup-uv@v3
+      - uses: astral-sh/setup-uv@v7
       # uvx runs ruff in its own isolated env -- unlike `uv run`, it never
       # tries to sync this project's own deps (the ../mcm-reishi path dep
       # isn't checked out in this job).
@@ -35,7 +35,7 @@ jobs:
           repository: ${{ github.repository_owner }}/mcm-reishi
           path: mcm-reishi
           token: ${{ secrets.MCM_SIBLING_REPO_TOKEN }}
-      - uses: astral-sh/setup-uv@v3
+      - uses: astral-sh/setup-uv@v7
         with:
           python-version: "3.12"
       - run: uv venv && uv pip install -e . --group dev
