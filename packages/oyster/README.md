@@ -1,8 +1,8 @@
 # oyster
 
-No-cloud execution layer for [reishi (mcm)](../mcm-reishi): a mesh of
+No-cloud execution layer for [reishi (mcm)](https://github.com/finngi/mcm-reishi): a mesh of
 self-hosted Macs behind GitHub Actions runners, with tag-based
-availability. Like [enoki](../mcm-enoki) (the KubeRay layer), oyster consumes
+availability. Like [enoki](https://github.com/finngi/mcm-enoki) (the KubeRay layer), oyster consumes
 recipe manifests and writes trial manifests to the mcm store — it defines
 no shapes of its own. Recipes target the mesh with `accelerator: mlx`.
 
