@@ -11,7 +11,7 @@ import os
 import subprocess
 import sys
 
-from mcm import store
+from reishi import store
 
 
 def _branch() -> str:
