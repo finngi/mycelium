@@ -6,9 +6,9 @@ tests never need a GPU, a cluster, or the real ReaderLM-v2 weights.
 
 import pytest
 
-import mcm.tasks  # noqa: F401  (populate the task registry)
-from mcm import store
-from mcm.primitives import trial
+import reishi.tasks  # noqa: F401  (populate the task registry)
+from reishi import store
+from reishi.primitives import trial
 
 from enoki import driver
 from enoki.trainers import TRAINERS
