@@ -1,4 +1,4 @@
-from mcm.primitives.task import Task, register
+from reishi.primitives.task import Task, register
 
 # Schema matches the IF name-parser PascalCase output; the field-F1 scorer and
 # constrained decoder port from mycelium (eval_common / constrained_decoding)

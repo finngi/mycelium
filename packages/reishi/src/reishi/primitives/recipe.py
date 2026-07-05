@@ -42,7 +42,7 @@ class Recipe:
         return cls(**raw)
 
     def validate(self) -> None:
-        from mcm.primitives import task as task_registry
+        from reishi.primitives import task as task_registry
 
         task_registry.get(self.task)
         if self.accelerator not in ACCELERATORS:

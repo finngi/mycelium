@@ -1,4 +1,4 @@
-from mcm.primitives.task import Task, register
+from reishi.primitives.task import Task, register
 
 # Output is free-text markdown, not a structured field extraction, hence
 # codec="text" and a single output_field -- or the literal sentinel string

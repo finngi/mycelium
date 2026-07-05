@@ -8,8 +8,8 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
-from mcm import store
-from mcm.primitives.recipe import Recipe
+from reishi import store
+from reishi.primitives.recipe import Recipe
 
 STATUSES = ("planned", "running", "done", "failed")
 
