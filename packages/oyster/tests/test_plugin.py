@@ -1,4 +1,4 @@
-"""mat's face inside the mcm CLI: vocabulary registers cleanly and the
+"""oyster's face inside the mcm CLI: vocabulary registers cleanly and the
 drain path leads with the assignment-level label."""
 
 import pytest
@@ -6,7 +6,7 @@ import pytest
 from mcm.cli import grammar
 from mcm.cli.grammar import Command, canonicalize
 
-from mat import machine, mcm_plugin
+from oyster import machine, mcm_plugin
 
 
 @pytest.fixture(autouse=True)

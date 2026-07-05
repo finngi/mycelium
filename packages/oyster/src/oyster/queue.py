@@ -12,7 +12,7 @@ import mcm.tasks  # noqa: F401  (populate the task registry)
 from mcm.primitives.trial import Trial
 from mcm.primitives import trial as trial_store
 
-from mat import footprint, gitstore
+from oyster import footprint, gitstore
 
 MAX_ATTEMPTS = 3
 

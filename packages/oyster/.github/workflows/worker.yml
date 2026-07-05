@@ -1,6 +1,6 @@
 name: worker
 
-# Generic "be a worker" job: which trials it runs is decided by mat's claim
+# Generic "be a worker" job: which trials it runs is decided by oyster's claim
 # loop at execution time, never by GitHub's runner pick. Dispatched by
 # herder.yml (or by hand); safe to over-dispatch -- a worker with nothing
 # claimable exits in seconds.
@@ -10,7 +10,7 @@ on:
 
 defaults:
   run:
-    working-directory: mat
+    working-directory: mcm-oyster
 
 jobs:
   claim-and-train:
@@ -35,13 +35,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main
-          path: mat
+          path: mcm-oyster
 
-      # mcm is a path dependency (../mycelium) -- check it out alongside.
+      # mcm is a path dependency (../mcm-reishi) -- check it out alongside.
       - uses: actions/checkout@v4
         with:
-          repository: ${{ github.repository_owner }}/mycelium
-          path: mycelium
+          repository: ${{ github.repository_owner }}/mcm-reishi
+          path: mcm-reishi
 
       - name: Set up environment
         run: |
@@ -50,15 +50,15 @@ jobs:
 
       - name: Configure git identity (claims and results are commits)
         run: |
-          git config user.name "mat-worker"
-          git config user.email "worker@mat.local"
+          git config user.name "oyster-worker"
+          git config user.email "worker@oyster.local"
 
       # HF_TOKEN enables checkpoint push/resume once the MLX trainer lands.
       - name: Claim and train
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           PYTHONUNBUFFERED: "1"
-          MCM_STORE: ${{ github.workspace }}/mat/store
+          MCM_STORE: ${{ github.workspace }}/mcm-oyster/store
         run: .venv/bin/mcm mesh work
 
       - name: Failure summary

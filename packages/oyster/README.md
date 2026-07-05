@@ -1,8 +1,8 @@
-# mat
+# oyster
 
-No-cloud execution layer for [mycelium (mcm)](../mycelium): a mesh of
+No-cloud execution layer for [reishi (mcm)](../mcm-reishi): a mesh of
 self-hosted Macs behind GitHub Actions runners, with tag-based
-availability. Like [hyphae](../hyphae) (the KubeRay layer), mat consumes
+availability. Like [enoki](../mcm-enoki) (the KubeRay layer), oyster consumes
 recipe manifests and writes trial manifests to the mcm store — it defines
 no shapes of its own. Recipes target the mesh with `accelerator: mlx`.
 
@@ -11,7 +11,7 @@ no shapes of its own. Recipes target the mesh with `accelerator: mlx`.
 Pushing work at runners fails in a specific way: GitHub assigns a queued
 job to any online runner — including one mid-training — so the job enters,
 fails a guard, and burns a retry, while the work itself is welded to
-whichever machine caught it. mat inverts this: planned trials sit in the
+whichever machine caught it. oyster inverts this: planned trials sit in the
 store as a priority queue, and a machine **claims** the next trial that
 fits only when it is actually idle, one at a time. A claim is a commit
 (the store lives in git), so it is atomic: the loser of a push race
@@ -40,13 +40,13 @@ already have them; renaming the files orphans the fleet.
 
 | Path | What it is |
 |---|---|
-| `src/mat/queue.py` | Scheduler: eligibility (fit + trainer + attempts), priority order, atomic claim, requeue |
-| `src/mat/worker.py` | Claim -> train -> record loop; drains between trials |
-| `src/mat/machine.py` | This machine: budget, identity, `ready`-label toggle, busy file |
-| `src/mat/footprint.py` | Conservative unified-memory estimate per trial |
-| `src/mat/gitstore.py` | Store-over-git: pull-rebase before deciding, push-with-retry after; lost race = clean abort |
-| `src/mat/trainers/` | MLX trainers, keyed by accelerator ("adapter" is reserved for the LoRA artifact) |
-| `src/mat/mcm_plugin.py` | Registers the `mesh` domain into the mcm CLI (entry point `mcm.plugins`) |
+| `src/oyster/queue.py` | Scheduler: eligibility (fit + trainer + attempts), priority order, atomic claim, requeue |
+| `src/oyster/worker.py` | Claim -> train -> record loop; drains between trials |
+| `src/oyster/machine.py` | This machine: budget, identity, `ready`-label toggle, busy file |
+| `src/oyster/footprint.py` | Conservative unified-memory estimate per trial |
+| `src/oyster/gitstore.py` | Store-over-git: pull-rebase before deciding, push-with-retry after; lost race = clean abort |
+| `src/oyster/trainers/` | MLX trainers, keyed by accelerator ("adapter" is reserved for the LoRA artifact) |
+| `src/oyster/mcm_plugin.py` | Registers the `mesh` domain into the mcm CLI (entry point `mcm.plugins`) |
 | `store/` | The mcm manifest store, committed — the queue IS the repo |
 | `.github/workflows/worker.yml` | Generic worker on `[self-hosted, macOS, mlx, ready]` |
 | `.github/workflows/herder.yml` | Scheduled: dispatches `min(planned, ready-idle)` workers |
@@ -55,7 +55,7 @@ already have them; renaming the files orphans the fleet.
 
 ## CLI
 
-mat has no CLI of its own — installing it teaches `mcm` the `mesh` domain
+oyster has no CLI of its own — installing it teaches `mcm` the `mesh` domain
 (one grammar, one canonical echo, one `-o json`):
 
 ```
@@ -75,7 +75,7 @@ uv run pytest -q
 ```
 
 `MCM_STORE` defaults to `./store` inside this checkout. Submit work from
-mycelium: `mcm run recipe.yaml --plan` against this store, then let the
+reishi: `mcm run recipe.yaml --plan` against this store, then let the
 herder tick (or `gh workflow run herder.yml`).
 
 ## Not here yet

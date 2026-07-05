@@ -9,7 +9,7 @@ gracefully: current trial finishes, nothing more claimed.
 import sys
 import traceback
 
-from mat import gitstore, machine, queue, trainers
+from oyster import gitstore, machine, queue, trainers
 
 
 def run(max_trials: int | None = None) -> int:
