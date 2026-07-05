@@ -3,7 +3,7 @@ name = "enoki"
 version = "0.1.0"
 description = "enoki — KubeRay (cloud) execution layer for mcm recipes"
 requires-python = ">=3.11"
-dependencies = ["mcm", "pyyaml>=6"]
+dependencies = ["mcm", "pyyaml>=6.0.3"]
 
 [dependency-groups]
 dev = ["pytest>=8"]
