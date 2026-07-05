@@ -4,8 +4,8 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from mcm.primitives import trial as trial_store
-from mcm.primitives.recipe import Recipe
+from reishi.primitives import trial as trial_store
+from reishi.primitives.recipe import Recipe
 
 from oyster import machine, queue, worker
 from oyster.trainers import TRAINERS

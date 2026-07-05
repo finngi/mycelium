@@ -13,8 +13,8 @@ import os
 import sys
 from pathlib import Path
 
-from mcm.cli.grammar import Command, Verb
-from mcm.cli.output import emit
+from reishi.cli.grammar import Command, Verb
+from reishi.cli.output import emit
 
 from oyster import footprint, gitstore, machine, queue, trainers, worker
 
@@ -38,7 +38,7 @@ def _flag_value(flags: list[str], name: str) -> str | None:
 
 
 def mesh_status(cmd: Command) -> int:
-    from mcm.primitives import trial as trial_store
+    from reishi.primitives import trial as trial_store
 
     gitstore.sync()
     by_status: dict[str, int] = {}
