@@ -21,7 +21,10 @@ jobs:
         with:
           path: mcm-enoki
       - uses: astral-sh/setup-uv@v3
-      - run: uv run --with ruff ruff check .
+      # uvx runs ruff in its own isolated env -- unlike `uv run`, it never
+      # tries to sync this project's own deps (the ../mcm-reishi path dep
+      # isn't checked out in this job).
+      - run: uvx ruff check .
 
   test:
     runs-on: ubuntu-latest
