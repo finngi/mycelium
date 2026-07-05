@@ -2,12 +2,38 @@ import sys
 
 from mcm.cli.grammar import GrammarError, canonicalize
 
+_plugins_loaded = False
+
+
+def _load_plugins(handlers: dict) -> None:
+    """Executors unify into this CLI via `mcm.plugins` entry points: each
+    plugin module exposes DOMAINS, VERBS, and HANDLERS to merge. A broken
+    plugin degrades to a warning, never a dead CLI."""
+    global _plugins_loaded
+    if _plugins_loaded:
+        return
+    _plugins_loaded = True
+    from importlib.metadata import entry_points
+
+    from mcm.cli import grammar
+
+    for ep in entry_points(group="mcm.plugins"):
+        try:
+            mod = ep.load()
+            grammar.extend(getattr(mod, "DOMAINS", ()), tuple(getattr(mod, "VERBS", ())))
+            handlers.update(getattr(mod, "HANDLERS", {}))
+        except Exception as e:
+            print(f"[WARN] mcm plugin '{ep.name}' failed to load: {type(e).__name__}: {e}", file=sys.stderr)
+
 
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
 
+    from mcm.cli import commands
+
+    _load_plugins(commands.HANDLERS)
+
     if "-h" in argv or "--help" in argv or argv[:1] == ["help"]:
-        from mcm.cli import commands
         from mcm.cli.help import render
 
         print(render(commands.HANDLERS))
@@ -18,8 +44,6 @@ def main(argv: list[str] | None = None) -> int:
     except GrammarError as e:
         print(f"[FAIL] {e}", file=sys.stderr)
         return 2
-
-    from mcm.cli import commands
 
     if cmd.domain is None and cmd.action is None:
         return commands.status(cmd)

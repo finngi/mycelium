@@ -1,11 +1,8 @@
-# mycelium (mcm)
+# reishi (mcm)
 
 Experiment contract layer for small-model training on KubeRay (GKE `train`
 namespace). mcm makes a training run mean something — reproducible, scored
 identically, comparable on one board — regardless of what executes it.
-
-Successor to `proto/mycelium` (now the frozen research archive); learnings
-migrated, code mostly didn't.
 
 ## Primitives
 
@@ -13,11 +10,14 @@ migrated, code mostly didn't.
 |---|---|
 | **Task** | Output schema + codec + constrained decoder + scorer. The scorer is the cross-accelerator invariant. |
 | **Dataset** | Versioned `gs://` prefix + card + leak contract. |
-| **Recipe** | Declarative model x dataset x prompt x trainer spec; `accelerator` selects the trainer adapter. |
+| **Recipe** | Declarative model x dataset x prompt x trainer spec; `accelerator` selects the trainer. |
 | **Trial** | One recipe x seed execution (Ray Tune's term) — a manifest, not a log line. |
 | **Board** | Aggregation over trial manifests; computed, never stored as truth. |
 
-Only `driver.py` and the CLI ever know Ray exists.
+Execution lives in sibling repos — [enoki](../mcm-enoki) (KubeRay: `l4`,
+`h100`, `v5e`) and [oyster](../mcm-oyster) (the self-hosted Mac mesh: `mlx`);
+mcm never imports Ray or MLX. Executors consume recipe manifests and write
+trial manifests — the store is the only interface.
 
 ## CLI
 
@@ -33,6 +33,10 @@ mcm logs 7f3a            # > mcm trial logs 7f3a
 mcm run parse-org.yaml   # > mcm recipe run parse-org.yaml   (local, in-process)
 mcm submit nameparse-x   # > mcm experiment submit nameparse-x  (RayJob)
 ```
+
+Installed executors extend this one CLI via `mcm.plugins` entry points
+(oyster adds a `mesh` domain: `mcm work`, `mcm drain`, ...) — same grammar,
+same disjointness law, one help.
 
 Grammar anchors (enforced by `tests/test_grammar.py`):
 - domains and verbs are disjoint closed vocabularies; `run` is a VERB, the noun is `trial`
@@ -53,5 +57,9 @@ becomes `gs://xapien-mcm-train` when the GCS store lands).
 
 ## Not here yet
 
-Trainer adapters (TRL/PEFT for CUDA, XLA/JAX for v5e), the Ray driver,
-RayJob templating in `jobs/`, the nameparse scorer port, GCS store.
+The nameparse scorer port and the GCS store. `experiment submit` now
+templates enoki's `jobs/rayjob.yaml` (convention: `experiments/<name>/recipe.yaml`,
+image via `--image`/`MCM_TRAIN_IMAGE`) and applies it with `kubectl` --
+only the `l4` accelerator has a verified node selector/toleration, others
+fail cleanly. Everything Ray-shaped (driver, trainers, RayJob template,
+Dockerfile) stays in enoki.

@@ -24,6 +24,7 @@ class Trial:
     metrics: dict = field(default_factory=dict)
     artifacts: dict = field(default_factory=dict)  # e.g. adapter/checkpoint URIs
     spec: dict = field(default_factory=dict)  # frozen copy of the recipe manifest
+    execution: dict = field(default_factory=dict)  # executor provenance: runner, claimed_at, heartbeat, attempt
 
     def to_manifest(self) -> dict:
         return {
@@ -35,11 +36,14 @@ class Trial:
             "metrics": self.metrics,
             "artifacts": self.artifacts,
             "spec": self.spec,
+            "execution": self.execution,
         }
 
     @classmethod
     def from_manifest(cls, m: dict) -> "Trial":
-        return cls(**m)
+        # Tolerant reader: ignore unknown keys so newer manifests load in older checkouts.
+        known = cls.__dataclass_fields__
+        return cls(**{k: v for k, v in m.items() if k in known})
 
 
 def plan(recipe: Recipe) -> list[Trial]:
