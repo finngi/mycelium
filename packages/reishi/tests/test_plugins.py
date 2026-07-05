@@ -3,8 +3,8 @@ same disjointness law the built-ins live by."""
 
 import pytest
 
-from mcm.cli import grammar
-from mcm.cli.grammar import GrammarError, Verb, canonicalize
+from reishi.cli import grammar
+from reishi.cli.grammar import GrammarError, Verb, canonicalize
 
 
 @pytest.fixture(autouse=True)

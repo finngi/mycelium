@@ -7,7 +7,7 @@ import json
 
 import pytest
 
-from mcm import store
+from reishi import store
 
 
 @pytest.fixture(autouse=True)

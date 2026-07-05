@@ -1,11 +1,11 @@
 """Help text generated from the live vocabularies — never hand-maintained."""
 
-from mcm.cli.grammar import DOMAINS, VERBS
+from reishi.cli.grammar import DOMAINS, VERBS
 
 
 def render(handlers: dict) -> str:
     lines = [
-        "mcm — mycelium: experiment contract layer for small-model training",
+        "mcm — reishi: experiment contract layer for small-model training",
         "",
         "usage: mcm <domain> <action> <objects> --<parameters>",
         "",

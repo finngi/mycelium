@@ -2,7 +2,7 @@
 
 from collections import defaultdict
 
-from mcm.primitives import trial as trial_store
+from reishi.primitives import trial as trial_store
 
 
 def build(metric: str = "f1", task: str | None = None) -> list[dict]:
