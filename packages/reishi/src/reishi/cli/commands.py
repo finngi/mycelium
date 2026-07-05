@@ -7,17 +7,16 @@ from pathlib import Path
 
 import yaml
 
-import mcm.tasks  # noqa: F401  (populate the task registry)
-from mcm import store
-from mcm.cli.grammar import Command
-from mcm.cli.output import emit
-from mcm.primitives import board, dataset, task, trial
-from mcm.primitives.recipe import Recipe
+import reishi.tasks  # noqa: F401  (populate the task registry)
+from reishi import store
+from reishi.cli.grammar import Command
+from reishi.cli.output import emit
+from reishi.primitives import board, dataset, task, trial
+from reishi.primitives.recipe import Recipe
 
-# Node selector/tolerations verified against a live workload in the `train`
-# namespace (see enoki's jobs/rayjob.yaml comment) -- only accelerators with
-# a confirmed-correct entry here are supported; anything else fails cleanly
-# rather than guessing.
+# Only accelerators with a verified-correct node selector/toleration entry
+# here are supported; anything else fails cleanly rather than guessing at
+# values the scheduler would silently mis-place on.
 _GPU_NODE_SELECTORS = {
     "l4": {"cloud.google.com/compute-class": "gpu-l4", "kubernetes.io/arch": "amd64"},
 }
@@ -109,7 +108,7 @@ def _flag_value(flags: list[str], name: str) -> str | None:
 
 def _enoki_root() -> Path:
     # mcm-reishi and mcm-enoki are checked out as sibling repos (both
-    # scoped under ml/); this file lives at <ml>/mcm-reishi/src/mcm/cli/.
+    # scoped under ml/); this file lives at <ml>/mcm-reishi/src/reishi/cli/.
     # ENOKI_HOME overrides for any other layout.
     env = os.environ.get("ENOKI_HOME")
     if env:
@@ -122,8 +121,6 @@ def experiment_submit(cmd: Command) -> int:
     if name is None:
         return 1
 
-    # Convention: experiments/<name>/recipe.yaml (the only one in use today,
-    # see experiments/nameparse-smoke/recipe.yaml).
     recipe_path = Path("experiments") / name / "recipe.yaml"
     if not recipe_path.exists():
         return _fail(f"no recipe at {recipe_path} (convention: experiments/<name>/recipe.yaml)")

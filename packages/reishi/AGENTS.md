@@ -14,7 +14,7 @@ execution lives in sibling repos.
 
 ## Repo shape
 
-Single package, `src/mcm/`, installed with `uv`. No path dependencies —
+Single package, `src/reishi/`, installed with `uv`. No path dependencies —
 this is the one repo in the mcm family with no dependency on the others.
 Sibling repos (`../mcm-enoki`, `../mcm-oyster`) depend on this one via a
 local path dependency and extend its CLI via `mcm.plugins` entry points.
@@ -27,9 +27,10 @@ local path dependency and extend its CLI via `mcm.plugins` entry points.
 | `Trial` | One recipe x seed execution — a manifest, not a log line. |
 | `Board` | Aggregation over trial manifests; computed, never stored as truth. |
 
-`mcm.store` is a `StorageBackend` Protocol: `LocalFilesystemBackend` is the
-default, executors swap in their own (e.g. enoki's `PostgresBackend`) via
-`store.use_backend()` — mcm's primitives never know which one is active.
+`reishi.store` is a `StorageBackend` Protocol: `LocalFilesystemBackend` is
+the default, executors swap in their own (e.g. enoki's `PostgresBackend`)
+via `store.use_backend()` — reishi's primitives never know which one is
+active.
 
 ## Conventions
 

@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from mcm import store
+from reishi import store
 
 
 @dataclass(frozen=True)
