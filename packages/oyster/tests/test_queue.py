@@ -7,14 +7,14 @@ import pytest
 from mcm.primitives import trial as trial_store
 from mcm.primitives.recipe import Recipe
 
-from mat import machine, queue, worker
-from mat.trainers import TRAINERS
+from oyster import machine, queue, worker
+from oyster.trainers import TRAINERS
 
 
 @pytest.fixture(autouse=True)
 def isolated_store(tmp_path, monkeypatch):
     monkeypatch.setenv("MCM_STORE", str(tmp_path / "store"))
-    monkeypatch.setenv("MAT_MEM_BUDGET_GB", "40")
+    monkeypatch.setenv("OYSTER_MEM_BUDGET_GB", "40")
     monkeypatch.setattr(machine, "BUSY_FILE", tmp_path / "busy")
     monkeypatch.setattr(machine, "training_process_running", lambda: False)
 

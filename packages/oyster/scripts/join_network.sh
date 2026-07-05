@@ -8,11 +8,11 @@
 # even though they don't compete for the same resource.
 #
 # Usage:
-#   MAT_REPO=<owner>/mat ./scripts/join_network.sh          # interactive token prompt
-#   MAT_REPO=<owner>/mat MAT_TOKEN=<t> ./scripts/join_network.sh
+#   OYSTER_REPO=<owner>/mcm-oyster ./scripts/join_network.sh          # interactive token prompt
+#   OYSTER_REPO=<owner>/mcm-oyster OYSTER_TOKEN=<t> ./scripts/join_network.sh
 set -euo pipefail
 
-REPO="${MAT_REPO:?set MAT_REPO=<owner>/mat (the GitHub repo runners register against)}"
+REPO="${OYSTER_REPO:?set OYSTER_REPO=<owner>/mcm-oyster (the GitHub repo runners register against)}"
 REPO_URL="https://github.com/$REPO"
 RUNNER_VERSION="2.325.0"
 RUNNER_TARBALL="actions-runner-osx-arm64-${RUNNER_VERSION}.tar.gz"
@@ -38,7 +38,7 @@ MEM_BUDGET_GB=$(( TOTAL_MEM_GB * 60 / 100 ))
 echo "[INFO] Detected: $CHIP, ${CPU_TOTAL} CPU cores, ${GPU_CORES} GPU cores, ${TOTAL_MEM_GB}GB unified memory"
 echo "[INFO] Safe MLX training memory budget: ${MEM_BUDGET_GB}GB"
 
-# mat's queue reads this as the machine's budget; the path is a fleet
+# oyster's queue reads this as the machine's budget; the path is a fleet
 # contract (see machine.py) -- do not rename it.
 cat > "$HOME/.mycelium-runner-config" <<EOF
 MYCELIUM_MEM_BUDGET_GB=$MEM_BUDGET_GB
@@ -54,13 +54,13 @@ if ! command -v uv >/dev/null 2>&1; then
   curl -LsSf https://astral.sh/uv/install.sh | sh
 fi
 
-TOKEN="${MAT_TOKEN:-}"
+TOKEN="${OYSTER_TOKEN:-}"
 if [ -z "$TOKEN" ]; then
   if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
     echo "[INFO] minting a registration token via gh..."
     TOKEN=$(gh api -X POST "repos/$REPO/actions/runners/registration-token" -q .token)
   else
-    echo "[FAIL] no token. Set MAT_TOKEN, or run 'gh auth login' first, or get one from"
+    echo "[FAIL] no token. Set OYSTER_TOKEN, or run 'gh auth login' first, or get one from"
     echo "       $REPO_URL/settings/actions/runners/new (expires in 1h)"
     exit 1
   fi

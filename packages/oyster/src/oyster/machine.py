@@ -26,11 +26,11 @@ _TRAINING_PATTERN = r"mlx_lm|bench\.py|train\.py"
 def name() -> str:
     # Short hostname, because runners register as "<hostname -s>-mlx" --
     # this is the join key for the label API.
-    return os.environ.get("MAT_RUNNER_NAME") or socket.gethostname().split(".")[0]
+    return os.environ.get("OYSTER_RUNNER_NAME") or socket.gethostname().split(".")[0]
 
 
 def mem_budget_gb() -> float:
-    env = os.environ.get("MAT_MEM_BUDGET_GB")
+    env = os.environ.get("OYSTER_MEM_BUDGET_GB")
     if env:
         return float(env)
     if CONFIG_FILE.exists():
@@ -61,8 +61,8 @@ def _gh(*args: str) -> subprocess.CompletedProcess:
 
 
 def _repo() -> str | None:
-    if os.environ.get("MAT_REPO"):
-        return os.environ["MAT_REPO"]
+    if os.environ.get("OYSTER_REPO"):
+        return os.environ["OYSTER_REPO"]
     r = _gh("repo", "view", "--json", "nameWithOwner", "-q", ".nameWithOwner")
     return r.stdout.strip() if r.returncode == 0 and r.stdout.strip() else None
 

@@ -15,7 +15,7 @@ from mcm import store
 
 
 def _branch() -> str:
-    return os.environ.get("MAT_BRANCH", "main")
+    return os.environ.get("OYSTER_BRANCH", "main")
 
 
 def _git(*args: str, check: bool = True) -> subprocess.CompletedProcess:

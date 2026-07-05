@@ -1,4 +1,4 @@
-"""mcm plugin: the `mesh` domain. With mat installed, the one mcm CLI grows
+"""mcm plugin: the `mesh` domain. With oyster installed, the one mcm CLI grows
 mesh vocabulary -- same grammar, same canonical echo, same -o json.
 
     mcm mesh                 # queue counts + this machine's fit (read-only default)
@@ -16,7 +16,7 @@ from pathlib import Path
 from mcm.cli.grammar import Command, Verb
 from mcm.cli.output import emit
 
-from mat import footprint, gitstore, machine, queue, trainers, worker
+from oyster import footprint, gitstore, machine, queue, trainers, worker
 
 DOMAINS = ("mesh",)
 VERBS = (
@@ -98,7 +98,7 @@ def mesh_undrain(cmd: Command) -> int:
         print("[OK] `ready` label restored -> job assignment re-enabled", file=sys.stderr)
     else:
         print("[WARN] could not restore `ready` label (gh/repo/runner unreachable) "
-              "-> restore it manually or set MAT_REPO", file=sys.stderr)
+              "-> restore it manually or set OYSTER_REPO", file=sys.stderr)
     print(f"[OK] {machine.BUSY_FILE} removed -> claiming re-enabled", file=sys.stderr)
     return 0
 
@@ -130,7 +130,7 @@ HANDLERS = {
     ("mesh", "reap"): mesh_reap,
 }
 
-# Inside a mat checkout the committed store/ is the queue; an explicit
+# Inside an oyster checkout the committed store/ is the queue; an explicit
 # MCM_STORE anywhere else is honored untouched.
 if "MCM_STORE" not in os.environ and (Path.cwd() / "store" / "trials").is_dir():
     os.environ["MCM_STORE"] = str(Path.cwd() / "store")

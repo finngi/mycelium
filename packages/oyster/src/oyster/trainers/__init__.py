@@ -2,7 +2,7 @@
 is the LoRA artifact a trial produces).
 
 A trainer is a callable: (trial_manifest: dict) -> {"metrics": ..., "artifacts": ...}.
-It must call mat.queue.heartbeat(trial) periodically or the reaper will
+It must call oyster.queue.heartbeat(trial) periodically or the reaper will
 requeue the trial mid-run. The MLX LoRA trainer lands here; until then the
 registry is empty, so workers claim nothing.
 """
