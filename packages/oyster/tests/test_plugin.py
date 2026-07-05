@@ -3,8 +3,8 @@ drain path leads with the assignment-level label."""
 
 import pytest
 
-from mcm.cli import grammar
-from mcm.cli.grammar import Command, canonicalize
+from reishi.cli import grammar
+from reishi.cli.grammar import Command, canonicalize
 
 from oyster import machine, mcm_plugin
 

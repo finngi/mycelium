@@ -8,9 +8,9 @@ asc, id) -- priority jumps the queue, ties are FIFO.
 import sys
 from datetime import datetime, timezone
 
-import mcm.tasks  # noqa: F401  (populate the task registry)
-from mcm.primitives.trial import Trial
-from mcm.primitives import trial as trial_store
+import reishi.tasks  # noqa: F401  (populate the task registry)
+from reishi.primitives.trial import Trial
+from reishi.primitives import trial as trial_store
 
 from oyster import footprint, gitstore
 
