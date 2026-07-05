@@ -41,6 +41,32 @@ _overlap = set(VERBS) & (set(DOMAINS) | set(_PLURALS))
 assert not _overlap, f"grammar vocabularies must stay disjoint: {_overlap}"
 
 
+def extend(domains: tuple[str, ...] = (), verbs: tuple[Verb, ...] = ()) -> None:
+    """Grow the vocabularies (plugins: executors add their domains/verbs at
+    CLI start). Same disjointness law as the built-ins, enforced loudly:
+    a new verb reusing a built-in's name would silently overwrite it via
+    VERBS.update() below, and one shadowed by an alias (get/ls) could never
+    be reached at all, since canonicalize() resolves aliases before ever
+    consulting VERBS -- both are collisions, not just verb-vs-domain."""
+    global DOMAINS
+    new_domains = tuple(d for d in domains if d not in DOMAINS)
+    candidate_domains = DOMAINS + new_domains
+    candidate_plurals = {d + "s" for d in candidate_domains}
+    new_verb_names = {v.name for v in verbs}
+
+    overlap = new_verb_names & set(VERBS)
+    overlap |= new_verb_names & set(_VERB_ALIASES)
+    overlap |= (set(VERBS) | new_verb_names | set(_VERB_ALIASES)) & (
+        set(candidate_domains) | candidate_plurals
+    )
+    if overlap:
+        raise GrammarError(f"plugin vocabulary collides with grammar: {sorted(overlap)}")
+
+    DOMAINS = candidate_domains
+    _PLURALS.update({d + "s": d for d in new_domains})
+    VERBS.update({v.name: v for v in verbs})
+
+
 class GrammarError(Exception):
     pass
 

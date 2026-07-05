@@ -1,7 +1,10 @@
 """Recipe: declarative model x dataset x prompt x trainer spec.
 
 A recipe never says HOW to train — the accelerator field selects a trainer
-adapter (TRL/PEFT on CUDA, an XLA/JAX adapter on TPU) at execution time.
+(TRL/PEFT on CUDA, XLA/JAX on TPU) at execution time.
+
+base_model is optional: absent means training from scratch, with the
+architecture described in the trainer spec.
 """
 
 from dataclasses import dataclass, field
@@ -9,18 +12,19 @@ from pathlib import Path
 
 import yaml
 
-ACCELERATORS = ("local", "l4", "h100", "v5e")
+ACCELERATORS = ("local", "mlx", "l4", "h100", "v5e")
 
 
 @dataclass(frozen=True)
 class Recipe:
     name: str
     task: str
-    base_model: str
     dataset: str
+    base_model: str | None = None
     accelerator: str = "l4"
     prompt: str | None = None
     seeds: int = 1
+    priority: int = 0  # higher claims first; ties break oldest-first
     trainer: dict = field(default_factory=dict)
 
     @classmethod
@@ -32,7 +36,7 @@ class Recipe:
         unknown = set(raw) - known
         if unknown:
             raise ValueError(f"{path}: unknown recipe fields: {', '.join(sorted(unknown))}")
-        missing = {"name", "task", "base_model", "dataset"} - set(raw)
+        missing = {"name", "task", "dataset"} - set(raw)
         if missing:
             raise ValueError(f"{path}: missing required fields: {', '.join(sorted(missing))}")
         return cls(**raw)
@@ -57,5 +61,6 @@ class Recipe:
             "accelerator": self.accelerator,
             "prompt": self.prompt,
             "seeds": self.seeds,
+            "priority": self.priority,
             "trainer": dict(self.trainer),
         }
