@@ -1,6 +1,6 @@
 """Leak contract: the structural train/eval checks mcm enforces natively."""
 
-from mcm.primitives.dataset import Dataset, leaks
+from reishi.primitives.dataset import Dataset, leaks
 
 
 def _ds(name, **kw):

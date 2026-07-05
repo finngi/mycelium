@@ -15,9 +15,9 @@ from types import SimpleNamespace
 import pytest
 import yaml
 
-import mcm.tasks  # noqa: F401  (populate the task registry)
-from mcm.cli import commands
-from mcm.cli.grammar import Command
+import reishi.tasks  # noqa: F401  (populate the task registry)
+from reishi.cli import commands
+from reishi.cli.grammar import Command
 
 RECIPE = """
 name: htmlmd-smoke

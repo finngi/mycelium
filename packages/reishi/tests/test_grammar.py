@@ -1,6 +1,6 @@
 import pytest
 
-from mcm.cli.grammar import DOMAINS, VERBS, GrammarError, canonicalize
+from reishi.cli.grammar import DOMAINS, VERBS, GrammarError, canonicalize
 
 
 CANONICALIZATION = [

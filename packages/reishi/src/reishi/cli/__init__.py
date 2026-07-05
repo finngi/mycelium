@@ -1,6 +1,6 @@
 import sys
 
-from mcm.cli.grammar import GrammarError, canonicalize
+from reishi.cli.grammar import GrammarError, canonicalize
 
 _plugins_loaded = False
 
@@ -15,7 +15,7 @@ def _load_plugins(handlers: dict) -> None:
     _plugins_loaded = True
     from importlib.metadata import entry_points
 
-    from mcm.cli import grammar
+    from reishi.cli import grammar
 
     for ep in entry_points(group="mcm.plugins"):
         try:
@@ -29,12 +29,12 @@ def _load_plugins(handlers: dict) -> None:
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
 
-    from mcm.cli import commands
+    from reishi.cli import commands
 
     _load_plugins(commands.HANDLERS)
 
     if "-h" in argv or "--help" in argv or argv[:1] == ["help"]:
-        from mcm.cli.help import render
+        from reishi.cli.help import render
 
         print(render(commands.HANDLERS))
         return 0

@@ -6,10 +6,10 @@ from-scratch run, and a dataset is not bound to any task (the recipe is).
 
 import pytest
 
-import mcm.tasks  # noqa: F401  (populate the task registry)
-from mcm.primitives import trial
-from mcm.primitives.dataset import Dataset
-from mcm.primitives.recipe import Recipe
+import reishi.tasks  # noqa: F401  (populate the task registry)
+from reishi.primitives import trial
+from reishi.primitives.dataset import Dataset
+from reishi.primitives.recipe import Recipe
 
 
 def _write_recipe(tmp_path, body: str):
