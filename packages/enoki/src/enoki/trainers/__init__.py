@@ -188,7 +188,7 @@ def train_l4(trial_manifest: dict) -> dict:
     from peft import LoraConfig, get_peft_model
     from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainingArguments
 
-    from mcm.primitives import dataset as dataset_registry
+    from reishi.primitives import dataset as dataset_registry
 
     spec = trial_manifest["spec"]
     trainer_cfg = spec.get("trainer") or {}

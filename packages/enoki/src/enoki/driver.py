@@ -8,10 +8,10 @@ cluster dependency group installed.
 import os
 import sys
 
-import mcm.tasks  # noqa: F401  (populate the task registry)
-from mcm import store
-from mcm.primitives import trial
-from mcm.primitives.recipe import Recipe
+import reishi.tasks  # noqa: F401  (populate the task registry)
+from reishi import store
+from reishi.primitives import trial
+from reishi.primitives.recipe import Recipe
 
 from enoki import trainers
 
