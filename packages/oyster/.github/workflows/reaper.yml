@@ -27,6 +27,7 @@ jobs:
         with:
           repository: ${{ github.repository_owner }}/mcm-reishi
           path: mcm-reishi
+          token: ${{ secrets.MCM_SIBLING_REPO_TOKEN }}
 
       - name: Set up environment
         run: |
