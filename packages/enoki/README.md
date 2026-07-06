@@ -1,5 +1,25 @@
-# enoki
-
+```
+           ____                                  
+       _.-'78o `"`--._                           
+   ,o888o.  .o888o,   ''-.                       
+ ,88888P  `78888P..______.]                      
+/_..__..----""        __.'                       
+`-._       /""| _..-''                           
+    "`-----\  `\              .-'~~~-.           
+            |   ;.-""--..   .'o  oOOOo`.         
+            | ,8o.  o88. `.:~~~-.oOo   o`.       
+            `;888P  `788P  :`. \ ~-.  oOOo.      
+      .o""-.|`-._         ./  `.; / ~.  OO:      
+     J88 _.-/    ";"-P----'   .'  ;-- `.o.'      
+     `--'\`|     /  /        ,'  ; ~~--'~        
+         | /     |  |        ;  ;                
+_\|/_____\|      |  |akn___\\;_\\//___\|/________
+     __\|/___---`---'           _                
+888888 88b 88  dP"Yb  88  dP 88                  
+88__   88Yb88 dP   Yb 88odP  88                  
+88""   88 Y88 Yb   dP 88"Yb  88                  
+888888 88  Y8  YbodP  88  Yb 88
+```
 Execution layer for [reishi (mcm)](https://github.com/Digital-Insight-Technologies-Ltd/mcm-reishi) on KubeRay (GKE `train`
 namespace). mcm defines the shapes — recipes in, trial manifests out — enoki
 is the thing that actually trains.
