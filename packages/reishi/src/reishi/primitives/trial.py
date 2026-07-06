@@ -49,12 +49,12 @@ class Trial:
     status: str = "planned"
     created: str = ""
     metrics: dict = field(default_factory=dict)
-    artifacts: TrialArtifacts = field(default_factory=TrialArtifacts)  # e.g. adapter/checkpoint URIs
+    artifacts: TrialArtifacts = field(default_factory=TrialArtifacts)
     # RecipeManifest's fields are all required (a real recipe always has them); the empty default
-    # here only fires for a bare, unplanned Trial (see the test_primitives.py construction) or a
-    # tolerant from_manifest() load of an old manifest missing "spec" -- neither is a real recipe.
+    # here only fires for a bare, unplanned Trial or a tolerant from_manifest() load of an old
+    # manifest missing "spec" -- neither is a real recipe.
     spec: RecipeManifest = field(default_factory=dict)  # type: ignore[assignment]
-    execution: ExecutionInfo = field(default_factory=ExecutionInfo)  # runner, claimed_at, heartbeat, attempt
+    execution: ExecutionInfo = field(default_factory=ExecutionInfo)
 
     def to_manifest(self) -> TrialManifest:
         return {
