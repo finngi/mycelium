@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/finngi/mcm-oyster/compare/v0.1.1...v0.2.0) (2026-07-06)
+
+
+### Features
+
+* add real MLX LoRA trainer and typed trainer contract ([#8](https://github.com/finngi/mcm-oyster/issues/8)) ([786b8b9](https://github.com/finngi/mcm-oyster/commit/786b8b9db483975699648d84bd9b09ad984c8301))
+
 ## [0.1.1](https://github.com/finngi/mcm-oyster/compare/v0.1.0...v0.1.1) (2026-07-05)
 
 
