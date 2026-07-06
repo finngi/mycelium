@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/Digital-Insight-Technologies-Ltd/mcm-reishi/compare/v0.2.0...v0.3.0) (2026-07-06)
+
+
+### Features
+
+* **store:** default to a sqlite manifest backend, add artifact root ([#13](https://github.com/Digital-Insight-Technologies-Ltd/mcm-reishi/issues/13)) ([841ea34](https://github.com/Digital-Insight-Technologies-Ltd/mcm-reishi/commit/841ea346767cff0fad82cbfd299f0a792fdd2c89))
+
 ## [0.2.0](https://github.com/Digital-Insight-Technologies-Ltd/mcm-reishi/compare/v0.1.1...v0.2.0) (2026-07-06)
 
 
