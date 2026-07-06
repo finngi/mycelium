@@ -32,9 +32,12 @@ jobs:
           fi
           echo "[OK] node idle"
 
+      # mesh-state, not main: claims/heartbeats/results are unreviewed,
+      # high-frequency commits that main's branch protection would reject.
+      # mesh-sync.yml promotes mesh-state into main on its own schedule.
       - uses: actions/checkout@v7
         with:
-          ref: main
+          ref: mesh-state
           path: mcm-oyster
 
       # mcm is a path dependency (../mcm-reishi) -- check it out alongside.
@@ -60,6 +63,7 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           PYTHONUNBUFFERED: "1"
           MCM_STORE: ${{ github.workspace }}/mcm-oyster/store
+          OYSTER_BRANCH: mesh-state
         run: .venv/bin/mcm mesh work
 
       - name: Failure summary
