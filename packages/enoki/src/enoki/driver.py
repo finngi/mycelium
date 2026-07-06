@@ -12,8 +12,10 @@ import reishi.tasks  # noqa: F401  (populate the task registry)
 from reishi import store
 from reishi.primitives import trial
 from reishi.primitives.recipe import Recipe
+from reishi.primitives.trial import TrialManifest
 
 from enoki import trainers
+from enoki.trainers.contract import Trainer, TrainerResult
 
 
 def _use_cluster_store() -> None:
@@ -26,7 +28,7 @@ def _use_cluster_store() -> None:
     store.use_backend(PostgresBackend(dsn))
 
 
-def _make_trainer_call(trainer_fn, accelerator: str):
+def _make_trainer_call(trainer_fn: Trainer, accelerator: str) -> Trainer:
     """Route the actual training call onto a GPU-holding Ray worker rather
     than running it in-process on the (CPU-only) head node.
 
@@ -45,7 +47,7 @@ def _make_trainer_call(trainer_fn, accelerator: str):
     num_gpus = trainers.TRAINER_GPUS.get(accelerator, 0)
     remote_fn = ray.remote(num_gpus=num_gpus)(trainer_fn)
 
-    def _call(manifest: dict) -> dict:
+    def _call(manifest: TrialManifest) -> TrainerResult:
         return ray.get(remote_fn.remote(manifest))
 
     return _call

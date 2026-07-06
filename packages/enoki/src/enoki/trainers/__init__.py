@@ -1,8 +1,8 @@
 """Trainers, keyed by the recipe's accelerator.
 
-A trainer is a callable: (trial_manifest: dict) -> dict of metrics plus
-artifact URIs. Named 'trainers' not 'adapters' -- in this domain an adapter
-is the LoRA artifact a trial produces.
+A trainer is a callable: (trial_manifest: TrialManifest) -> TrainerResult
+(see trainers/contract.py). Named 'trainers' not 'adapters' -- in this
+domain an adapter is the LoRA artifact a trial produces.
 
 Heavy ML deps (torch/transformers/peft/google-cloud-storage) are imported
 lazily inside train_l4, not at module scope: `enoki.trainers` is imported
@@ -16,7 +16,34 @@ import math
 import os
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING, TypedDict
 from urllib.parse import urlparse
+
+from reishi.primitives.trial import TrialManifest
+
+from enoki.trainers.contract import Trainer, TrainerResult
+
+if TYPE_CHECKING:
+    # torch is a lazy, optional import (see module docstring) -- this branch
+    # never runs, so referencing it in an annotation doesn't force the import
+    # on a laptop with only the base dependency group installed.
+    import torch
+
+
+class _ChatMessage(TypedDict):
+    role: str
+    content: str
+
+
+class _TokenizedExample(TypedDict):
+    input_ids: list[int]
+    labels: list[int]
+
+
+class _CollatedBatch(TypedDict):
+    input_ids: "torch.Tensor"
+    attention_mask: "torch.Tensor"
+    labels: "torch.Tensor"
 
 # jinaai/ReaderLM-v2: a ~1.5B param Qwen2 model purpose-built for HTML ->
 # Markdown extraction (confirmed via the HF model API, not assumed), small
@@ -108,7 +135,7 @@ def _upload_dir_to_gcs(local_dir: Path, dataset_uri: str, trial_id: str) -> str 
         return None
 
 
-def _build_example(tokenizer, messages: list[dict], max_length: int) -> dict | None:
+def _build_example(tokenizer, messages: list[_ChatMessage], max_length: int) -> _TokenizedExample | None:
     """Mask the loss to the assistant/completion tokens only. This is
     instruction-tuned chat data (user = HTML + instruction, assistant =
     markdown or INVALID_PAGE): training on the HTML-input tokens too would
@@ -152,17 +179,17 @@ def _build_example(tokenizer, messages: list[dict], max_length: int) -> dict | N
 
 
 class _ChatDataset:
-    def __init__(self, examples: list[dict]):
+    def __init__(self, examples: list[_TokenizedExample]):
         self._examples = examples
 
     def __len__(self) -> int:
         return len(self._examples)
 
-    def __getitem__(self, idx: int) -> dict:
+    def __getitem__(self, idx: int) -> _TokenizedExample:
         return self._examples[idx]
 
 
-def _collate(batch: list[dict], pad_token_id: int) -> dict:
+def _collate(batch: list[_TokenizedExample], pad_token_id: int) -> _CollatedBatch:
     import torch
 
     max_len = max(len(ex["input_ids"]) for ex in batch)
@@ -179,14 +206,15 @@ def _collate(batch: list[dict], pad_token_id: int) -> dict:
     }
 
 
-def train_l4(trial_manifest: dict) -> dict:
+def train_l4(trial_manifest: TrialManifest) -> TrainerResult:
     """Real, minimal LoRA fine-tune of ReaderLM-v2 -- plain transformers +
     peft, no TRL/Axolotl (simplest option, per instruction). Returns
     {"metrics": {...}, "artifacts": {"weights": <uri>}}, the same contract
     mcm-oyster's fake_trainer uses."""
     import torch
     from peft import LoraConfig, get_peft_model
-    from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainingArguments
+    from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments
+    from transformers import Trainer as HFTrainer
 
     from reishi.primitives import dataset as dataset_registry
 
@@ -269,7 +297,7 @@ def train_l4(trial_manifest: dict) -> dict:
         remove_unused_columns=False,
     )
 
-    hf_trainer = Trainer(
+    hf_trainer = HFTrainer(
         model=model,
         args=args,
         train_dataset=_ChatDataset(examples),
@@ -302,7 +330,7 @@ def train_l4(trial_manifest: dict) -> dict:
     return {"metrics": metrics, "artifacts": {"weights": weights_uri}}
 
 
-TRAINERS: dict[str, object] = {"l4": train_l4}
+TRAINERS: dict[str, Trainer] = {"l4": train_l4}
 
 # GPUs each trainer's actual work needs, keyed the same as TRAINERS -- read
 # by enoki.driver to size the ray.remote() call that routes training onto a
@@ -310,7 +338,7 @@ TRAINERS: dict[str, object] = {"l4": train_l4}
 TRAINER_GPUS: dict[str, int] = {"l4": 1}
 
 
-def get(accelerator: str):
+def get(accelerator: str) -> Trainer:
     if accelerator not in TRAINERS:
         known = ", ".join(sorted(TRAINERS)) or "none yet"
         raise KeyError(f"no trainer for '{accelerator}' (installed: {known})")
