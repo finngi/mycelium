@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/finngi/mcm-oyster/compare/v0.2.0...v0.2.1) (2026-07-06)
+
+
+### Bug Fixes
+
+* reset local state when a claim/heartbeat push is permanently rejected ([#12](https://github.com/finngi/mcm-oyster/issues/12)) ([b2e4c88](https://github.com/finngi/mcm-oyster/commit/b2e4c8807a92a3e6b028346cdd7db8c66d765730))
+
 ## [0.2.0](https://github.com/finngi/mcm-oyster/compare/v0.1.1...v0.2.0) (2026-07-06)
 
 
