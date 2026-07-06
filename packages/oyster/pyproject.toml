@@ -3,13 +3,27 @@ name = "oyster"
 version = "0.1.1"
 description = "oyster — self-hosted Mac mesh execution layer for mcm (GH Actions transport, pull-based claims)"
 requires-python = ">=3.11"
-dependencies = ["reishi", "pyyaml>=6.0.3"]
+dependencies = [
+    "reishi",
+    "pyyaml>=6.0.3",
+    "huggingface-hub>=1.21.0",
+    # MLX training backend -- Apple Silicon only. Pinned: mlx_lora.py reaches
+    # into mlx_lm.lora internals (run(), the SimpleNamespace args shape).
+    "mlx ; sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "mlx-lm==0.31.3 ; sys_platform == 'darwin' and platform_machine == 'arm64'",
+    # transformers>=5.13 breaks mlx_lm.tokenizer_utils's AutoTokenizer.register()
+    # call ('str' object has no attribute '__module__').
+    "transformers==5.12.1 ; sys_platform == 'darwin' and platform_machine == 'arm64'",
+]
 
 [project.entry-points."mcm.plugins"]
 oyster = "oyster.mcm_plugin"
 
 [dependency-groups]
-dev = ["pytest>=9.1.1"]
+dev = [
+    "mypy>=2.1.0",
+    "pytest>=9.1.1",
+]
 
 [tool.uv.sources]
 reishi = { path = "../mcm-reishi", editable = true }
