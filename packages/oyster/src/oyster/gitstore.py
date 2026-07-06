@@ -43,6 +43,10 @@ def sync() -> None:
         print(f"[WARN] store sync failed: {r.stderr.strip()}", file=sys.stderr)
 
 
+def _reset_to_origin() -> None:
+    _git("reset", "--hard", f"origin/{_branch()}", check=False)
+
+
 def publish(message: str) -> bool:
     """Commit the store and push. False means we lost a race: our commit was
     dropped and the store re-synced -- re-read before acting again."""
@@ -58,7 +62,12 @@ def publish(message: str) -> bool:
         r = _git("pull", "--rebase", "--autostash", "origin", _branch(), check=False)
         if r.returncode != 0:
             _git("rebase", "--abort", check=False)
-            _git("reset", "--hard", f"origin/{_branch()}", check=False)
+            _reset_to_origin()
             return False
     print("[WARN] push failed after 5 rebase retries", file=sys.stderr)
+    # A push can fail for reasons no amount of rebasing fixes (e.g. a protected
+    # branch rejecting a direct commit) -- leaving our unpushed commit in place
+    # would make this trial look locally claimed forever, even though no claim
+    # ever reached origin. Reset so the next sync sees the true upstream state.
+    _reset_to_origin()
     return False
