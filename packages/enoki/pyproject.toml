@@ -1,6 +1,6 @@
 [project]
 name = "enoki"
-version = "0.1.1"
+version = "0.1.2"
 description = "enoki — KubeRay (cloud) execution layer for mcm recipes"
 requires-python = ">=3.11"
 dependencies = ["reishi", "pyyaml>=6.0.3"]
