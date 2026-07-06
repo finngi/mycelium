@@ -2,13 +2,13 @@
 imports the trainer modules (mlx_lora.py, ...) that also need these types."""
 
 from collections.abc import Callable
-from typing import TypedDict
+from typing import Any, TypedDict
 
 from reishi.primitives.trial import TrialArtifacts, TrialManifest
 
 
 class TrainerResult(TypedDict):
-    metrics: dict  # task-specific; extract-style tasks land Task.aggregate's AggregateMetrics here
+    metrics: dict[str, Any]  # shape is task-defined, so it stays untyped rather than a fixed schema
     artifacts: TrialArtifacts
 
 

@@ -20,7 +20,7 @@ except ImportError as e:
     # Only swallow the absence of the optional mlx/mlx-lm stack itself (darwin+arm64
     # only, per pyproject platform marker) -- a real import bug inside mlx_lora.py
     # should surface loudly, not silently shrink the trainer registry.
-    if not (e.name or "").startswith(("mlx", "mlx_lm")):
+    if not (e.name or "").startswith("mlx"):
         raise
     print(f"[WARN] mlx trainer unavailable ({e}) -> this machine can't claim mlx trials", file=sys.stderr)
 
