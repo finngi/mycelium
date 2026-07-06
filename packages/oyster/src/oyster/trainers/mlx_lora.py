@@ -64,8 +64,7 @@ def _prepare_data(train_path: Path, val_path: Path, out_dir: Path, codec, prompt
     out_dir.mkdir(parents=True, exist_ok=True)
 
     def convert(src: Path, dst: Path):
-        rows = []
-        with open(src) as f:
+        with open(src) as f, open(dst, "w") as out:
             for line in f:
                 if not line.strip():
                     continue
@@ -73,12 +72,10 @@ def _prepare_data(train_path: Path, val_path: Path, out_dir: Path, codec, prompt
                 encoded_target = codec.encode(json.loads(obj["target"]))
                 prompt_text = prompt.replace("{name}", obj["input"]) if prompt else obj["input"]
                 if use_chat_template:
-                    rows.append({"prompt": prompt_text, "completion": encoded_target})
+                    row = {"prompt": prompt_text, "completion": encoded_target}
                 else:
-                    rows.append({"text": prompt_text + encoded_target})
-        with open(dst, "w") as f:
-            for row in rows:
-                f.write(json.dumps(row) + "\n")
+                    row = {"text": prompt_text + encoded_target}
+                out.write(json.dumps(row) + "\n")
 
     convert(train_path, out_dir / "train.jsonl")
     convert(val_path, out_dir / "valid.jsonl")
@@ -91,10 +88,16 @@ def _maybe_push_to_hf(adapter_dir: Path, trial_id: str) -> str | None:
     from huggingface_hub import HfApi
 
     repo_id = f"{os.environ.get('OYSTER_HF_REPO_PREFIX', 'finngi/mcm-oyster')}-{trial_id}"
-    api = HfApi(token=token)
-    api.create_repo(repo_id, private=True, exist_ok=True)
-    api.upload_folder(repo_id=repo_id, folder_path=str(adapter_dir))
-    return f"hf://{repo_id}"
+    try:
+        api = HfApi(token=token)
+        api.create_repo(repo_id, private=True, exist_ok=True)
+        api.upload_folder(repo_id=repo_id, folder_path=str(adapter_dir))
+        return f"hf://{repo_id}"
+    except Exception as e:
+        # publishing is a convenience, not the trial's success criterion -- a transient
+        # upload failure shouldn't discard an otherwise-complete, expensive training run
+        print(f"[WARN] HF publish failed: {e} -> falling back to local adapter path", file=sys.stderr)
+        return None
 
 
 def train(trial_manifest: TrialManifest) -> TrainerResult:
@@ -136,6 +139,13 @@ def train(trial_manifest: TrialManifest) -> TrainerResult:
         if not use_chat_template:
             print(f"[WARN] {base_model} has no chat_template -> training/eval will concatenate raw prompt+completion text", file=sys.stderr)
 
+        mask_prompt = trainer_cfg.get("mask_prompt", False)
+        if mask_prompt and not use_chat_template:
+            # mlx-lm only supports prompt masking on chat/completion-format data, not the
+            # raw-text rows this path produces when a model has no chat template
+            print("[WARN] mask_prompt is only supported for chat/completion datasets -> ignoring for this text-format run", file=sys.stderr)
+            mask_prompt = False
+
         data_dir = out_dir / "mlx_data"
         _prepare_data(train_path, val_path, data_dir, codec, prompt, use_chat_template)
 
@@ -161,7 +171,7 @@ def train(trial_manifest: TrialManifest) -> TrainerResult:
             steps_per_report=max(10, iters // 10),
             steps_per_eval=max(20, iters // 5),
             val_batches=trainer_cfg.get("val_batches", 25),
-            mask_prompt=trainer_cfg.get("mask_prompt", False),
+            mask_prompt=mask_prompt,
             grad_checkpoint=trainer_cfg.get("grad_checkpoint", False),
             grad_accumulation_steps=1,
             clear_cache_threshold=trainer_cfg.get("clear_cache_threshold", 100),
@@ -204,6 +214,7 @@ def train(trial_manifest: TrialManifest) -> TrainerResult:
             else:
                 formatted = prompt_text
             pred_text = generate(model, tokenizer, formatted, max_tokens=768, sampler=sampler)
+            # reasoning models emit chain-of-thought before the answer; the codec must see only the structured output
             pred_text = re.sub(r"<think>.*?</think>", "", pred_text, flags=re.DOTALL).strip()
             gold = json.loads(row["target"])
             scores.append(task_obj.score(codec.decode(pred_text), gold))
