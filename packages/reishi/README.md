@@ -1,4 +1,25 @@
-# reishi (mcm)
+```
+           ____                                  
+       _.-'78o `"`--._                           
+   ,o888o.  .o888o,   ''-.                       
+ ,88888P  `78888P..______.]                      
+/_..__..----""        __.'                       
+`-._       /""| _..-''                           
+    "`-----\  `\              .-'~~~-.           
+            |   ;.-""--..   .'o  oOOOo`.         
+            | ,8o.  o88. `.:~~~-.oOo   o`.       
+            `;888P  `788P  :`. \ ~-.  oOOo.      
+      .o""-.|`-._         ./  `.; / ~.  OO:      
+     J88 _.-/    ";"-P----'   .'  ;-- `.o.'      
+     `--'\`|     /  /        ,'  ; ~~--'~        
+         | /     |  |        ;  ;                
+_\|/_____\|      |  |akn___\\;_\\//___\|/________
+     __\|/___---`---'           _                
+88""Yb 888888 88 .dP"Y8 88  88 88                
+88__dP 88__   88 `Ybo." 88  88 88                
+88"Yb  88""   88 o.`Y8b 888888 88                
+88  Yb 888888 88 8bodP' 88  88 88
+```
 
 Experiment contract layer for small-model training on KubeRay (GKE `train`
 namespace). mcm makes a training run mean something — reproducible, scored
