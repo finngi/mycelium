@@ -9,10 +9,23 @@ architecture described in the trainer spec.
 
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import TypedDict
 
 import yaml
 
 ACCELERATORS = ("local", "mlx", "l4", "h100", "v5e")
+
+
+class RecipeManifest(TypedDict):
+    name: str
+    task: str
+    base_model: str | None
+    dataset: str
+    accelerator: str
+    prompt: str | None
+    seeds: int
+    priority: int
+    trainer: dict  # per-accelerator hyperparameters -- shape varies by trainer, not a fixed contract
 
 
 @dataclass(frozen=True)
@@ -52,7 +65,7 @@ class Recipe:
         if self.seeds < 1:
             raise ValueError("seeds must be >= 1")
 
-    def to_manifest(self) -> dict:
+    def to_manifest(self) -> RecipeManifest:
         return {
             "name": self.name,
             "task": self.task,

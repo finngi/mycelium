@@ -12,6 +12,7 @@ import json
 import os
 import re
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Protocol
 
@@ -31,7 +32,7 @@ def _safe_name(name: str) -> str:
 
 
 class StorageBackend(Protocol):
-    def save(self, kind: str, name: str, manifest: dict) -> None: ...
+    def save(self, kind: str, name: str, manifest: Mapping[str, object]) -> None: ...
     def load(self, kind: str, name: str) -> dict: ...
     def load_all(self, kind: str, *, tolerant: bool = True) -> list[dict]: ...
 
@@ -45,12 +46,12 @@ class LocalFilesystemBackend:
         d.mkdir(parents=True, exist_ok=True)
         return d
 
-    def save(self, kind: str, name: str, manifest: dict) -> None:
+    def save(self, kind: str, name: str, manifest: Mapping[str, object]) -> None:
         path = self._dir(kind) / f"{_safe_name(name)}.json"
         # Write-then-rename: a crashed or concurrent write can never leave a
         # half-written manifest that load_all would choke on.
         tmp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
-        tmp.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
+        tmp.write_text(json.dumps(dict(manifest), indent=2, ensure_ascii=False) + "\n")
         os.replace(tmp, path)
 
     def load(self, kind: str, name: str) -> dict:
@@ -79,7 +80,7 @@ def use_backend(backend: StorageBackend) -> None:
     _backend = backend
 
 
-def save(kind: str, name: str, manifest: dict) -> None:
+def save(kind: str, name: str, manifest: Mapping[str, object]) -> None:
     _backend.save(kind, name, manifest)
 
 
