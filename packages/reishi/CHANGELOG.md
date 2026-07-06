@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.0](https://github.com/Digital-Insight-Technologies-Ltd/mcm-reishi/compare/v0.1.1...v0.2.0) (2026-07-06)
+
+
+### Features
+
+* add TypedDict manifests, Task.aggregate scoring, and JSON codec ([#8](https://github.com/Digital-Insight-Technologies-Ltd/mcm-reishi/issues/8)) ([9f3e3ea](https://github.com/Digital-Insight-Technologies-Ltd/mcm-reishi/commit/9f3e3ea6ec10f43b744383b65a0c7c1a9522aca4))
+
+
+### Documentation
+
+* fix stale/inaccurate doc claims and comment restatements ([#11](https://github.com/Digital-Insight-Technologies-Ltd/mcm-reishi/issues/11)) ([32a15fa](https://github.com/Digital-Insight-Technologies-Ltd/mcm-reishi/commit/32a15faef13c98622f165c8ebb1e0c302dd65ac7))
+
 ## [0.1.1](https://github.com/Digital-Insight-Technologies-Ltd/mcm-reishi/compare/v0.1.0...v0.1.1) (2026-07-05)
 
 
