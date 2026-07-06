@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, TypedDict
 from urllib.parse import urlparse
 
+from reishi import store
 from reishi.primitives.trial import TrialManifest
 
 from enoki.trainers.contract import Trainer, TrainerResult
@@ -279,9 +280,8 @@ def train_l4(trial_manifest: TrialManifest) -> TrainerResult:
     )
     model = get_peft_model(model, lora_config)
 
-    output_dir = trainer_cfg.get("output_dir") or os.path.join(
-        os.environ.get("ENOKI_ARTIFACT_ROOT", "/tmp/enoki-artifacts"), trial_manifest["id"]
-    )
+    artifact_root = os.environ.get("ENOKI_ARTIFACT_ROOT") or str(store.artifact_root())
+    output_dir = trainer_cfg.get("output_dir") or os.path.join(artifact_root, trial_manifest["id"])
     os.makedirs(output_dir, exist_ok=True)
 
     args = TrainingArguments(
