@@ -18,9 +18,11 @@ jobs:
     permissions:
       contents: write
     steps:
+      # mesh-state, not main -- see worker.yml; reaper's requeue commits are
+      # subject to the same branch-protection rejection main would give them.
       - uses: actions/checkout@v7
         with:
-          ref: main
+          ref: mesh-state
           path: mcm-oyster
 
       - uses: actions/checkout@v7
@@ -42,4 +44,5 @@ jobs:
       - name: Requeue stale trials
         env:
           MCM_STORE: ${{ github.workspace }}/mcm-oyster/store
+          OYSTER_BRANCH: mesh-state
         run: .venv/bin/mcm mesh reap --timeout-min 90
