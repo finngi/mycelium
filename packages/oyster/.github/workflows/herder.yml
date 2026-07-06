@@ -15,7 +15,11 @@ jobs:
     permissions:
       actions: write
     steps:
+      # mesh-state, not main: that's where live claims/heartbeats/results
+      # actually land (see worker.yml) -- main only gets synced periodically.
       - uses: actions/checkout@v7
+        with:
+          ref: mesh-state
 
       - name: Count planned trials
         id: trials
