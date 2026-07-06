@@ -8,6 +8,8 @@ kill mid-run.
 
 import re
 
+from reishi.primitives.recipe import RecipeManifest
+
 # MLX LoRA keeps base weights frozen -> small optimizer/activation overhead.
 # HF full fine-tunes carry AdamW states + activations -> much larger.
 _MULTIPLIER = {"mlx": 3.0, "hf": 6.0}
@@ -40,7 +42,7 @@ def params_m(model_id: str | None) -> float:
     return _PESSIMISTIC_PARAMS_M
 
 
-def estimate_gb(spec: dict) -> float:
+def estimate_gb(spec: RecipeManifest) -> float:
     """Peak unified-memory estimate (GB) for one trial, from its frozen spec."""
     trainer = spec.get("trainer", {})
     if spec.get("base_model") is None and "params_m" in trainer:

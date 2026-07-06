@@ -9,7 +9,7 @@ import sys
 from datetime import datetime, timezone
 
 import reishi.tasks  # noqa: F401  (populate the task registry)
-from reishi.primitives.trial import Trial
+from reishi.primitives.trial import Trial, TrialArtifacts
 from reishi.primitives import trial as trial_store
 
 from oyster import footprint, gitstore
@@ -67,7 +67,7 @@ def heartbeat(t: Trial) -> None:
     gitstore.publish(f"heartbeat {t.id}")
 
 
-def finish(t: Trial, metrics: dict, artifacts: dict) -> None:
+def finish(t: Trial, metrics: dict, artifacts: TrialArtifacts) -> None:
     t.status, t.metrics, t.artifacts = "done", metrics, artifacts
     t.execution["finished_at"] = _now()
     trial_store.save(t)
