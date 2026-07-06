@@ -38,6 +38,8 @@ def render(handlers: dict) -> str:
         "flags: -o json on any command (canonical echo stays on stderr);",
         "       --plan on recipe run; --metric <name> on board show",
         "",
-        "store: ~/.mcm/store, override with MCM_STORE",
+        "store: ~/.mcm/store (dir, via MCM_STORE); sqlite by default,",
+        "       MCM_STORE_BACKEND=fs for one-file-per-manifest;",
+        "       artifacts under MCM_ARTF_STORE (~/.mcm/artifacts)",
     ]
     return "\n".join(lines)
