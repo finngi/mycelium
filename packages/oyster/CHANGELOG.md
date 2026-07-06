@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/Digital-Insight-Technologies-Ltd/mcm-oyster/compare/v0.2.1...v0.3.0) (2026-07-06)
+
+
+### Features
+
+* move mesh claims off main onto an auto-synced mesh-state branch ([#15](https://github.com/Digital-Insight-Technologies-Ltd/mcm-oyster/issues/15)) ([9511f81](https://github.com/Digital-Insight-Technologies-Ltd/mcm-oyster/commit/9511f81cd97061239cab61156d85288742c4e079))
+
 ## [0.2.1](https://github.com/Digital-Insight-Technologies-Ltd/mcm-oyster/compare/v0.2.0...v0.2.1) (2026-07-06)
 
 
