@@ -1,15 +1,15 @@
 [project]
 name = "oyster"
 version = "0.2.0"
-description = "oyster — self-hosted Mac mesh execution layer for mcm (GH Actions transport, pull-based claims)"
+description = "oyster — self-hosted mesh execution layer for mcm (GH Actions transport, pull-based claims)"
 requires-python = ">=3.11"
 dependencies = [
     "reishi",
     "pyyaml>=6.0.3",
-    "huggingface-hub>=1.21.0",
     # MLX training backend -- Apple Silicon only. Pinned: mlx_lora.py reaches
     # into mlx_lm.lora internals (run(), the SimpleNamespace args shape).
     "mlx ; sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "huggingface-hub>=1.21.0 ; sys_platform == 'darwin' and platform_machine == 'arm64'",
     "mlx-lm==0.31.3 ; sys_platform == 'darwin' and platform_machine == 'arm64'",
     # transformers>=5.13 breaks mlx_lm.tokenizer_utils's AutoTokenizer.register()
     # call ('str' object has no attribute '__module__').

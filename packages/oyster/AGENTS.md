@@ -5,9 +5,11 @@ repo is just `@AGENTS.md` — this file is the canonical source.
 
 ## What this repo is
 
-oyster is mcm's no-cloud execution layer: a mesh of self-hosted Mac
-runners (`accelerator: mlx`) that pull-claim trials instead of having
-GitHub push jobs at them. `store/` (the mcm manifest store) is committed
+oyster is mcm's no-cloud execution layer: self-hosted runners pull-claim
+trials instead of having GitHub push jobs at them. The claim/heartbeat
+mechanism is machine-agnostic; only the one trainer wired up so far
+(`accelerator: mlx`) happens to require Apple Silicon. `store/` (the mcm
+manifest store) is committed
 to this repo — the queue IS the repo, and a claim is a commit. See the
 README's "Scheduling: pull, not push" section before changing anything
 in `queue.py`/`gitstore.py`; the pull-based, git-atomic design is load

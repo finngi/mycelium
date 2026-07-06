@@ -109,7 +109,8 @@ def test_worker_runs_queue_with_fake_trainer(monkeypatch):
 
 
 def test_worker_without_trainers_exits_clean(monkeypatch):
-    monkeypatch.delitem(TRAINERS, "mlx", raising=False)
+    for name in list(TRAINERS):
+        monkeypatch.delitem(TRAINERS, name, raising=False)
     plan_one("job")
     assert worker.run() == 0
     assert trial_store.load_all()[0].status == "planned"

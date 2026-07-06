@@ -21,8 +21,10 @@ Yb   dP   8P   o.`Y8b   88   88""   88"Yb
  YbodP   dP    8bodP'   88   888888 88  Yb
 ```
 No-cloud execution layer for [reishi (mcm)](https://github.com/Digital-Insight-Technologies-Ltd/mcm-reishi): a mesh of
-self-hosted Macs behind GitHub Actions runners, with tag-based
-availability. Like [enoki](https://github.com/Digital-Insight-Technologies-Ltd/mcm-enoki) (the KubeRay layer), oyster consumes
+self-hosted runners behind GitHub Actions, with tag-based
+availability. The mesh mechanism doesn't care what hardware a runner is;
+today's only wired-up trainer (`mlx`) just happens to need Apple Silicon.
+Like [enoki](https://github.com/Digital-Insight-Technologies-Ltd/mcm-enoki) (the KubeRay layer), oyster consumes
 recipe manifests and writes trial manifests to the mcm store — it defines
 no shapes of its own. Recipes target the mesh with `accelerator: mlx`.
 
