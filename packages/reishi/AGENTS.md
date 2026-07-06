@@ -63,7 +63,7 @@ uvx ruff check .               # lint (required in CI)
 ## Sibling repos
 
 - [mcm-enoki](../mcm-enoki) — KubeRay (cloud) execution: `l4`, `h100`, `v5e`.
-- [mcm-oyster](../mcm-oyster) — self-hosted Mac mesh execution: `mlx`.
+- [mcm-oyster](../mcm-oyster) — self-hosted mesh execution (currently `mlx` on Apple Silicon).
 
 Both must be checked out as siblings on disk (`uv.sources` path
 dependency); neither is a git submodule of this repo.
