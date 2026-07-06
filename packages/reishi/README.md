@@ -62,7 +62,7 @@ Installed executors extend this one CLI via `mcm.plugins` entry points
 (oyster adds a `mesh` domain: `mcm work`, `mcm drain`, ...) — same grammar,
 same disjointness law, one help.
 
-Grammar anchors (enforced by `tests/test_grammar.py`):
+Grammar anchors (enforced by an automated test, not just convention):
 - domains and verbs are disjoint closed vocabularies; `run` is a VERB, the noun is `trial`
 - an omitted action defaults to something read-only
 - every verb has one home domain; object names must contain `-./_` or a digit
@@ -81,7 +81,7 @@ becomes `gs://example-bucket` when the GCS store lands).
 
 ## Not here yet
 
-The extract scorer port and the GCS store. `experiment submit` now
+The GCS store. `experiment submit` now
 templates enoki's `jobs/rayjob.yaml` (convention: `experiments/<name>/recipe.yaml`,
 image via `--image`/`MCM_TRAIN_IMAGE`) and applies it with `kubectl` --
 only the `l4` accelerator has a verified node selector/toleration, others
