@@ -52,6 +52,6 @@ GPU to be useful, but will install/import on CPU too).
 ## Sibling repos
 
 - [mcm-reishi](https://github.com/finngi/mcm-reishi) — the contract layer this repo executes against.
-- [mcm-oyster](https://github.com/finngi/mcm-oyster) — the other executor (self-hosted Mac mesh, `mlx`).
+- [mcm-oyster](https://github.com/finngi/mcm-oyster) — the other executor (self-hosted mesh, currently `mlx` on Apple Silicon).
 
 See `CONTRIBUTING.md` for commit conventions and the PR/CI gate.
