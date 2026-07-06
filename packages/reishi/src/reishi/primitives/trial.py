@@ -5,13 +5,40 @@ with metrics and artifact URIs attached along the way.
 """
 
 import uuid
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from typing import NotRequired, TypedDict
 
 from reishi import store
-from reishi.primitives.recipe import Recipe
+from reishi.primitives.recipe import Recipe, RecipeManifest
 
 STATUSES = ("planned", "running", "done", "failed")
+
+
+class TrialArtifacts(TypedDict):
+    weights: NotRequired[str]  # adapter/checkpoint URI, local path or hf://<repo>
+
+
+class ExecutionInfo(TypedDict):
+    runner: NotRequired[str]
+    claimed_at: NotRequired[str]
+    heartbeat: NotRequired[str]
+    attempt: NotRequired[int]
+    finished_at: NotRequired[str]
+    last_error: NotRequired[str]
+
+
+class TrialManifest(TypedDict):
+    id: str
+    recipe: str
+    seed: int
+    status: str
+    created: str
+    metrics: dict  # task-specific; extract-style tasks land Task.aggregate's AggregateMetrics here
+    artifacts: TrialArtifacts
+    spec: RecipeManifest
+    execution: ExecutionInfo
 
 
 @dataclass
@@ -22,11 +49,14 @@ class Trial:
     status: str = "planned"
     created: str = ""
     metrics: dict = field(default_factory=dict)
-    artifacts: dict = field(default_factory=dict)  # e.g. adapter/checkpoint URIs
-    spec: dict = field(default_factory=dict)  # frozen copy of the recipe manifest
-    execution: dict = field(default_factory=dict)  # executor provenance: runner, claimed_at, heartbeat, attempt
+    artifacts: TrialArtifacts = field(default_factory=TrialArtifacts)  # e.g. adapter/checkpoint URIs
+    # RecipeManifest's fields are all required (a real recipe always has them); the empty default
+    # here only fires for a bare, unplanned Trial (see the test_primitives.py construction) or a
+    # tolerant from_manifest() load of an old manifest missing "spec" -- neither is a real recipe.
+    spec: RecipeManifest = field(default_factory=dict)  # type: ignore[assignment]
+    execution: ExecutionInfo = field(default_factory=ExecutionInfo)  # runner, claimed_at, heartbeat, attempt
 
-    def to_manifest(self) -> dict:
+    def to_manifest(self) -> TrialManifest:
         return {
             "id": self.id,
             "recipe": self.recipe,
@@ -40,10 +70,16 @@ class Trial:
         }
 
     @classmethod
-    def from_manifest(cls, m: dict) -> "Trial":
+    def from_manifest(cls, m: Mapping[str, object]) -> "Trial":
+        # m is raw store.load() output, not yet trusted as TrialManifest-shaped -- unlike
+        # to_manifest() (a construction we control), this is a read boundary from disk/Postgres.
         # Tolerant reader: ignore unknown keys so newer manifests load in older checkouts.
+        # A dict comprehension over Mapping.items() widens every value to `object` regardless
+        # of m's declared shape, so mypy can't verify the **kwargs unpacking below -- rewriting
+        # this field-by-field (like Dataset.from_manifest) would fix that, but at the cost of
+        # duplicating every dataclass field default here instead of delegating to Trial's own.
         known = cls.__dataclass_fields__
-        return cls(**{k: v for k, v in m.items() if k in known})
+        return cls(**{k: v for k, v in m.items() if k in known})  # type: ignore[arg-type]
 
 
 def plan(recipe: Recipe) -> list[Trial]:
