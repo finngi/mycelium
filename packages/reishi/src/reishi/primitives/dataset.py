@@ -1,8 +1,20 @@
 """Dataset: a versioned storage prefix plus its card and leak contract."""
 
+from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import NotRequired, TypedDict, cast
 
 from reishi import store
+
+
+class DatasetManifest(TypedDict):
+    name: str
+    uri: str
+    task: NotRequired[str]
+    revision: NotRequired[str]
+    card: NotRequired[str]
+    eval_only: NotRequired[bool]
+    disjoint_from: NotRequired[list[str]]
 
 
 @dataclass(frozen=True)
@@ -15,7 +27,7 @@ class Dataset:
     eval_only: bool = False
     disjoint_from: tuple[str, ...] = ()  # eval sets this must never leak into
 
-    def to_manifest(self) -> dict:
+    def to_manifest(self) -> DatasetManifest:
         return {
             "name": self.name,
             "uri": self.uri,
@@ -27,15 +39,19 @@ class Dataset:
         }
 
     @classmethod
-    def from_manifest(cls, m: dict) -> "Dataset":
+    def from_manifest(cls, m: Mapping[str, object]) -> "Dataset":
+        # m is raw store.load() output, not yet trusted as DatasetManifest-shaped -- unlike
+        # to_manifest() (a construction we control), this is a read boundary from disk/Postgres.
+        # The cast is that trust, made explicit exactly once, rather than implicitly via Any.
+        d = cast(DatasetManifest, m)
         return cls(
-            name=m["name"],
-            uri=m["uri"],
-            task=m.get("task", ""),
-            revision=m.get("revision", ""),
-            card=m.get("card", ""),
-            eval_only=m.get("eval_only", False),
-            disjoint_from=tuple(m.get("disjoint_from", ())),
+            name=d["name"],
+            uri=d["uri"],
+            task=d.get("task", ""),
+            revision=d.get("revision", ""),
+            card=d.get("card", ""),
+            eval_only=d.get("eval_only", False),
+            disjoint_from=tuple(d.get("disjoint_from", ())),
         )
 
 
