@@ -1,5 +1,25 @@
-# oyster
-
+```
+           ____                                  
+       _.-'78o `"`--._                           
+   ,o888o.  .o888o,   ''-.                       
+ ,88888P  `78888P..______.]                      
+/_..__..----""        __.'                       
+`-._       /""| _..-''                           
+    "`-----\  `\              .-'~~~-.           
+            |   ;.-""--..   .'o  oOOOo`.         
+            | ,8o.  o88. `.:~~~-.oOo   o`.       
+            `;888P  `788P  :`. \ ~-.  oOOo.      
+      .o""-.|`-._         ./  `.; / ~.  OO:      
+     J88 _.-/    ";"-P----'   .'  ;-- `.o.'      
+     `--'\`|     /  /        ,'  ; ~~--'~        
+         | /     |  |        ;  ;                
+_\|/_____\|      |  |akn___\\;_\\//___\|/________
+     __\|/___---`---'           _                
+ dP"Yb  Yb  dP .dP"Y8 888888 888888 88""Yb       
+dP   Yb  YbdP  `Ybo."   88   88__   88__dP       
+Yb   dP   8P   o.`Y8b   88   88""   88"Yb        
+ YbodP   dP    8bodP'   88   888888 88  Yb
+```
 No-cloud execution layer for [reishi (mcm)](https://github.com/finngi/mcm-reishi): a mesh of
 self-hosted Macs behind GitHub Actions runners, with tag-based
 availability. Like [enoki](https://github.com/finngi/mcm-enoki) (the KubeRay layer), oyster consumes
