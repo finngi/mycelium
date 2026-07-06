@@ -12,7 +12,22 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
+      # A real PAT, not the default GITHUB_TOKEN: PRs opened under the bot
+      # identity get gated behind a manual "Approve and run" on every CI
+      # check, which means required checks never go green on their own and
+      # auto-merge (below) never fires.
       - uses: googleapis/release-please-action@v5
+        id: release
         with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+      - name: Enable auto-merge on the release PR
+        if: ${{ steps.release.outputs.prs_created == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          RELEASE_PRS: ${{ steps.release.outputs.prs }}
+        run: |
+          for number in $(echo "$RELEASE_PRS" | jq -r '.[].number'); do
+            gh pr merge --auto --squash "$number" --repo ${{ github.repository }}
+          done
