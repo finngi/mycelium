@@ -1,10 +1,10 @@
 # Training image, pushed to the `ml-models` Artifact Registry repo.
 # CUDA base for l4/h100; the v5e (TPU) variant lands with the XLA/JAX adapter.
 #
-# Build context must be the `ml/` parent directory, not `mcm-enoki/` alone --
+# Build context must be the `mcm/` parent directory, not `mcm-enoki/` alone --
 # pyproject.toml resolves reishi via [tool.uv.sources] path = "../mcm-reishi",
 # a sibling repo outside mcm-enoki's own tree that a plain `docker build mcm-enoki`
-# can never see. From ml/:
+# can never see. From mcm/:
 #   docker build -f mcm-enoki/jobs/Dockerfile -t <tag> .
 FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04
 

@@ -13,6 +13,7 @@ and concurrent-claim guarantees a directory of files can't.
 
 import json
 import os
+from collections.abc import Mapping
 
 _DDL = """
 CREATE TABLE IF NOT EXISTS manifests (
@@ -44,14 +45,14 @@ class PostgresBackend:
     def _connect(self):
         return self._psycopg.connect(self._dsn, autocommit=True)
 
-    def save(self, kind: str, name: str, manifest: dict) -> None:
+    def save(self, kind: str, name: str, manifest: Mapping[str, object]) -> None:
         with self._connect() as conn:
             conn.execute(
                 "INSERT INTO manifests (kind, name, manifest, updated_at) "
                 "VALUES (%s, %s, %s, now()) "
                 "ON CONFLICT (kind, name) DO UPDATE "
                 "SET manifest = EXCLUDED.manifest, updated_at = now()",
-                (kind, name, json.dumps(manifest)),
+                (kind, name, json.dumps(dict(manifest))),
             )
 
     def load(self, kind: str, name: str) -> dict:
