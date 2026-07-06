@@ -6,7 +6,10 @@ requires-python = ">=3.11"
 dependencies = ["reishi", "pyyaml>=6.0.3"]
 
 [dependency-groups]
-dev = ["pytest>=8"]
+dev = [
+    "mypy>=2.1.0",
+    "pytest>=8",
+]
 # Only the training image needs Ray/Postgres/the LoRA trainer stack; keep
 # laptops light.
 #
@@ -48,6 +51,14 @@ torch = [{ index = "pytorch-cu124" }]
 name = "pytorch-cu124"
 url = "https://download.pytorch.org/whl/cu124"
 explicit = true
+
+# The 'cluster' group (torch/ray/psycopg/transformers/peft/google-cloud-storage) is
+# deliberately absent from a laptop's default `uv sync` -- see trainers/__init__.py's
+# module docstring. mypy runs against that laptop venv, so these imports are always
+# unresolvable here, not a real type error.
+[[tool.mypy.overrides]]
+module = ["torch", "ray", "ray.*", "psycopg", "peft", "transformers", "google.cloud", "google.cloud.*"]
+ignore_missing_imports = true
 
 [build-system]
 requires = ["hatchling"]
