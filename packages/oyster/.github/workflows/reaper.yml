@@ -1,0 +1,48 @@
+name: reaper
+
+# Lost-runner recovery at trial granularity: a running trial whose heartbeat
+# went stale (closed lid, killed service) is requeued while attempts remain,
+# failed after 3. The next herder tick redistributes it.
+on:
+  schedule:
+    - cron: "13 * * * *"
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: mcm-oyster
+
+jobs:
+  reap:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      # mesh-state, not main -- see worker.yml; reaper's requeue commits are
+      # subject to the same branch-protection rejection main would give them.
+      - uses: actions/checkout@v7
+        with:
+          ref: mesh-state
+          path: mcm-oyster
+
+      - uses: actions/checkout@v7
+        with:
+          repository: ${{ github.repository_owner }}/mcm-reishi
+          path: mcm-reishi
+          token: ${{ secrets.MCM_SIBLING_REPO_TOKEN }}
+
+      - name: Set up environment
+        run: |
+          pip install --quiet uv
+          uv venv && uv pip install -e .
+
+      - name: Configure git identity
+        run: |
+          git config user.name "oyster-reaper"
+          git config user.email "reaper@oyster.local"
+
+      - name: Requeue stale trials
+        env:
+          MCM_STORE: ${{ github.workspace }}/mcm-oyster/store
+          OYSTER_BRANCH: mesh-state
+        run: .venv/bin/mcm mesh reap --timeout-min 90
