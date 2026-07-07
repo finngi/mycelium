@@ -13,15 +13,24 @@ from oyster.trainers import TRAINERS
 
 @pytest.fixture(autouse=True)
 def isolated_store(tmp_path, monkeypatch):
+    from reishi import store
+
     monkeypatch.setenv("MCM_STORE", str(tmp_path / "store"))
     monkeypatch.setenv("OYSTER_MEM_BUDGET_GB", "40")
     monkeypatch.setattr(machine, "BUSY_FILE", tmp_path / "busy")
     monkeypatch.setattr(machine, "training_process_running", lambda: False)
+    # The default sqlite backend binds its db path at construction and is cached
+    # module-global, so a per-test MCM_STORE is ignored unless the cache is
+    # dropped -- rebuild it against this test's store (reishi's own store tests
+    # reset _backend the same way).
+    store._backend = None
+    yield
+    store._backend = None
 
 
 def plan_one(name: str, priority: int = 0, base_model: str = "x/tiny-0.5B",
              accelerator: str = "mlx") -> trial_store.Trial:
-    r = Recipe(name=name, task="extract", dataset="d-1", base_model=base_model,
+    r = Recipe(name=name, task="fixture", dataset="d-1", base_model=base_model,
                accelerator=accelerator, priority=priority)
     t = trial_store.plan(r)[0]
     trial_store.save(t)
