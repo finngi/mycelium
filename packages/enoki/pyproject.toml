@@ -1,0 +1,68 @@
+[project]
+name = "enoki"
+version = "0.1.2"
+description = "enoki — KubeRay (cloud) execution layer for mcm recipes"
+requires-python = ">=3.11"
+dependencies = ["reishi", "pyyaml>=6.0.3"]
+
+[dependency-groups]
+dev = [
+    "mypy>=2.1.0",
+    "pytest>=8",
+]
+# Only the training image needs Ray/Postgres/the LoRA trainer stack; keep
+# laptops light.
+#
+# torch is pinned explicitly and sourced from PyTorch's own cu124 index
+# (below) rather than left to float on PyPI: torch's PyPI wheel bundles
+# whatever CUDA version upstream currently defaults to, independent of
+# this repo, and a mismatch against this Dockerfile's base image
+# (nvidia/cuda:12.4.1-runtime-ubuntu22.04) means two different CUDA
+# runtimes shipping in the same image, plus whatever minimum-driver bump
+# the newer one demands on node pools only ever exercised against the
+# older one. Confirmed concretely once: an unpinned resolve landed on a
+# cu13 wheel (needing driver >=580.65.06) against this cu124 base (driver
+# >=550.54.14). Pinning to a cu124 build keeps one known-good CUDA version
+# end to end regardless of what upstream defaults to next.
+#
+# transformers/peft/accelerate get upper bounds for the same reason:
+# an unpinned floor tracks upstream's latest, so a future rebuild can
+# silently pick up a breaking major version with no change on this side
+# to review. Confirmed concretely once: an unconstrained
+# `transformers>=4.46` floor resolved to `transformers==5.13.0` (its first
+# major bump in 5 years, breaking API changes, zero signal here that it
+# had happened). Bounding to the 4.x line actually exercised avoids that
+# silently repeating.
+cluster = [
+    "torch==2.4.1",
+    "ray[default]>=2.9",
+    "psycopg[binary]>=3.3.4",
+    "transformers>=4.46,<5",
+    "peft>=0.13,<0.14",
+    "accelerate>=0.34,<1",
+    "google-cloud-storage>=2.18",
+]
+
+[tool.uv.sources]
+reishi = { path = "../mcm-reishi", editable = true }
+torch = [{ index = "pytorch-cu124" }]
+
+[[tool.uv.index]]
+name = "pytorch-cu124"
+url = "https://download.pytorch.org/whl/cu124"
+explicit = true
+
+# The 'cluster' group (torch/ray/psycopg/transformers/peft/google-cloud-storage) is
+# deliberately absent from a laptop's default `uv sync` -- see trainers/__init__.py's
+# module docstring. mypy runs against that laptop venv, so these imports are always
+# unresolvable here, not a real type error.
+[[tool.mypy.overrides]]
+module = ["torch", "ray", "ray.*", "psycopg", "peft", "transformers", "google.cloud", "google.cloud.*"]
+ignore_missing_imports = true
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/enoki"]
