@@ -6,7 +6,6 @@ import json
 
 import pytest
 
-import reishi.tasks  # noqa: F401  (populate the task registry)
 from reishi.primitives import dataset as dataset_registry
 from reishi.primitives.dataset import Dataset
 
@@ -41,7 +40,7 @@ def _register_dataset(tmp_path) -> Dataset:
     with open(data_path, "w") as f:
         for row in HTML_ROWS:
             f.write(json.dumps(row) + "\n")
-    ds = Dataset(name="htmlmd-fixture", uri=str(data_path), task="htmlmd", eval_only=True)
+    ds = Dataset(name="htmlmd-fixture", uri=str(data_path), task="extract-fixture", eval_only=True)
     dataset_registry.save(ds)
     return ds
 
@@ -57,7 +56,7 @@ def _manifest(dataset_name: str, trainer_cfg: dict) -> dict:
         "artifacts": {},
         "spec": {
             "name": "r1",
-            "task": "htmlmd",
+            "task": "extract-fixture",
             "base_model": None,
             "dataset": dataset_name,
             "accelerator": "local",

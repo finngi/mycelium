@@ -2,14 +2,13 @@
 
 import pytest
 
-import reishi.tasks  # noqa: F401  (populate the task registry)
 from physarum.primitives.sweep import Sweep
 
 SWEEP_YAML = """
 name: extract-lora-sweep-1
 template:
   name: extract-lora-sweep-1
-  task: extract
+  task: extract-fixture
   dataset: extract-v3
   base_model: mlx-community/Qwen2.5-7B-Instruct-4bit
   accelerator: mlx
