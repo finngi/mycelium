@@ -16,7 +16,7 @@ def render(handlers: dict) -> str:
         "  mcm trial <id>         -> mcm trial describe <id>",
         "  mcm logs <id>          -> mcm trial logs <id>",
         "  mcm run <recipe.yaml>  -> mcm recipe run  (local, in-process)",
-        "  mcm submit <exp>       -> mcm experiment submit  (RayJob)",
+        "  mcm submit <exp>       -> mcm experiment submit  (needs an executor plugin)",
         "",
         f"domains: {', '.join(DOMAINS)}  (plurals accepted)",
         "",
