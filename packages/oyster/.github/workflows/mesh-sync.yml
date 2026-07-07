@@ -1,0 +1,43 @@
+name: mesh-sync
+
+# mesh-state carries the mesh's live claim/heartbeat/finish commits (no PR
+# needed there -- see worker.yml). This promotes that history into main via
+# an auto-merging PR, so main stays a synced record without main's branch
+# protection ever being relaxed.
+on:
+  push:
+    branches: [mesh-state]
+
+concurrency:
+  group: mesh-sync
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      # A real PAT: a PR opened as github-actions[bot] gets its required
+      # checks gated behind a manual "Approve and run" (the same issue
+      # release-please hit), so auto-merge below would never fire.
+      - name: Ensure a PR from mesh-state to main, auto-merging
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+        run: |
+          number=$(gh pr list --repo "${{ github.repository }}" --head mesh-state --base main --state open --json number --jq '.[0].number')
+          if [ -z "$number" ]; then
+            gh pr create --repo "${{ github.repository }}" --head mesh-state --base main \
+              --title "sync: mesh state" \
+              --body "Automated sync of mesh claim/heartbeat/finish commits into main." || true
+            number=$(gh pr list --repo "${{ github.repository }}" --head mesh-state --base main --state open --json number --jq '.[0].number')
+          fi
+          if [ -z "$number" ]; then
+            echo "[FAIL] could not find or create a mesh-state -> main PR" >&2
+            exit 1
+          fi
+          # A real merge commit, not squash: keeps each claim/heartbeat/finish
+          # commit's own message and timestamp in main's history instead of
+          # flattening a trial's audit trail into one commit per sync.
+          gh pr merge --auto --merge "$number" --repo "${{ github.repository }}"
