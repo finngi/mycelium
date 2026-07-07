@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/finngi/mcm-reishi/compare/v0.4.0...v0.4.1) (2026-07-07)
+
+
+### Bug Fixes
+
+* **cli:** fail loud and clean on task-loading errors; isolate test registry ([#18](https://github.com/finngi/mcm-reishi/issues/18)) ([e13d540](https://github.com/finngi/mcm-reishi/commit/e13d54095dee07ec44394fd08700e05a2e5dde97))
+
 ## [0.4.0](https://github.com/finngi/mcm-reishi/compare/v0.3.0...v0.4.0) (2026-07-07)
 
 
