@@ -35,7 +35,7 @@ class TrialManifest(TypedDict):
     seed: int
     status: str
     created: str
-    metrics: dict  # task-specific; extract-style tasks land Task.aggregate's AggregateMetrics here
+    metrics: dict  # task-specific; field-scored tasks land Task.aggregate's AggregateMetrics here
     artifacts: TrialArtifacts
     spec: RecipeManifest
     execution: ExecutionInfo

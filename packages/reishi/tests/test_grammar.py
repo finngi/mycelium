@@ -10,7 +10,7 @@ CANONICALIZATION = [
     (["trial", "7f3a-x"], ("trial", "describe", ["7f3a-x"])),
     (["logs", "7f3a-x"], ("trial", "logs", ["7f3a-x"])),
     (["run", "example.yaml"], ("recipe", "run", ["example.yaml"])),
-    (["submit", "extract-prompted"], ("experiment", "submit", ["extract-prompted"])),
+    (["submit", "fixture-prompted"], ("experiment", "submit", ["fixture-prompted"])),
     (["dataset", "build", "sample"], ("dataset", "build", ["sample"])),
     (["board"], ("board", "list", [])),
     (["tasks"], ("task", "list", [])),

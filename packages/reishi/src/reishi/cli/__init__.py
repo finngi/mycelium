@@ -39,6 +39,12 @@ def main(argv: list[str] | None = None) -> int:
         print(render(commands.HANDLERS))
         return 0
 
+    # After the help short-circuit: load_tasks() fails loud on a broken task, and
+    # `--help` must render regardless of a deployment's task health.
+    from reishi.tasks import load_tasks
+
+    load_tasks()
+
     try:
         cmd = canonicalize(argv)
     except GrammarError as e:
