@@ -8,11 +8,11 @@ cluster dependency group installed.
 import os
 import sys
 
-import reishi.tasks  # noqa: F401  (populate the task registry)
 from reishi import store
 from reishi.primitives import trial
 from reishi.primitives.recipe import Recipe
 from reishi.primitives.trial import TrialManifest
+from reishi.tasks import load_tasks
 
 from enoki import trainers
 from enoki.trainers.contract import Trainer, TrainerResult
@@ -54,6 +54,10 @@ def _make_trainer_call(trainer_fn: Trainer, accelerator: str) -> Trainer:
 
 
 def run(recipe_path: str) -> int:
+    # The deployment's tasks live in its own package, advertised via an
+    # mcm.tasks entry point; this is what makes the recipe's task resolvable
+    # in-cluster, exactly as the CLI resolves it on a laptop.
+    load_tasks()
     _use_cluster_store()
     recipe = Recipe.from_yaml(recipe_path)
 
