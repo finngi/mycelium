@@ -54,7 +54,7 @@ active.
 ```
 uv venv && uv pip install -e . --group dev
 uv run pytest -q
-uv run mcm tasks              # what commands exist
+uv run reishi-admin tasks     # dev-only CLI; deployments expose this as `mcm`
 uvx ruff check .               # lint (required in CI)
 ```
 
