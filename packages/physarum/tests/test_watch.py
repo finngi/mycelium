@@ -4,7 +4,6 @@ recorded) gets parsed back into the shape the dashboard graphs."""
 
 import pytest
 
-import reishi.tasks  # noqa: F401  (populate the task registry)
 from reishi.primitives import trial as trial_store
 from reishi.primitives.trial import Trial
 
@@ -52,7 +51,7 @@ def test_build_recipe_naming_matches_trials_for_sweep_parsing(tmp_path):
     # watch.trials_for_sweep, not a hand-fabricated recipe string standing in
     # for it -- a naming change on either side should fail this test.
     template = {
-        "name": "tpl", "task": "htmlmd", "base_model": None, "dataset": "d",
+        "name": "tpl", "task": "extract-fixture", "base_model": None, "dataset": "d",
         "accelerator": "local", "prompt": None, "seeds": 1, "priority": 0, "trainer": {},
     }
     recipe = build_recipe(template, {"trainer.include_tables": True}, "my-sweep", 3)
