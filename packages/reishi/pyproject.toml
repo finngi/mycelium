@@ -1,6 +1,6 @@
 [project]
 name = "reishi"
-version = "0.4.0"
+version = "0.4.1"
 description = "reishi (mcm) — experiment contract layer for small-model training on KubeRay"
 requires-python = ">=3.11"
 dependencies = ["pyyaml>=6.0.3"]
