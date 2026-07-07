@@ -15,14 +15,13 @@ from types import SimpleNamespace
 import pytest
 import yaml
 
-import reishi.tasks  # noqa: F401  (populate the task registry)
 from reishi.cli import commands
 from reishi.cli.grammar import Command
 
 RECIPE = """
-name: htmlmd-smoke
-task: htmlmd
-dataset: htmlmd-fixture
+name: fixture-smoke
+task: fixture
+dataset: fixture-fixture
 base_model: jinaai/ReaderLM-v2
 accelerator: {accelerator}
 seeds: 1
@@ -51,31 +50,31 @@ def _fake_run_ok(calls):
         manifest_path = args[args.index("-f") + 1]
         manifest = yaml.safe_load(open(manifest_path))
         calls.append({"args": args, "manifest": manifest})
-        return SimpleNamespace(returncode=0, stdout="rayjob.ray.io/mcm-htmlmd-smoke created", stderr="")
+        return SimpleNamespace(returncode=0, stdout="rayjob.ray.io/mcm-fixture-smoke created", stderr="")
 
     return _run
 
 
 def test_submit_renders_every_placeholder_for_l4_recipe(tmp_path, monkeypatch, capsys):
-    _write_recipe(tmp_path, "htmlmd-smoke", accelerator="l4")
+    _write_recipe(tmp_path, "fixture-smoke", accelerator="l4")
     calls = []
     monkeypatch.setattr(commands.subprocess, "run", _fake_run_ok(calls))
 
-    rc = commands.experiment_submit(Command(domain="experiment", action="submit", objects=["htmlmd-smoke"]))
+    rc = commands.experiment_submit(Command(domain="experiment", action="submit", objects=["fixture-smoke"]))
 
     assert rc == 0
     assert len(calls) == 1
     manifest = calls[0]["manifest"]
 
-    assert manifest["metadata"]["name"] == "mcm-htmlmd-smoke"
+    assert manifest["metadata"]["name"] == "mcm-fixture-smoke"
     # No volume/ConfigMap mounts a recipe file into the image, so the
     # entrypoint recreates it from an inline base64 blob before running the
     # driver -- assert both the shape and that it decodes to the real recipe.
     entrypoint = manifest["spec"]["entrypoint"]
-    assert entrypoint.startswith("mkdir -p /recipes/htmlmd-smoke && echo ")
+    assert entrypoint.startswith("mkdir -p /recipes/fixture-smoke && echo ")
     assert entrypoint.endswith(
-        " | base64 -d > /recipes/htmlmd-smoke/recipe.yaml && "
-        "python -m enoki.driver /recipes/htmlmd-smoke/recipe.yaml"
+        " | base64 -d > /recipes/fixture-smoke/recipe.yaml && "
+        "python -m enoki.driver /recipes/fixture-smoke/recipe.yaml"
     )
     recipe_b64 = entrypoint.split("echo ", 1)[1].split(" | base64", 1)[0]
     assert base64.b64decode(recipe_b64).decode() == RECIPE.format(accelerator="l4")
@@ -94,16 +93,16 @@ def test_submit_renders_every_placeholder_for_l4_recipe(tmp_path, monkeypatch, c
     assert spot_toleration["value"] == "true"
     assert isinstance(spot_toleration["value"], str)
 
-    assert "[OK] submitted RayJob 'mcm-htmlmd-smoke'" in capsys.readouterr().err
+    assert "[OK] submitted RayJob 'mcm-fixture-smoke'" in capsys.readouterr().err
 
 
 def test_submit_honors_image_override_flag(tmp_path, monkeypatch):
-    _write_recipe(tmp_path, "htmlmd-smoke", accelerator="l4")
+    _write_recipe(tmp_path, "fixture-smoke", accelerator="l4")
     calls = []
     monkeypatch.setattr(commands.subprocess, "run", _fake_run_ok(calls))
 
     rc = commands.experiment_submit(
-        Command(domain="experiment", action="submit", objects=["htmlmd-smoke"],
+        Command(domain="experiment", action="submit", objects=["fixture-smoke"],
                 flags=["--image", "example.com/custom:tag"])
     )
 
@@ -136,29 +135,29 @@ def test_submit_fails_cleanly_when_recipe_missing(monkeypatch):
 
 
 def test_submit_reports_kubectl_failure(tmp_path, monkeypatch, capsys):
-    _write_recipe(tmp_path, "htmlmd-smoke", accelerator="l4")
+    _write_recipe(tmp_path, "fixture-smoke", accelerator="l4")
 
     def _run_fail(args, capture_output, text):
         return SimpleNamespace(returncode=1, stdout="", stderr="the server doesn't have a resource type")
 
     monkeypatch.setattr(commands.subprocess, "run", _run_fail)
 
-    rc = commands.experiment_submit(Command(domain="experiment", action="submit", objects=["htmlmd-smoke"]))
+    rc = commands.experiment_submit(Command(domain="experiment", action="submit", objects=["fixture-smoke"]))
 
     assert rc == 1
     assert "kubectl apply failed" in capsys.readouterr().err
 
 
 def _rendered_manifest_leftovers() -> list[str]:
-    return glob.glob(str(Path(tempfile.gettempdir()) / "mcm-htmlmd-smoke-*.yaml"))
+    return glob.glob(str(Path(tempfile.gettempdir()) / "mcm-fixture-smoke-*.yaml"))
 
 
 def test_submit_cleans_up_the_rendered_manifest_tempfile_on_success(tmp_path, monkeypatch):
-    _write_recipe(tmp_path, "htmlmd-smoke", accelerator="l4")
+    _write_recipe(tmp_path, "fixture-smoke", accelerator="l4")
     monkeypatch.setattr(commands.subprocess, "run", _fake_run_ok([]))
 
     before = _rendered_manifest_leftovers()
-    rc = commands.experiment_submit(Command(domain="experiment", action="submit", objects=["htmlmd-smoke"]))
+    rc = commands.experiment_submit(Command(domain="experiment", action="submit", objects=["fixture-smoke"]))
     after = _rendered_manifest_leftovers()
 
     assert rc == 0
@@ -166,7 +165,7 @@ def test_submit_cleans_up_the_rendered_manifest_tempfile_on_success(tmp_path, mo
 
 
 def test_submit_cleans_up_the_rendered_manifest_tempfile_on_kubectl_failure(tmp_path, monkeypatch):
-    _write_recipe(tmp_path, "htmlmd-smoke", accelerator="l4")
+    _write_recipe(tmp_path, "fixture-smoke", accelerator="l4")
 
     def _run_fail(args, capture_output, text):
         return SimpleNamespace(returncode=1, stdout="", stderr="boom")
@@ -174,7 +173,7 @@ def test_submit_cleans_up_the_rendered_manifest_tempfile_on_kubectl_failure(tmp_
     monkeypatch.setattr(commands.subprocess, "run", _run_fail)
 
     before = _rendered_manifest_leftovers()
-    rc = commands.experiment_submit(Command(domain="experiment", action="submit", objects=["htmlmd-smoke"]))
+    rc = commands.experiment_submit(Command(domain="experiment", action="submit", objects=["fixture-smoke"]))
     after = _rendered_manifest_leftovers()
 
     assert rc == 1
