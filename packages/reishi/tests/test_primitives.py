@@ -6,7 +6,6 @@ from-scratch run, and a dataset is not bound to any task (the recipe is).
 
 import pytest
 
-import reishi.tasks  # noqa: F401  (populate the task registry)
 from reishi.primitives import trial
 from reishi.primitives.dataset import Dataset
 from reishi.primitives.recipe import Recipe
@@ -19,16 +18,16 @@ def _write_recipe(tmp_path, body: str):
 
 
 FINETUNE = """
-name: nameparse-ft
-task: nameparse
+name: fixture-ft
+task: fixture
 base_model: LiquidAI/LFM2.5-1.2B-Base
 dataset: identify-orgs-040726
 seeds: 2
 """
 
 FROM_SCRATCH = """
-name: nameparse-scratch
-task: nameparse
+name: fixture-scratch
+task: fixture
 dataset: identify-orgs-040726
 accelerator: v5e
 trainer:

@@ -7,7 +7,6 @@ from pathlib import Path
 
 import yaml
 
-import reishi.tasks  # noqa: F401  (populate the task registry)
 from reishi import store
 from reishi.cli.grammar import Command
 from reishi.cli.output import emit

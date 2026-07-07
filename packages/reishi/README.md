@@ -54,8 +54,8 @@ mcm                      # status
 mcm trials               # > mcm trial list
 mcm trial 7f3a           # > mcm trial describe 7f3a
 mcm logs 7f3a            # > mcm trial logs 7f3a
-mcm run parse-org.yaml   # > mcm recipe run parse-org.yaml   (local, in-process)
-mcm submit nameparse-x   # > mcm experiment submit nameparse-x  (RayJob)
+mcm run my-exp.yaml      # > mcm recipe run my-exp.yaml      (local, in-process)
+mcm submit my-exp        # > mcm experiment submit my-exp       (RayJob)
 ```
 
 Installed executors extend this one CLI via `mcm.plugins` entry points
@@ -73,7 +73,7 @@ Grammar anchors (enforced by an automated test, not just convention):
 ```
 uv venv && uv pip install -e . --group dev
 uv run pytest -q
-uv run mcm tasks
+uv run reishi-admin tasks
 ```
 
 `MCM_STORE` overrides the manifest store root (default `~/.mcm/store`;
