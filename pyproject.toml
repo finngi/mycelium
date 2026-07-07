@@ -1,0 +1,33 @@
+[tool.uv.workspace]
+members = ["packages/*"]
+exclude = ["lab"]
+
+# Fork the universal lock per platform. mycelium runs in exactly two places:
+# the linux/CUDA KubeRay training image (enoki cluster) and macOS dev/mesh
+# machines (oyster mlx). Separate forks let enoki's transformers<5 and oyster's
+# darwin-only transformers==5.12.1 resolve independently instead of colliding.
+[tool.uv]
+environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
+
+# Workspace-internal deps resolve to the in-tree package, not PyPI. This is the
+# monorepo replacement for each member's old `{ path = "../mcm-*" }` source.
+[tool.uv.sources]
+reishi = { workspace = true }
+enoki = { workspace = true }
+oyster = { workspace = true }
+physarum = { workspace = true }
+torch = [{ index = "pytorch-cu124" }]
+
+# torch pulled from PyTorch's cu124 index rather than PyPI -- see the rationale
+# on enoki's `cluster` group. Workspace-root scope so any member can depend on it.
+[[tool.uv.index]]
+name = "pytorch-cu124"
+url = "https://download.pytorch.org/whl/cu124"
+explicit = true
+
+[dependency-groups]
+dev = [
+    "mypy>=2.1.0",
+    "pytest>=9.1.1",
+    "types-pyyaml>=6.0.12.20260518",
+]

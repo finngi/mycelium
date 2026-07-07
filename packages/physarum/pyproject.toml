@@ -25,10 +25,6 @@ dev = [
     "types-pyyaml>=6.0.12.20260518",
 ]
 
-[tool.uv.sources]
-reishi = { path = "../mcm-reishi", editable = true }
-oyster = { path = "../mcm-oyster", editable = true }
-
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
