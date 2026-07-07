@@ -33,24 +33,20 @@ dev = [
 # major bump in 5 years, breaking API changes, zero signal here that it
 # had happened). Bounding to the 4.x line actually exercised avoids that
 # silently repeating.
+# linux-only markers: this stack runs solely in the KubeRay training image
+# (nvidia/cuda:12.4.1 base) and torch comes from a cu124 index with no macOS
+# wheels. In the monorepo's single universal lock this also keeps enoki's
+# transformers<5 from colliding with oyster's darwin-only transformers==5.12.1
+# -- the two never resolve on the same platform.
 cluster = [
-    "torch==2.4.1",
-    "ray[default]>=2.9",
-    "psycopg[binary]>=3.3.4",
-    "transformers>=4.46,<5",
-    "peft>=0.13,<0.14",
-    "accelerate>=0.34,<1",
-    "google-cloud-storage>=2.18",
+    "torch==2.4.1 ; sys_platform == 'linux'",
+    "ray[default]>=2.9 ; sys_platform == 'linux'",
+    "psycopg[binary]>=3.3.4 ; sys_platform == 'linux'",
+    "transformers>=4.46,<5 ; sys_platform == 'linux'",
+    "peft>=0.13,<0.14 ; sys_platform == 'linux'",
+    "accelerate>=0.34,<1 ; sys_platform == 'linux'",
+    "google-cloud-storage>=2.18 ; sys_platform == 'linux'",
 ]
-
-[tool.uv.sources]
-reishi = { path = "../mcm-reishi", editable = true }
-torch = [{ index = "pytorch-cu124" }]
-
-[[tool.uv.index]]
-name = "pytorch-cu124"
-url = "https://download.pytorch.org/whl/cu124"
-explicit = true
 
 # The 'cluster' group (torch/ray/psycopg/transformers/peft/google-cloud-storage) is
 # deliberately absent from a laptop's default `uv sync` -- see trainers/__init__.py's
