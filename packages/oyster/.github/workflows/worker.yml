@@ -57,7 +57,8 @@ jobs:
           git config user.name "oyster-worker"
           git config user.email "worker@oyster.local"
 
-      # HF_TOKEN enables checkpoint push/resume once the MLX trainer lands.
+      # HF_TOKEN enables checkpoint push (mlx_lora.py's _maybe_push_to_hf) --
+      # push-only today, no pull/resume path exists yet.
       - name: Claim and train
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
