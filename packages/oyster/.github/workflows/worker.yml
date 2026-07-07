@@ -1,0 +1,78 @@
+name: worker
+
+# Generic "be a worker" job: which trials it runs is decided by oyster's claim
+# loop at execution time, never by GitHub's runner pick. Dispatched by
+# herder.yml (or by hand); safe to over-dispatch -- a worker with nothing
+# claimable exits in seconds.
+# Runners are unmetered (self-hosted); never switch runs-on to a GitHub-hosted label.
+on:
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: mcm-oyster
+
+jobs:
+  claim-and-train:
+    runs-on: [self-hosted, macOS, mlx, ready]
+    timeout-minutes: 2880
+    permissions:
+      contents: write
+    steps:
+      # Belt-and-braces gate for jobs already assigned before a drain took
+      # effect: fail fast so the machine is freed without burning a retry.
+      - name: Check node availability
+        working-directory: .
+        run: |
+          if [ -f "$HOME/.mycelium-busy" ]; then
+            echo "[FAIL] node marked busy ($HOME/.mycelium-busy exists) -> refusing job"; exit 1
+          fi
+          if pgrep -fl "mlx_lm|bench\.py|train\.py" | grep -v "actions-runner"; then
+            echo "[FAIL] a training process is already running on this node -> refusing job"; exit 1
+          fi
+          echo "[OK] node idle"
+
+      # mesh-state, not main: claims/heartbeats/results are unreviewed,
+      # high-frequency commits that main's branch protection would reject.
+      # mesh-sync.yml promotes mesh-state into main on its own schedule.
+      - uses: actions/checkout@v7
+        with:
+          ref: mesh-state
+          path: mcm-oyster
+
+      # mcm is a path dependency (../mcm-reishi) -- check it out alongside.
+      - uses: actions/checkout@v7
+        with:
+          repository: ${{ github.repository_owner }}/mcm-reishi
+          path: mcm-reishi
+          token: ${{ secrets.MCM_SIBLING_REPO_TOKEN }}
+
+      - name: Set up environment
+        run: |
+          uv venv --python 3.12
+          uv pip install -e .
+
+      - name: Configure git identity (claims and results are commits)
+        run: |
+          git config user.name "oyster-worker"
+          git config user.email "worker@oyster.local"
+
+      # HF_TOKEN enables checkpoint push (mlx_lora.py's _maybe_push_to_hf) --
+      # push-only today, no pull/resume path exists yet.
+      - name: Claim and train
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          PYTHONUNBUFFERED: "1"
+          MCM_STORE: ${{ github.workspace }}/mcm-oyster/store
+          OYSTER_BRANCH: mesh-state
+        run: .venv/bin/mcm mesh work
+
+      - name: Failure summary
+        if: failure()
+        run: |
+          {
+            echo "## [FAIL] worker on $(hostname -s)"
+            echo '```'
+            .venv/bin/mcm mesh -o json 2>/dev/null || echo "status unavailable"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
