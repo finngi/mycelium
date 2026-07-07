@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/finngi/mcm-reishi/compare/v0.3.0...v0.4.0) (2026-07-07)
+
+
+### Features
+
+* **tasks:** reishi ships no tasks; deployments load them via mcm.tasks entry points ([#16](https://github.com/finngi/mcm-reishi/issues/16)) ([d8e4e7a](https://github.com/finngi/mcm-reishi/commit/d8e4e7a8dbabdb6c8ac1bf77c34d8b3bd1d2e1ad))
+
 ## [0.3.0](https://github.com/finngi/mcm-reishi/compare/v0.2.0...v0.3.0) (2026-07-06)
 
 
