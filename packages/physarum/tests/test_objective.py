@@ -5,7 +5,6 @@ without needing Optuna's sampler machinery or a real trainer."""
 import optuna
 import pytest
 
-import reishi.tasks  # noqa: F401  (populate the task registry)
 from reishi.primitives import trial as trial_store
 from reishi.primitives.recipe import Recipe
 
@@ -14,7 +13,7 @@ from physarum.primitives.sweep import Sweep
 
 TEMPLATE = Recipe(
     name="placeholder",
-    task="nameparse",
+    task="extract-fixture",
     dataset="nameparse-v3",
     base_model="mlx-community/Qwen2.5-7B-Instruct-4bit",
     accelerator="mlx",
