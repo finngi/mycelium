@@ -43,7 +43,11 @@ def main(argv: list[str] | None = None) -> int:
     # `--help` must render regardless of a deployment's task health.
     from reishi.tasks import load_tasks
 
-    load_tasks()
+    try:
+        load_tasks()
+    except Exception as e:
+        print(f"[FAIL] task loading failed: {type(e).__name__}: {e}", file=sys.stderr)
+        return 2
 
     try:
         cmd = canonicalize(argv)
