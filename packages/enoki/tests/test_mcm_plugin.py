@@ -1,9 +1,9 @@
-"""experiment_submit: recipe -> rendered RayJob -> kubectl apply.
+"""enoki's mcm plugin: experiment_submit renders a recipe -> RayJob -> kubectl apply.
 
-kubectl is always monkeypatched here -- these tests never touch a real
-cluster. jobs/rayjob.yaml is read from the real sibling mcm-enoki checkout
-(the same lookup experiment_submit uses at runtime), not faked, so a change
-to the template's placeholders is caught here too.
+kubectl is always monkeypatched here -- these tests never touch a real cluster.
+jobs/rayjob.yaml is read from enoki's own package root (the same lookup
+experiment_submit uses at runtime), not faked, so a change to the template's
+placeholders is caught here too.
 """
 
 import base64
@@ -15,7 +15,7 @@ from types import SimpleNamespace
 import pytest
 import yaml
 
-from reishi.cli import commands
+from enoki import mcm_plugin
 from reishi.cli.grammar import Command
 
 RECIPE = """
@@ -58,9 +58,9 @@ def _fake_run_ok(calls):
 def test_submit_renders_every_placeholder_for_l4_recipe(tmp_path, monkeypatch, capsys):
     _write_recipe(tmp_path, "fixture-smoke", accelerator="l4")
     calls = []
-    monkeypatch.setattr(commands.subprocess, "run", _fake_run_ok(calls))
+    monkeypatch.setattr(mcm_plugin.subprocess, "run", _fake_run_ok(calls))
 
-    rc = commands.experiment_submit(Command(domain="experiment", action="submit", objects=["fixture-smoke"]))
+    rc = mcm_plugin.experiment_submit(Command(domain="experiment", action="submit", objects=["fixture-smoke"]))
 
     assert rc == 0
     assert len(calls) == 1
@@ -80,13 +80,13 @@ def test_submit_renders_every_placeholder_for_l4_recipe(tmp_path, monkeypatch, c
     assert base64.b64decode(recipe_b64).decode() == RECIPE.format(accelerator="l4")
 
     head_image = manifest["spec"]["rayClusterSpec"]["headGroupSpec"]["template"]["spec"]["containers"][0]["image"]
-    assert head_image == commands._DEFAULT_IMAGE
+    assert head_image == mcm_plugin._DEFAULT_IMAGE
 
     worker = manifest["spec"]["rayClusterSpec"]["workerGroupSpecs"][0]
     assert worker["groupName"] == "l4"
     worker_spec = worker["template"]["spec"]
-    assert worker_spec["nodeSelector"] == commands._GPU_NODE_SELECTORS["l4"]
-    assert worker_spec["tolerations"] == commands._GPU_TOLERATIONS["l4"]
+    assert worker_spec["nodeSelector"] == mcm_plugin._GPU_NODE_SELECTORS["l4"]
+    assert worker_spec["tolerations"] == mcm_plugin._GPU_TOLERATIONS["l4"]
     # yaml.safe_dump must round-trip 'true' as a string, not a YAML bool --
     # a real toleration requires a string value here.
     spot_toleration = next(t for t in worker_spec["tolerations"] if t["key"] == "cloud.google.com/gke-spot")
@@ -99,9 +99,9 @@ def test_submit_renders_every_placeholder_for_l4_recipe(tmp_path, monkeypatch, c
 def test_submit_honors_image_override_flag(tmp_path, monkeypatch):
     _write_recipe(tmp_path, "fixture-smoke", accelerator="l4")
     calls = []
-    monkeypatch.setattr(commands.subprocess, "run", _fake_run_ok(calls))
+    monkeypatch.setattr(mcm_plugin.subprocess, "run", _fake_run_ok(calls))
 
-    rc = commands.experiment_submit(
+    rc = mcm_plugin.experiment_submit(
         Command(domain="experiment", action="submit", objects=["fixture-smoke"],
                 flags=["--image", "example.com/custom:tag"])
     )
@@ -115,9 +115,9 @@ def test_submit_honors_image_override_flag(tmp_path, monkeypatch):
 def test_submit_rejects_unsupported_accelerator_without_calling_kubectl(tmp_path, monkeypatch, capsys):
     _write_recipe(tmp_path, "h100-run", accelerator="h100")
     calls = []
-    monkeypatch.setattr(commands.subprocess, "run", _fake_run_ok(calls))
+    monkeypatch.setattr(mcm_plugin.subprocess, "run", _fake_run_ok(calls))
 
-    rc = commands.experiment_submit(Command(domain="experiment", action="submit", objects=["h100-run"]))
+    rc = mcm_plugin.experiment_submit(Command(domain="experiment", action="submit", objects=["h100-run"]))
 
     assert rc == 1
     assert calls == []
@@ -126,9 +126,9 @@ def test_submit_rejects_unsupported_accelerator_without_calling_kubectl(tmp_path
 
 def test_submit_fails_cleanly_when_recipe_missing(monkeypatch):
     calls = []
-    monkeypatch.setattr(commands.subprocess, "run", _fake_run_ok(calls))
+    monkeypatch.setattr(mcm_plugin.subprocess, "run", _fake_run_ok(calls))
 
-    rc = commands.experiment_submit(Command(domain="experiment", action="submit", objects=["does-not-exist"]))
+    rc = mcm_plugin.experiment_submit(Command(domain="experiment", action="submit", objects=["does-not-exist"]))
 
     assert rc == 1
     assert calls == []
@@ -140,9 +140,9 @@ def test_submit_reports_kubectl_failure(tmp_path, monkeypatch, capsys):
     def _run_fail(args, capture_output, text):
         return SimpleNamespace(returncode=1, stdout="", stderr="the server doesn't have a resource type")
 
-    monkeypatch.setattr(commands.subprocess, "run", _run_fail)
+    monkeypatch.setattr(mcm_plugin.subprocess, "run", _run_fail)
 
-    rc = commands.experiment_submit(Command(domain="experiment", action="submit", objects=["fixture-smoke"]))
+    rc = mcm_plugin.experiment_submit(Command(domain="experiment", action="submit", objects=["fixture-smoke"]))
 
     assert rc == 1
     assert "kubectl apply failed" in capsys.readouterr().err
@@ -154,10 +154,10 @@ def _rendered_manifest_leftovers() -> list[str]:
 
 def test_submit_cleans_up_the_rendered_manifest_tempfile_on_success(tmp_path, monkeypatch):
     _write_recipe(tmp_path, "fixture-smoke", accelerator="l4")
-    monkeypatch.setattr(commands.subprocess, "run", _fake_run_ok([]))
+    monkeypatch.setattr(mcm_plugin.subprocess, "run", _fake_run_ok([]))
 
     before = _rendered_manifest_leftovers()
-    rc = commands.experiment_submit(Command(domain="experiment", action="submit", objects=["fixture-smoke"]))
+    rc = mcm_plugin.experiment_submit(Command(domain="experiment", action="submit", objects=["fixture-smoke"]))
     after = _rendered_manifest_leftovers()
 
     assert rc == 0
@@ -170,10 +170,10 @@ def test_submit_cleans_up_the_rendered_manifest_tempfile_on_kubectl_failure(tmp_
     def _run_fail(args, capture_output, text):
         return SimpleNamespace(returncode=1, stdout="", stderr="boom")
 
-    monkeypatch.setattr(commands.subprocess, "run", _run_fail)
+    monkeypatch.setattr(mcm_plugin.subprocess, "run", _run_fail)
 
     before = _rendered_manifest_leftovers()
-    rc = commands.experiment_submit(Command(domain="experiment", action="submit", objects=["fixture-smoke"]))
+    rc = mcm_plugin.experiment_submit(Command(domain="experiment", action="submit", objects=["fixture-smoke"]))
     after = _rendered_manifest_leftovers()
 
     assert rc == 1
@@ -181,8 +181,8 @@ def test_submit_cleans_up_the_rendered_manifest_tempfile_on_kubectl_failure(tmp_
 
 
 def test_submit_uses_the_real_rayjob_template():
-    """The real sibling-repo lookup (no ENOKI_HOME override) must find
-    mcm-enoki's actual jobs/rayjob.yaml, not a path that only exists in test
+    """The default package-root lookup (no ENOKI_HOME override) must find
+    enoki's actual jobs/rayjob.yaml, not a path that only exists in test
     fixtures -- otherwise this suite could pass against a template that
     doesn't match what ships."""
-    assert (commands._enoki_root() / "jobs" / "rayjob.yaml").exists()
+    assert (mcm_plugin._enoki_root() / "jobs" / "rayjob.yaml").exists()
