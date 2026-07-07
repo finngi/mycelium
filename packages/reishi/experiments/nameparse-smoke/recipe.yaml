@@ -1,0 +1,10 @@
+name: nameparse-smoke
+task: nameparse
+base_model: LiquidAI/LFM2.5-1.2B-Base
+dataset: identify-orgs-040726
+accelerator: l4
+seeds: 3
+trainer:
+  method: lora
+  rank: 16
+  iters: 4000
