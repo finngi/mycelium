@@ -1,0 +1,71 @@
+# RayJob template — filled in by `mcm experiment submit`.
+# {{name}}, {{image}}, {{recipe}}, {{recipe_b64}}, {{accelerator}},
+# {{gpu_node_selector}} and {{gpu_tolerations}} are substituted; everything
+# else is fixed policy for the `train` namespace.
+apiVersion: ray.io/v1
+kind: RayJob
+metadata:
+  name: mcm-{{name}}
+  namespace: train
+spec:
+  # No volume/ConfigMap exists to put a file at /recipes/{{recipe}} inside
+  # the container, and the image bakes in mcm-reishi/mcm-enoki source only
+  # -- not any experiments/ directory. So the entrypoint writes the recipe
+  # itself from an inline base64 blob before running the driver. Ray job
+  # entrypoints run via a shell (KubeRay execs `ray job submit -- <this
+  # string>`), so `&&`/`|` work here same as a shell script.
+  entrypoint: mkdir -p /recipes/{{name}} && echo {{recipe_b64}} | base64 -d > /recipes/{{recipe}} && python -m enoki.driver /recipes/{{recipe}}
+  shutdownAfterJobFinishes: true
+  ttlSecondsAfterFinished: 600
+  rayClusterSpec:
+    headGroupSpec:
+      rayStartParams: {}
+      template:
+        spec:
+          # The driver entrypoint runs on this pod and persists trial state
+          # to Cloud SQL, reachable via this workload identity binding.
+          serviceAccountName: mcm-enoki
+          containers:
+            - name: ray-head
+              image: {{image}}
+              resources:
+                requests: {cpu: "2", memory: 8Gi}
+                limits: {cpu: "2", memory: 8Gi}
+    workerGroupSpecs:
+      # One group per submit, chosen by the recipe's accelerator. Node
+      # selectors/tolerations must be verified against a real, currently
+      # running workload before being added here, never assumed from docs
+      # -- GKE compute-class values and their taints drift across releases
+      # and node pools. mcm's _GPU_NODE_SELECTORS gates on exactly which
+      # accelerators have a verified entry, so an unverified row here is
+      # inert, not silently wrong. Each accelerator's compute-class differs
+      # ('gpu-l4' vs plain 'gpu'), so don't copy one row for another without
+      # re-verifying:
+      #   l4      -> compute-class: gpu-l4 + nvidia.com/gpu, on spot (NAP
+      #              provisions gpu-l4-timeshare / nap-a3-highgpu-1g-spot-*
+      #              on demand -- every GPU workload in this namespace runs
+      #              on spot; a stateful primary would not, but a training
+      #              worker checkpoints and resumes, so it does)
+      #   h100    -> compute-class: gpu (not gpu-l4) + nvidia.com/gpu, on spot
+      #   v5e     -> gke-tpu-accelerator: tpu-v5-lite-podslice, NOT on spot
+      #              (no TPU trainer exists yet to prove checkpoint/resume
+      #              survives a preemption; stay off spot until one does)
+      - groupName: {{accelerator}}
+        replicas: 1
+        minReplicas: 1
+        maxReplicas: 1
+        rayStartParams: {}
+        template:
+          spec:
+            # The trainer running here needs GCS access for dataset and
+            # checkpoint I/O, reachable via the same binding as the head
+            # group.
+            serviceAccountName: mcm-enoki
+            nodeSelector: {{gpu_node_selector}}
+            tolerations: {{gpu_tolerations}}
+            containers:
+              - name: ray-worker
+                image: {{image}}
+                resources:
+                  requests: {cpu: "8", memory: 32Gi, nvidia.com/gpu: "1"}
+                  limits: {cpu: "8", memory: 32Gi, nvidia.com/gpu: "1"}
