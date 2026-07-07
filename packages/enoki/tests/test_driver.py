@@ -6,7 +6,6 @@ tests never need a GPU, a cluster, or the real ReaderLM-v2 weights.
 
 import pytest
 
-import reishi.tasks  # noqa: F401  (populate the task registry)
 from reishi import store
 from reishi.primitives import trial
 
@@ -15,7 +14,7 @@ from enoki.trainers import TRAINERS
 
 RECIPE = """
 name: htmlmd-smoke
-task: htmlmd
+task: fixture
 dataset: htmlmd-fixture
 accelerator: l4
 seeds: 2
