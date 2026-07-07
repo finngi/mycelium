@@ -1,0 +1,42 @@
+name: ci
+
+# Lint + test only. herder.yml / reaper.yml / worker.yml are the mesh's
+# own orchestration jobs, not touched here.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+defaults:
+  run:
+    working-directory: mcm-oyster
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: mcm-oyster
+      - uses: astral-sh/setup-uv@v7
+      # uvx runs ruff in its own isolated env -- unlike `uv run`, it never
+      # tries to sync this project's own deps (the ../mcm-reishi path dep
+      # isn't checked out in this job).
+      - run: uvx ruff check .
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: mcm-oyster
+      - uses: actions/checkout@v7
+        with:
+          repository: ${{ github.repository_owner }}/mcm-reishi
+          path: mcm-reishi
+          token: ${{ secrets.MCM_SIBLING_REPO_TOKEN }}
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.12"
+      - run: uv venv && uv pip install -e . --group dev
+      - run: uv run pytest -q
