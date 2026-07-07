@@ -15,6 +15,18 @@ _TASK_SRC = (
 )
 
 
+@pytest.fixture(autouse=True)
+def _isolate_registry():
+    # register() writes a module-global; without this, adv-* names leak into the
+    # rest of the session and trip the duplicate-name guard on re-registration.
+    saved = dict(task._REGISTRY)
+    try:
+        yield
+    finally:
+        task._REGISTRY.clear()
+        task._REGISTRY.update(saved)
+
+
 def _make_pkg(root, dotted: str):
     pkg = root
     for part in dotted.split("."):
