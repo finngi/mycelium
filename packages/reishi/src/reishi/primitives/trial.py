@@ -18,6 +18,18 @@ STATUSES = ("planned", "running", "done", "failed")
 
 class TrialArtifacts(TypedDict):
     weights: NotRequired[str]  # adapter/checkpoint URI, local path or hf://<repo>
+    # URI under store.artifact_root()/<trial-id>/predictions.jsonl -- persisting raw
+    # predictions lets a trial be re-scored/replayed without re-running the model.
+    predictions: NotRequired[str]
+
+
+# Metrics alone don't say WHAT scored the trial or WHERE: an L4 metric and a
+# replayed metric are otherwise indistinguishable. This block records that provenance.
+class EvalInfo(TypedDict, total=False):
+    scorer: str  # task name / scorer id that produced the metrics
+    scored_at: str
+    placement: str  # cpu | accelerator | local -- where scoring ran
+    source: str  # "live" | "replay"
 
 
 class ExecutionInfo(TypedDict):
@@ -39,6 +51,7 @@ class TrialManifest(TypedDict):
     artifacts: TrialArtifacts
     spec: RecipeManifest
     execution: ExecutionInfo
+    eval: NotRequired[EvalInfo]
 
 
 @dataclass
@@ -55,6 +68,7 @@ class Trial:
     # manifest missing "spec" -- neither is a real recipe.
     spec: RecipeManifest = field(default_factory=dict)  # type: ignore[assignment]
     execution: ExecutionInfo = field(default_factory=ExecutionInfo)
+    eval: EvalInfo = field(default_factory=dict)  # type: ignore[assignment]
 
     def to_manifest(self) -> TrialManifest:
         return {
@@ -67,6 +81,7 @@ class Trial:
             "artifacts": self.artifacts,
             "spec": self.spec,
             "execution": self.execution,
+            "eval": self.eval,
         }
 
     @classmethod
