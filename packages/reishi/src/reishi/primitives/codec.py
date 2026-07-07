@@ -8,7 +8,7 @@ balanced {...} object rather than requiring a strict parse from character 0.
 
 import json
 from dataclasses import dataclass
-from typing import Callable
+from typing import Any, Callable
 
 
 def _encode_json(d: dict[str, object]) -> str:
@@ -62,11 +62,16 @@ def _decode_json(s: str) -> dict[str, object]:
 
 @dataclass(frozen=True)
 class Codec:
-    encode: Callable[[dict[str, object]], str]
-    decode: Callable[[str], dict[str, object]]
+    encode: Callable[[Any], str]
+    # decode is Any, not dict: codecs serve any output type (e.g. text tasks
+    # return a str), not only extraction records.
+    decode: Callable[[str], Any]
 
 
-_CODECS = {"json": Codec(_encode_json, _decode_json)}
+_CODECS = {
+    "json": Codec(_encode_json, _decode_json),
+    "text": Codec(lambda s: s, lambda s: s),
+}
 
 
 def get_codec(name: str) -> Codec:
