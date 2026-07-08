@@ -77,7 +77,7 @@ uv run reishi-admin tasks
 ```
 
 `MCM_STORE` overrides the manifest store root (default `~/.mcm/store`;
-becomes `gs://xapien-mcm-train` when the GCS store lands).
+becomes a `gs://` prefix when the GCS store lands).
 
 ## Not here yet
 

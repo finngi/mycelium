@@ -3,8 +3,9 @@ name = "oyster"
 version = "0.3.0"
 description = "oyster — self-hosted mesh execution layer for mcm (GH Actions transport, pull-based claims)"
 requires-python = ">=3.11"
+license = "AGPL-3.0-only"
 dependencies = [
-    "reishi",
+    "reishi>=0.4,<0.5",
     "pyyaml>=6.0.3",
     # MLX training backend -- Apple Silicon only. Pinned: mlx_lora.py reaches
     # into mlx_lm.lora internals (run(), the SimpleNamespace args shape).

@@ -1,6 +1,5 @@
 [tool.uv.workspace]
 members = ["packages/*"]
-exclude = ["lab"]
 
 # Fork the universal lock per platform. mycelium runs in exactly two places:
 # the linux/CUDA KubeRay training image (enoki cluster) and macOS dev/mesh

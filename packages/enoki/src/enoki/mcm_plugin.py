@@ -35,10 +35,9 @@ _GPU_TOLERATIONS = {
     ],
 }
 
-# non-prod-466909 / us-west1 match the live cluster; ml-models is the AR repo
-# named in enoki's Dockerfile. Override with --image or MCM_TRAIN_IMAGE once
-# a real build/push pipeline picks its own tags.
-_DEFAULT_IMAGE = "us-west1-docker.pkg.dev/non-prod-466909/ml-models/enoki-train:latest"
+# No real registry is baked into the open build: point this at your own training
+# image with --image or the MCM_TRAIN_IMAGE env var. This placeholder is inert.
+_DEFAULT_IMAGE = "localhost/enoki-train:latest"
 
 
 def _fail(msg: str) -> int:

@@ -30,19 +30,3 @@ jobs:
           python-version: "3.12"
       - run: uv sync --all-extras
       - run: uv run pytest packages/${{ matrix.package }} -q
-
-  # lab is a standalone consumer project (its own lock/venv): its flair-capped
-  # transformers is irreconcilable with oyster's mlx pin in one venv, so it is
-  # not a workspace member and syncs on its own.
-  test-lab:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: lab
-    steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v7
-        with:
-          python-version: "3.12"
-      - run: uv sync
-      - run: uv run pytest -q
