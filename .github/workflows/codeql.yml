@@ -10,6 +10,11 @@ on:
 jobs:
   analyze:
     runs-on: ubuntu-latest
+    # Code scanning needs GitHub Advanced Security, which private repos on a
+    # personal plan don't have -- the analysis runs but the SARIF upload hard-
+    # fails with "Code scanning is not enabled". Skip while private; this job
+    # starts passing automatically the moment the repo is made public.
+    if: ${{ github.event.repository.private == false }}
     # An explicit `permissions:` block replaces the default grants entirely,
     # not just adds to them -- contents: read must be listed too, or
     # actions/checkout can't even read the repo. actions: read lets
