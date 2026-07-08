@@ -1,0 +1,39 @@
+name: security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 2"
+
+permissions:
+  contents: read
+
+jobs:
+  # Full git-history secret scan. fetch-depth: 0 so gitleaks walks every commit,
+  # not just the tip -- the leaks this repo already had to scrub lived in history,
+  # not the worktree, so a tip-only scan would have missed them.
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Install gitleaks
+        run: |
+          version=$(curl -sSfL https://api.github.com/repos/gitleaks/gitleaks/releases/latest | grep -oE '"tag_name": *"v[0-9.]+"' | grep -oE '[0-9.]+')
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${version}/gitleaks_${version}_linux_x64.tar.gz" | tar -xz gitleaks
+      - name: Scan
+        run: ./gitleaks detect --source . --redact --verbose --exit-code 1
+
+  # Known-CVE audit of the resolved dependency tree.
+  pip-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v6
+      - name: Export locked deps and audit
+        run: |
+          uv export --all-extras --no-emit-workspace --format requirements-txt > requirements.txt
+          uvx pip-audit --requirement requirements.txt
