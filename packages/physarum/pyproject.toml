@@ -3,15 +3,16 @@ name = "physarum"
 version = "0.1.0"
 description = "physarum (mcm) — Optuna hyperparameter-search adaptor for mcm sweeps"
 requires-python = ">=3.11"
+license = "AGPL-3.0-only"
 dependencies = [
-    "reishi",
+    "reishi>=0.4,<0.5",
     "optuna>=4.9.0",
     "pyyaml>=6.0.3",
 ]
 
 [project.optional-dependencies]
 # Only needed to actually run a sweep whose template targets accelerator: mlx.
-mlx = ["oyster"]
+mlx = ["oyster>=0.3,<0.4"]
 # Only needed to actually run a sweep whose template targets accelerator: local.
 local = ["trafilatura>=2.0.0"]
 
