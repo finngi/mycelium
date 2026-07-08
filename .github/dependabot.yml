@@ -1,7 +1,12 @@
 version: 2
 updates:
   - package-ecosystem: "pip"
-    directory: "/"
+    directories:
+      - "/packages/reishi"
+      - "/packages/enoki"
+      - "/packages/oyster"
+      - "/packages/physarum"
+      - "/lab"
     schedule:
       interval: "weekly"
   - package-ecosystem: "github-actions"
