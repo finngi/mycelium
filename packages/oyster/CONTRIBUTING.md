@@ -40,7 +40,7 @@ something's wrong.
 
 ## Joining the mesh
 
-`OYSTER_REPO=finngi/mcm-oyster ./scripts/join_network.sh`
+`OYSTER_REPO=finngi/mycelium ./scripts/join_network.sh`
 on an Apple Silicon Mac. Needs a `gh`-authenticated session (or a manually
 minted runner registration token) and `HF_TOKEN` set as a repo secret
 before `worker.yml` can push/resume checkpoints.

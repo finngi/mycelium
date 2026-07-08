@@ -17,7 +17,7 @@ in `queue.py`/`gitstore.py`; the pull-based, git-atomic design is load
 
 ## Repo shape
 
-Depends on [mcm-reishi](https://github.com/finngi/mcm-reishi)
+Depends on [mcm-reishi](https://github.com/finngi/mycelium/tree/main/packages/reishi)
 via a local path (`uv.sources`, `../mcm-reishi`) — check it out as a
 sibling directory. No CLI of its own: installing it registers the `mesh`
 domain into mcm's CLI via the `mcm.plugins` entry point
@@ -58,8 +58,8 @@ uvx ruff check .
 
 ## Sibling repos
 
-- [mcm-reishi](https://github.com/finngi/mcm-reishi) — the contract layer this repo executes against.
-- [mcm-enoki](https://github.com/finngi/mcm-enoki) — the other executor (KubeRay, cloud GPU/TPU).
+- [mcm-reishi](https://github.com/finngi/mycelium/tree/main/packages/reishi) — the contract layer this repo executes against.
+- [mcm-enoki](https://github.com/finngi/mycelium/tree/main/packages/enoki) — the other executor (KubeRay, cloud GPU/TPU).
 
 See `CONTRIBUTING.md` for commit conventions, the PR/CI gate, and how to
 join the mesh as a runner.

@@ -20,7 +20,7 @@ _\|/_____\|      |  |akn___\\;_\\//___\|/________
 88""   88 Y88 Yb   dP 88"Yb  88                  
 888888 88  Y8  YbodP  88  Yb 88
 ```
-Execution layer for [reishi (mcm)](https://github.com/finngi/mcm-reishi) on KubeRay (GKE `train`
+Execution layer for [reishi (mcm)](https://github.com/finngi/mycelium/tree/main/packages/reishi) on KubeRay (GKE `train`
 namespace). mcm defines the shapes — recipes in, trial manifests out — enoki
 is the thing that actually trains.
 
