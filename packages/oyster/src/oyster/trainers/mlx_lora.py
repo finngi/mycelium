@@ -87,7 +87,7 @@ def _maybe_push_to_hf(adapter_dir: Path, trial_id: str) -> str | None:
         return None
     from huggingface_hub import HfApi
 
-    repo_id = f"{os.environ.get('OYSTER_HF_REPO_PREFIX', 'finngi/mcm-oyster')}-{trial_id}"
+    repo_id = f"{os.environ.get('OYSTER_HF_REPO_PREFIX', 'mcm-oyster')}-{trial_id}"
     try:
         api = HfApi(token=token)
         api.create_repo(repo_id, private=True, exist_ok=True)

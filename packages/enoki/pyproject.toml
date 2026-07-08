@@ -3,7 +3,8 @@ name = "enoki"
 version = "0.1.2"
 description = "enoki — KubeRay (cloud) execution layer for mcm recipes"
 requires-python = ">=3.11"
-dependencies = ["reishi", "pyyaml>=6.0.3"]
+license = "AGPL-3.0-only"
+dependencies = ["reishi>=0.4,<0.5", "pyyaml>=6.0.3"]
 
 [project.entry-points."mcm.plugins"]
 enoki = "enoki.mcm_plugin"

@@ -85,7 +85,7 @@ def test_trial_manifest_tolerates_unknown_keys():
 
 
 def test_dataset_task_is_optional():
-    ds = Dataset(name="pile-mini-040726", uri="gs://xapien-mcm-train/pile-mini")
+    ds = Dataset(name="pile-mini-040726", uri="gs://example-bucket/pile-mini")
     m = ds.to_manifest()
     assert m["task"] == ""
     assert Dataset.from_manifest(m) == ds
