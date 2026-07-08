@@ -1,0 +1,48 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+      - run: uvx ruff check .
+
+  # One venv for the SDK workspace, tested per package: reishi's registry and
+  # each plugin's conftest mutate shared global state, so a single pooled pytest
+  # session cross-contaminates -- run each member isolated (mirrors how the old
+  # per-repo suites ran).
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [reishi, enoki, oyster, physarum]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.12"
+      - run: uv sync --all-extras
+      - run: uv run pytest packages/${{ matrix.package }} -q
+
+  # lab is a standalone consumer project (its own lock/venv): its flair-capped
+  # transformers is irreconcilable with oyster's mlx pin in one venv, so it is
+  # not a workspace member and syncs on its own.
+  test-lab:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: lab
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.12"
+      - run: uv sync
+      - run: uv run pytest -q
