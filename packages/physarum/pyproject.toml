@@ -3,7 +3,7 @@ name = "physarum"
 version = "0.1.0"
 description = "physarum (mcm) — Optuna hyperparameter-search adaptor for mcm sweeps"
 requires-python = ">=3.11"
-license = "AGPL-3.0-only"
+license = "Apache-2.0"
 dependencies = [
     "reishi>=0.4,<0.5",
     "optuna>=4.9.0",
