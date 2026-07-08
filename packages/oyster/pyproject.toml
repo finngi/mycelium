@@ -22,7 +22,7 @@ oyster = "oyster.mcm_plugin"
 
 [dependency-groups]
 dev = [
-    "mypy>=2.1.0",
+    "mypy>=2.2.0",
     "pytest>=9.1.1",
 ]
 
