@@ -13,7 +13,7 @@ entrypoint. Only `l4` has a verified node selector/toleration today.
 
 ## Repo shape
 
-Depends on [mcm-reishi](https://github.com/finngi/mcm-reishi)
+Depends on [mcm-reishi](https://github.com/finngi/mycelium/tree/main/packages/reishi)
 via a local path (`uv.sources`, `../mcm-reishi`) — check it out as a
 sibling directory. Two dependency groups:
 
@@ -51,7 +51,7 @@ GPU to be useful, but will install/import on CPU too).
 
 ## Sibling repos
 
-- [mcm-reishi](https://github.com/finngi/mcm-reishi) — the contract layer this repo executes against.
-- [mcm-oyster](https://github.com/finngi/mcm-oyster) — the other executor (self-hosted mesh, currently `mlx` on Apple Silicon).
+- [mcm-reishi](https://github.com/finngi/mycelium/tree/main/packages/reishi) — the contract layer this repo executes against.
+- [mcm-oyster](https://github.com/finngi/mycelium/tree/main/packages/oyster) — the other executor (self-hosted mesh, currently `mlx` on Apple Silicon).
 
 See `CONTRIBUTING.md` for commit conventions and the PR/CI gate.

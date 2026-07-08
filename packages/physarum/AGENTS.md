@@ -7,7 +7,7 @@ this file is the canonical source, tool-specific files import it.
 ## What this repo is
 
 physarum is the Optuna hyperparameter-search adaptor for
-[reishi (mcm)](https://github.com/finngi/mcm-reishi):
+[reishi (mcm)](https://github.com/finngi/mycelium/tree/main/packages/reishi):
 one Optuna-suggested point in a search space becomes one ordinary `Recipe`,
 planned and run through the exact same `Trainer` contract oyster and enoki
 already implement. physarum defines no execution of its own — it is a
