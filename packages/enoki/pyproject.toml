@@ -11,7 +11,7 @@ enoki = "enoki.mcm_plugin"
 
 [dependency-groups]
 dev = [
-    "mypy>=2.1.0",
+    "mypy>=2.2.0",
     "pytest>=8",
 ]
 # Only the training image needs Ray/Postgres/the LoRA trainer stack; keep
