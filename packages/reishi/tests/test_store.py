@@ -155,7 +155,8 @@ def test_sqlite_db_lives_inside_the_mcm_store_dir(tmp_path, monkeypatch):
     # or not the directory exists yet (no dir-vs-file ambiguity).
     monkeypatch.setenv("MCM_STORE", str(tmp_path / "not-created-yet"))
     b = store.SqliteBackend()
-    assert b.root() == tmp_path / "not-created-yet" / "store.db"
+    assert b.root() == tmp_path / "not-created-yet"
+    assert (b.root() / "store.db").exists()
 
 
 # --- filesystem specifics (the layout oyster's git-as-queue depends on) ---

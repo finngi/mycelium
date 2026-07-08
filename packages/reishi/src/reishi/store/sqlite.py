@@ -42,7 +42,11 @@ class SqliteBackend:
         )
 
     def root(self) -> Path:
-        return self._path
+        # The store directory, not the db file inside it: root() means "the
+        # local store location" across all backends (the fs backend returns
+        # MCM_STORE directly), and callers like oyster's gitstore run `git -C
+        # root()` against it -- a file path there fails silently.
+        return self._path.parent
 
     def save(self, kind: str, name: str, manifest: Mapping[str, object]) -> None:
         self._db.execute(
