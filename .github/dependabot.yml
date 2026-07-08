@@ -8,6 +8,22 @@ updates:
       - "/packages/physarum"
     schedule:
       interval: "weekly"
+    groups:
+      dev-tools:
+        dependency-type: "development"
+    # These are pinned deliberately, with rationale in the pyproject.toml
+    # comments: enoki's cluster stack tracks one known-good CUDA 12.4 build end
+    # to end, and oyster's mlx stack pins the exact transformers/mlx-lm that its
+    # trainer reaches into. Automated major/minor bumps here silently break the
+    # training images, so dependabot must not raise them.
+    ignore:
+      - dependency-name: "torch"
+      - dependency-name: "ray"
+      - dependency-name: "transformers"
+      - dependency-name: "peft"
+      - dependency-name: "accelerate"
+      - dependency-name: "mlx"
+      - dependency-name: "mlx-lm"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
