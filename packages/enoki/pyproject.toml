@@ -44,7 +44,7 @@ dev = [
 # -- the two never resolve on the same platform.
 cluster = [
     "torch==2.4.1 ; sys_platform == 'linux'",
-    "ray[default]>=2.9 ; sys_platform == 'linux'",
+    "ray[default]>=2.56.0 ; sys_platform == 'linux'",
     "psycopg[binary]>=3.3.4 ; sys_platform == 'linux'",
     "transformers>=4.46,<5 ; sys_platform == 'linux'",
     "peft>=0.13,<0.14 ; sys_platform == 'linux'",
