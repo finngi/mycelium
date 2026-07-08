@@ -1,11 +1,11 @@
 # physarum (mcm)
 
 Optuna hyperparameter-search adaptor for
-[reishi (mcm)](https://github.com/finngi/mcm-reishi):
+[reishi (mcm)](https://github.com/finngi/mycelium/tree/main/packages/reishi):
 one Optuna-suggested point in a search space becomes one ordinary `Recipe`,
 planned and run through the exact same `Trainer` contract
-[oyster](https://github.com/finngi/mcm-oyster) and
-[enoki](https://github.com/finngi/mcm-enoki)
+[oyster](https://github.com/finngi/mycelium/tree/main/packages/oyster) and
+[enoki](https://github.com/finngi/mycelium/tree/main/packages/enoki)
 already implement. physarum defines no execution of its own.
 
 ## What a sweep is

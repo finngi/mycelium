@@ -20,11 +20,11 @@ dP   Yb  YbdP  `Ybo."   88   88__   88__dP
 Yb   dP   8P   o.`Y8b   88   88""   88"Yb        
  YbodP   dP    8bodP'   88   888888 88  Yb
 ```
-No-cloud execution layer for [reishi (mcm)](https://github.com/finngi/mcm-reishi): a mesh of
+No-cloud execution layer for [reishi (mcm)](https://github.com/finngi/mycelium/tree/main/packages/reishi): a mesh of
 self-hosted runners behind GitHub Actions, with tag-based
 availability. The mesh mechanism doesn't care what hardware a runner is;
 today's only wired-up trainer (`mlx`) just happens to need Apple Silicon.
-Like [enoki](https://github.com/finngi/mcm-enoki) (the KubeRay layer), oyster consumes
+Like [enoki](https://github.com/finngi/mycelium/tree/main/packages/enoki) (the KubeRay layer), oyster consumes
 recipe manifests and writes trial manifests to the mcm store — it defines
 no shapes of its own. Recipes target the mesh with `accelerator: mlx`.
 
