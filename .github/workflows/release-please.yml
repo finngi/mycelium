@@ -11,19 +11,22 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    env:
+      # Auto-merge needs a real PAT: PRs opened under the default GITHUB_TOKEN
+      # identity gate every CI check behind a manual "Approve and run", so
+      # required checks never go green on their own and auto-merge never fires.
+      # Until a RELEASE_PLEASE_TOKEN secret is set, fall back to GITHUB_TOKEN --
+      # release PRs still open, they just need a manual merge.
+      HAS_PAT: ${{ secrets.RELEASE_PLEASE_TOKEN != '' }}
     steps:
-      # A real PAT, not the default GITHUB_TOKEN: PRs opened under the bot
-      # identity get gated behind a manual "Approve and run" on every CI
-      # check, which means required checks never go green on their own and
-      # auto-merge (below) never fires.
       - uses: googleapis/release-please-action@v5
         id: release
         with:
-          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
       - name: Enable auto-merge on the release PR(s)
-        if: ${{ steps.release.outputs.prs_created == 'true' }}
+        if: ${{ steps.release.outputs.prs_created == 'true' && env.HAS_PAT == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           RELEASE_PRS: ${{ steps.release.outputs.prs }}
