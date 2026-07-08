@@ -35,9 +35,8 @@ _GPU_TOLERATIONS = {
     ],
 }
 
-# placeholder default image -- override with --image or the MCM_TRAIN_IMAGE env var
-# named in enoki's Dockerfile. Override with --image or MCM_TRAIN_IMAGE once
-# a real build/push pipeline picks its own tags.
+# No real registry is baked into the open build: point this at your own training
+# image with --image or the MCM_TRAIN_IMAGE env var. This placeholder is inert.
 _DEFAULT_IMAGE = "localhost/enoki-train:latest"
 
 
