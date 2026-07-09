@@ -30,7 +30,9 @@ def _write(tmp_path, body: str):
 
 
 def test_sweep_roundtrip(tmp_path):
-    sw = Sweep.from_yaml(_write(tmp_path, SWEEP_YAML.format(sampler="tpe", n_trials=40)))
+    sw = Sweep.from_yaml(
+        _write(tmp_path, SWEEP_YAML.format(sampler="tpe", n_trials=40))
+    )
     sw.validate()
     assert sw.n_trials == 40
     assert sw.template["accelerator"] == "mlx"
@@ -38,18 +40,24 @@ def test_sweep_roundtrip(tmp_path):
 
 
 def test_unknown_accelerator_rejected(tmp_path):
-    body = SWEEP_YAML.format(sampler="tpe", n_trials=1).replace("accelerator: mlx", "accelerator: quantum")
+    body = SWEEP_YAML.format(sampler="tpe", n_trials=1).replace(
+        "accelerator: mlx", "accelerator: quantum"
+    )
     with pytest.raises(ValueError, match="accelerator"):
         Sweep.from_yaml(_write(tmp_path, body)).validate()
 
 
 def test_n_trials_must_be_positive(tmp_path):
     with pytest.raises(ValueError, match="n_trials"):
-        Sweep.from_yaml(_write(tmp_path, SWEEP_YAML.format(sampler="tpe", n_trials=0))).validate()
+        Sweep.from_yaml(
+            _write(tmp_path, SWEEP_YAML.format(sampler="tpe", n_trials=0))
+        ).validate()
 
 
 def test_search_space_keys_must_target_trainer(tmp_path):
-    body = SWEEP_YAML.format(sampler="tpe", n_trials=1).replace("trainer.lr:", "top_level_lr:")
+    body = SWEEP_YAML.format(sampler="tpe", n_trials=1).replace(
+        "trainer.lr:", "top_level_lr:"
+    )
     with pytest.raises(ValueError, match="trainer\\."):
         Sweep.from_yaml(_write(tmp_path, body)).validate()
 

@@ -9,7 +9,9 @@ from enoki.trainers import _build_example
 
 
 class _FakeTokenizer:
-    def apply_chat_template(self, messages, tokenize=False, add_generation_prompt=False):
+    def apply_chat_template(
+        self, messages, tokenize=False, add_generation_prompt=False
+    ):
         text = "".join(f"<{m['role']}>{m['content']}</{m['role']}>" for m in messages)
         if add_generation_prompt:
             text += "<assistant>"
@@ -60,7 +62,9 @@ def test_oversized_prompt_is_truncated_from_the_left_completion_kept_whole():
     assert len(ex["input_ids"]) == max_length
     # the completion (end of the sequence) is byte-for-byte intact and fully
     # supervised -- this is the thing the old right-truncation could corrupt.
-    assert ex["input_ids"][-completion_len:] == [ord(c) for c in full_text[-completion_len:]]
+    assert ex["input_ids"][-completion_len:] == [
+        ord(c) for c in full_text[-completion_len:]
+    ]
     assert ex["labels"][-completion_len:] == ex["input_ids"][-completion_len:]
     # everything before the completion is masked prompt (truncated HTML).
     assert ex["labels"][:-completion_len] == [-100] * (max_length - completion_len)

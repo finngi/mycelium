@@ -75,15 +75,35 @@ def set_ready(ready: bool) -> bool:
     repo = _repo()
     if repo is None:
         return False
-    r = _gh("api", f"repos/{repo}/actions/runners", "--paginate", "--jq",
-            f'.runners[] | select((.labels[].name=="mlx") and '
-            f'(.name | startswith("{name()}"))) | .id')
-    runner_id = r.stdout.strip().splitlines()[0] if r.returncode == 0 and r.stdout.strip() else None
+    r = _gh(
+        "api",
+        f"repos/{repo}/actions/runners",
+        "--paginate",
+        "--jq",
+        f'.runners[] | select((.labels[].name=="mlx") and '
+        f'(.name | startswith("{name()}"))) | .id',
+    )
+    runner_id = (
+        r.stdout.strip().splitlines()[0]
+        if r.returncode == 0 and r.stdout.strip()
+        else None
+    )
     if runner_id is None:
         return False
     if ready:
-        r = _gh("api", "-X", "POST", f"repos/{repo}/actions/runners/{runner_id}/labels",
-                "-f", "labels[]=ready")
+        r = _gh(
+            "api",
+            "-X",
+            "POST",
+            f"repos/{repo}/actions/runners/{runner_id}/labels",
+            "-f",
+            "labels[]=ready",
+        )
     else:
-        r = _gh("api", "-X", "DELETE", f"repos/{repo}/actions/runners/{runner_id}/labels/ready")
+        r = _gh(
+            "api",
+            "-X",
+            "DELETE",
+            f"repos/{repo}/actions/runners/{runner_id}/labels/ready",
+        )
     return r.returncode == 0

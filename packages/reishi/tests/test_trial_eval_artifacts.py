@@ -20,7 +20,9 @@ def test_predictions_artifact_roundtrips():
     )
     back = Trial.from_manifest(t.to_manifest())
     assert back.artifacts == t.artifacts
-    assert back.artifacts["predictions"] == "file:///store/artifacts/t-1/predictions.jsonl"
+    assert (
+        back.artifacts["predictions"] == "file:///store/artifacts/t-1/predictions.jsonl"
+    )
 
 
 def test_eval_block_roundtrips():

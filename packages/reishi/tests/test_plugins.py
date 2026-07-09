@@ -9,7 +9,11 @@ from reishi.cli.grammar import GrammarError, Verb, canonicalize
 
 @pytest.fixture(autouse=True)
 def pristine_grammar():
-    domains, plurals, verbs = grammar.DOMAINS, dict(grammar._PLURALS), dict(grammar.VERBS)
+    domains, plurals, verbs = (
+        grammar.DOMAINS,
+        dict(grammar._PLURALS),
+        dict(grammar.VERBS),
+    )
     yield
     grammar.DOMAINS = domains
     grammar._PLURALS.clear(), grammar._PLURALS.update(plurals)

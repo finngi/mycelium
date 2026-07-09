@@ -69,7 +69,9 @@ def test_suggest_accepts_any_backend_offering_the_suggester_surface():
 
 
 def test_build_recipe_merges_suggestions_over_template_defaults():
-    recipe = build_recipe(TEMPLATE, {"trainer.lr": 5e-5, "trainer.rank": 16}, "my-sweep", trial_number=3)
+    recipe = build_recipe(
+        TEMPLATE, {"trainer.lr": 5e-5, "trainer.rank": 16}, "my-sweep", trial_number=3
+    )
     assert recipe.name == "my-sweep-t3"
     assert recipe.seeds == 1
     assert recipe.trainer == {"iters": 500, "lr": 5e-5, "rank": 16}

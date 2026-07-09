@@ -45,7 +45,9 @@ def run_eval(
     sink: Callable[[Mapping], None] | None = None,
 ) -> dict:
     if not callable(getattr(task, "score", None)):
-        raise ValueError("task has no scorer (Task.score is None) -- nothing to run_eval")
+        raise ValueError(
+            "task has no scorer (Task.score is None) -- nothing to run_eval"
+        )
     scores: list[Mapping[str, object]] = []
     for row in rows:
         raw = generate(_render(prompt, row["x"]))

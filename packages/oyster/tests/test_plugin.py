@@ -13,7 +13,11 @@ from oyster import machine, mcm_plugin
 def mesh_grammar(tmp_path, monkeypatch):
     monkeypatch.setenv("MCM_STORE", str(tmp_path / "store"))
     monkeypatch.setattr(machine, "BUSY_FILE", tmp_path / "busy")
-    domains, plurals, verbs = grammar.DOMAINS, dict(grammar._PLURALS), dict(grammar.VERBS)
+    domains, plurals, verbs = (
+        grammar.DOMAINS,
+        dict(grammar._PLURALS),
+        dict(grammar.VERBS),
+    )
     grammar.extend(mcm_plugin.DOMAINS, mcm_plugin.VERBS)
     yield
     grammar.DOMAINS = domains
@@ -22,7 +26,10 @@ def mesh_grammar(tmp_path, monkeypatch):
 
 
 def test_mesh_vocabulary_canonicalizes():
-    assert (canonicalize(["work"]).domain, canonicalize(["work"]).action) == ("mesh", "work")
+    assert (canonicalize(["work"]).domain, canonicalize(["work"]).action) == (
+        "mesh",
+        "work",
+    )
     assert canonicalize(["mesh"]).action == "list"
     cmd = canonicalize(["requeue", "trial-1"])
     assert (cmd.domain, cmd.action, cmd.objects) == ("mesh", "requeue", ["trial-1"])

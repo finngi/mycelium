@@ -75,7 +75,10 @@ def run(recipe_path: str) -> int:
     trials = trial.plan(recipe)
     for t in trials:
         trial.save(t)
-    print(f"[OK] planned {len(trials)} trial(s) for recipe '{recipe.name}'", file=sys.stderr)
+    print(
+        f"[OK] planned {len(trials)} trial(s) for recipe '{recipe.name}'",
+        file=sys.stderr,
+    )
 
     failures = 0
     for t in trials:

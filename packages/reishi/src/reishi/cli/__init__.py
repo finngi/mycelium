@@ -20,10 +20,15 @@ def _load_plugins(handlers: dict) -> None:
     for ep in entry_points(group="mcm.plugins"):
         try:
             mod = ep.load()
-            grammar.extend(getattr(mod, "DOMAINS", ()), tuple(getattr(mod, "VERBS", ())))
+            grammar.extend(
+                getattr(mod, "DOMAINS", ()), tuple(getattr(mod, "VERBS", ()))
+            )
             handlers.update(getattr(mod, "HANDLERS", {}))
         except Exception as e:
-            print(f"[WARN] mcm plugin '{ep.name}' failed to load: {type(e).__name__}: {e}", file=sys.stderr)
+            print(
+                f"[WARN] mcm plugin '{ep.name}' failed to load: {type(e).__name__}: {e}",
+                file=sys.stderr,
+            )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -64,7 +69,10 @@ def main(argv: list[str] | None = None) -> int:
 
     handler = commands.HANDLERS.get((cmd.domain, cmd.action))
     if handler is None:
-        print(f"[FAIL] 'mcm {cmd.domain} {cmd.action}' is not implemented", file=sys.stderr)
+        print(
+            f"[FAIL] 'mcm {cmd.domain} {cmd.action}' is not implemented",
+            file=sys.stderr,
+        )
         return 2
 
     try:

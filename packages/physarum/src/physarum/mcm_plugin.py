@@ -23,7 +23,9 @@ from physarum.watch import DEFAULT_PORT, serve as watch_serve
 
 DOMAINS = ("sweep",)
 VERBS = (
-    Verb("optimize", home="sweep", readonly=False),  # not "run" -- already home to "recipe"
+    Verb(
+        "optimize", home="sweep", readonly=False
+    ),  # not "run" -- already home to "recipe"
     Verb("watch", home="sweep", readonly=True),
 )
 
@@ -37,7 +39,9 @@ _SAMPLERS = {
 _GridValue = str | float | int | bool | None
 
 
-def _grid_search_space(search_space: dict[str, ParamSpec]) -> dict[str, list[_GridValue]]:
+def _grid_search_space(
+    search_space: dict[str, ParamSpec],
+) -> dict[str, list[_GridValue]]:
     # GridSampler needs every value it will ever suggest listed up front, so
     # unbounded continuous params ("float"/"loguniform") can't feed it --
     # only the enumerable types (categorical's own choices, or a stepped int
@@ -56,11 +60,15 @@ def _grid_search_space(search_space: dict[str, ParamSpec]) -> dict[str, list[_Gr
     return grid
 
 
-def _resolve_sampler(name: str, search_space: dict[str, ParamSpec]) -> optuna.samplers.BaseSampler:
+def _resolve_sampler(
+    name: str, search_space: dict[str, ParamSpec]
+) -> optuna.samplers.BaseSampler:
     if name == "grid":
         return optuna.samplers.GridSampler(_grid_search_space(search_space))
     if name not in _SAMPLERS:
-        raise ValueError(f"unknown sampler '{name}' (one of {', '.join((*_SAMPLERS, 'grid'))})")
+        raise ValueError(
+            f"unknown sampler '{name}' (one of {', '.join((*_SAMPLERS, 'grid'))})"
+        )
     return _SAMPLERS[name]()
 
 
@@ -83,7 +91,9 @@ def _resolve_trainer(accelerator: str) -> Trainer:
                 f"accelerator 'local' needs trafilatura installed (uv pip install -e '.[local]'): {e}"
             ) from e
         return local_train
-    raise ValueError(f"no trainer resolvable for accelerator '{accelerator}' yet (one of 'local', 'mlx' is wired up)")
+    raise ValueError(
+        f"no trainer resolvable for accelerator '{accelerator}' yet (one of 'local', 'mlx' is wired up)"
+    )
 
 
 def _flag_value(flags: list[str], name: str) -> str | None:
@@ -97,14 +107,20 @@ def _flag_value(flags: list[str], name: str) -> str | None:
     return flags[i + 1] if i + 1 < len(flags) else None
 
 
-def _make_progress_callback(total: int) -> Callable[[optuna.Study, optuna.trial.FrozenTrial], None]:
+def _make_progress_callback(
+    total: int,
+) -> Callable[[optuna.Study, optuna.trial.FrozenTrial], None]:
     def callback(study: optuna.Study, trial: optuna.trial.FrozenTrial) -> None:
         # study.best_value raises until at least one trial has completed -- trial.number
         # is 0-indexed, so +1 here matches the 1-of-N a human expects to read. `total` is
         # the sweep's configured n_trials, not len(study.trials) -- the latter only ever
         # equals trial.number + 1 in this single-threaded loop, so every line would
         # otherwise read "K/K" instead of "K/60".
-        best = study.best_value if study.trials and any(t.value is not None for t in study.trials) else None
+        best = (
+            study.best_value
+            if study.trials and any(t.value is not None for t in study.trials)
+            else None
+        )
         if trial.state != optuna.trial.TrialState.COMPLETE:
             # study.optimize(catch=...) swallows the exception and keeps going --
             # objective() already recorded the real error on the Trial manifest,
@@ -148,7 +164,11 @@ def sweep_optimize(cmd: Command) -> int:
     # manifests are never removed, only superseded by this newer sidecar) --
     # see watch.trials_for_sweep's started_at filter.
     started_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    store.save("sweeps", sweep.name, {"name": sweep.name, "n_trials": sweep.n_trials, "started_at": started_at})
+    store.save(
+        "sweeps",
+        sweep.name,
+        {"name": sweep.name, "n_trials": sweep.n_trials, "started_at": started_at},
+    )
     print(
         f"[INFO] sweep '{sweep.name}' starting: {sweep.n_trials} trials -> "
         f"run `mcm sweep watch {sweep.name}` in another terminal to graph convergence live",
@@ -167,15 +187,28 @@ def sweep_optimize(cmd: Command) -> int:
 
     completed = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
     if not completed:
-        print(f"[FAIL] sweep '{sweep.name}': all {len(study.trials)} trials failed", file=sys.stderr)
+        print(
+            f"[FAIL] sweep '{sweep.name}': all {len(study.trials)} trials failed",
+            file=sys.stderr,
+        )
         return 1
 
     best = study.best_trial
     best_trial_id = best.user_attrs.get("mcm_trial_id")
     failed = len(study.trials) - len(completed)
     suffix = f" ({failed} of {len(study.trials)} trials failed)" if failed else ""
-    print(f"[OK] sweep '{sweep.name}' done: best value {best.value} (mcm trial {best_trial_id}){suffix}", file=sys.stderr)
-    emit({"best_value": best.value, "best_trial": best_trial_id, "best_params": best.params}, cmd.flags)
+    print(
+        f"[OK] sweep '{sweep.name}' done: best value {best.value} (mcm trial {best_trial_id}){suffix}",
+        file=sys.stderr,
+    )
+    emit(
+        {
+            "best_value": best.value,
+            "best_trial": best_trial_id,
+            "best_params": best.params,
+        },
+        cmd.flags,
+    )
     return 0
 
 

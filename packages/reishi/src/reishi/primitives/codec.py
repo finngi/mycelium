@@ -76,5 +76,7 @@ _CODECS = {
 
 def get_codec(name: str) -> Codec:
     if name not in _CODECS:
-        raise ValueError(f"unknown codec '{name}' (registered: {', '.join(sorted(_CODECS))})")
+        raise ValueError(
+            f"unknown codec '{name}' (registered: {', '.join(sorted(_CODECS))})"
+        )
     return _CODECS[name]
