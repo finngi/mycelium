@@ -1,8 +1,7 @@
-"""mcm plugin: the `sweep` domain. With physarum installed, the one mcm CLI
-grows sweep vocabulary -- same grammar, same canonical echo, same -o json.
+"""mcm plugin registering the `sweep` domain.
 
-    mcm sweep optimize sweep.yaml   # > mcm sweep optimize   run a sweep to completion, in-process
-    mcm sweep watch my-sweep        # > mcm sweep watch      localhost page graphing its trials live
+mcm sweep optimize sweep.yaml   # run a sweep to completion, in-process
+mcm sweep watch my-sweep        # localhost page graphing its trials live
 """
 
 import sys
@@ -25,7 +24,7 @@ DOMAINS = ("sweep",)
 VERBS = (
     Verb(
         "optimize", home="sweep", readonly=False
-    ),  # not "run" -- already home to "recipe"
+    ),  # not "run": that verb's home domain is "recipe"
     Verb("watch", home="sweep", readonly=True),
 )
 
@@ -43,9 +42,8 @@ def _grid_search_space(
     search_space: dict[str, ParamSpec],
 ) -> dict[str, list[_GridValue]]:
     # GridSampler needs every value it will ever suggest listed up front, so
-    # unbounded continuous params ("float"/"loguniform") can't feed it --
-    # only the enumerable types (categorical's own choices, or a stepped int
-    # range) have a well-defined full grid.
+    # only enumerable types have a full grid: continuous float/loguniform
+    # params can't feed it.
     grid: dict[str, list[_GridValue]] = {}
     for key, spec in search_space.items():
         if spec["type"] == "categorical":
@@ -73,8 +71,6 @@ def _resolve_sampler(
 
 
 def _resolve_trainer(accelerator: str) -> Trainer:
-    # mlx delegates to oyster's cluster-execution stack; local needs nothing
-    # beyond trafilatura since it never leaves this process.
     if accelerator == "mlx":
         try:
             from oyster.trainers import TRAINERS
@@ -111,20 +107,19 @@ def _make_progress_callback(
     total: int,
 ) -> Callable[[optuna.Study, optuna.trial.FrozenTrial], None]:
     def callback(study: optuna.Study, trial: optuna.trial.FrozenTrial) -> None:
-        # study.best_value raises until at least one trial has completed -- trial.number
-        # is 0-indexed, so +1 here matches the 1-of-N a human expects to read. `total` is
-        # the sweep's configured n_trials, not len(study.trials) -- the latter only ever
-        # equals trial.number + 1 in this single-threaded loop, so every line would
-        # otherwise read "K/K" instead of "K/60".
+        # study.best_value raises until at least one trial has completed.
+        # `total` is the configured n_trials, not len(study.trials): the latter
+        # equals trial.number + 1 in this single-threaded loop, so lines would
+        # otherwise read "K/K". trial.number is 0-indexed, hence the +1.
         best = (
             study.best_value
             if study.trials and any(t.value is not None for t in study.trials)
             else None
         )
         if trial.state != optuna.trial.TrialState.COMPLETE:
-            # study.optimize(catch=...) swallows the exception and keeps going --
-            # objective() already recorded the real error on the Trial manifest,
-            # this is just the search backend's own view of what happened.
+            # objective() already recorded the real error on the Trial manifest
+            # before study.optimize(catch=...) swallowed it; this line is only
+            # the backend's own view.
             print(
                 f"[WARN] trial {trial.number + 1}/{total} {trial.state.name.lower()} "
                 f"(best so far: {best}) params={trial.params}",
@@ -153,16 +148,10 @@ def sweep_optimize(cmd: Command) -> int:
         direction=sweep.objective["direction"],
         sampler=_resolve_sampler(sweep.sampler, sweep.search_space),
     )
-    # A read-only sidecar for `sweep watch`, which only ever reads the store and
-    # has no other way to learn n_trials -- it can't parse this sweep's yaml
-    # (it only takes a name), and it must stay startable independently of this
-    # process. Not a reishi primitive: it's physarum's own bookkeeping over
-    # reishi's generic (kind, name) store, same as Sweep itself.
-    #
-    # started_at lets `sweep watch` hide trials left over from an earlier run
-    # of a sweep with this same name (reishi's store has no delete -- old Trial
-    # manifests are never removed, only superseded by this newer sidecar) --
-    # see watch.trials_for_sweep's started_at filter.
+    # `sweep watch` takes only a name, so it can't learn n_trials from the yaml;
+    # this sidecar carries it. started_at lets watch hide trials from an earlier
+    # run of a same-named sweep, since reishi's store never deletes old manifests
+    # (see watch.trials_for_sweep's started_at filter).
     started_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
     store.save(
         "sweeps",
@@ -178,10 +167,8 @@ def sweep_optimize(cmd: Command) -> int:
         make_objective(sweep, trainer_fn),
         n_trials=sweep.n_trials,
         callbacks=[_make_progress_callback(sweep.n_trials)],
-        # One bad trial (a trainer crash, a missing metric) must not sink the
-        # whole sweep -- objective() already marks it "failed" on the Trial
-        # manifest before re-raising; this just stops Optuna from propagating
-        # that past study.optimize() and losing every trial after it.
+        # objective() marks a failing trial "failed" and re-raises; catch stops
+        # that exception unwinding study.optimize() and losing every later trial.
         catch=(Exception,),
     )
 

@@ -1,11 +1,8 @@
-"""'local' accelerator trainer: one Optuna-suggested trafilatura config,
-scored against a recipe's dataset -- no gradient step, no model.
+"""'local' accelerator trainer: scores one trafilatura config against a
+recipe's dataset -- no gradient step, no model.
 
-Same Trainer contract as oyster's mlx_lora (trial manifest in, metrics +
-artifacts out), so this "training" is deterministic extraction-parameter
-search rather than fine-tuning. No heartbeat thread: unlike mlx_lora's
-multi-hour cluster run, one trial here is a bounded in-process CPU loop with
-no reaper watching it.
+Satisfies the Trainer contract (trial manifest in, metrics + artifacts out),
+so "training" here is deterministic extraction-parameter search.
 """
 
 import json
@@ -21,10 +18,8 @@ from reishi.primitives.trial import TrialManifest
 
 from physarum.objective import TrainerResult
 
-# The only knobs trafilatura.extract() itself takes as booleans -- the sweep's
-# search_space is validated (Sweep.validate) to only contain "trainer.*" keys,
-# and every one of those must be one of these or eval_n, so a typo'd param
-# name fails loudly here rather than silently no-opping inside extract().
+# The boolean knobs trafilatura.extract() accepts; any other trainer key
+# (besides eval_n) is rejected below rather than silently ignored by extract().
 _EXTRACT_PARAMS = (
     "favor_precision",
     "favor_recall",

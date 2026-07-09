@@ -1,9 +1,7 @@
 """Sweep: a recipe template plus a search space over its trainer hyperparameters.
 
-physarum's own primitive, layered on reishi's Recipe -- a sweep never trains
-anything itself; each suggested point becomes an ordinary Recipe, planned and
-run through the exact same Trainer contract oyster and enoki already
-implement.
+Each suggested point becomes an ordinary reishi Recipe; a Sweep never trains
+anything itself.
 """
 
 from dataclasses import dataclass
@@ -58,7 +56,7 @@ class Sweep:
     template: RecipeManifest
     search_space: dict[str, ParamSpec]
     objective: ObjectiveSpec
-    sampler: str = "tpe"  # a name the resolved search backend understands; validating it is that backend's job, not this manifest's
+    sampler: str = "tpe"  # validated by the resolved backend, not here
     n_trials: int = 20
 
     @classmethod
