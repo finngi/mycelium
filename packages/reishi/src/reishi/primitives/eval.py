@@ -1,14 +1,9 @@
-"""Eval orchestration: the pure control flow around a Task's decode/score/aggregate.
+"""Eval loop: render prompt -> generate -> decode -> score -> aggregate.
 
-The seam this module defines: reishi owns the loop (render prompt -> collect raw
--> decode -> score -> aggregate) but never runs the one step that touches hardware.
-Generation is injected as a `generate` callback, so reishi imports no Ray/torch/mlx
-and runs no accelerator work in-process -- the executor (enoki/oyster) supplies a
-real `generate` and chooses a `Placement`; reishi stays a pure dependency.
-
-The loop bounds nothing about x/y: it only assumes a row exposes `x`, `y`, `key`,
-and it talks to the task through the `Scorable` protocol, not a concrete class.
-pred and gold are `Any`.
+generate is injected as a callback, so this module imports no accelerator
+libraries and runs no inference itself. Rows are read only as x/y/key and the
+task only through the Scorable protocol, so nothing here is bound to a concrete
+row or task type.
 """
 
 from collections.abc import Iterable, Mapping
@@ -20,7 +15,7 @@ Placement = Literal["cpu", "accelerator", "local"]
 
 @runtime_checkable
 class Scorable(Protocol):
-    """The only shape eval needs from a Task -- decouples the loop from task.py."""
+    """The subset of Task that run_eval actually calls."""
 
     def decode(self, raw: str) -> Any: ...
     def score(self, pred: Any, gold: Any) -> Mapping[str, object]: ...

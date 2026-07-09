@@ -1,10 +1,6 @@
-"""Recipe: declarative model x dataset x prompt x trainer spec.
-
-A recipe never says HOW to train — the accelerator field selects a trainer
-(TRL/PEFT on CUDA, XLA/JAX on TPU) at execution time.
-
-base_model is optional: absent means training from scratch, with the
-architecture described in the trainer spec.
+"""Recipe: a frozen spec of model x dataset x prompt x trainer, loaded from
+YAML (from_yaml), checked (validate), and serialized (to_manifest). It holds
+fields only; nothing here trains -- executors read the manifest and act on it.
 """
 
 from dataclasses import dataclass, field
@@ -25,7 +21,7 @@ class RecipeManifest(TypedDict):
     prompt: str | None
     seeds: int
     priority: int
-    trainer: dict  # per-accelerator hyperparameters -- shape varies by trainer, not a fixed contract
+    trainer: dict  # free-form hyperparameters; shape not validated here
 
 
 @dataclass(frozen=True)
@@ -37,7 +33,7 @@ class Recipe:
     accelerator: str = "l4"
     prompt: str | None = None
     seeds: int = 1
-    priority: int = 0  # higher claims first; ties break oldest-first
+    priority: int = 0
     trainer: dict = field(default_factory=dict)
 
     @classmethod
