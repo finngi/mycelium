@@ -45,6 +45,11 @@ class TrialManifest(TypedDict):
     status: str
     created: str
     metrics: dict  # task-specific; field-scored tasks store AggregateMetrics here
+    # Executor-written run-resource facts (wall_time_s, cost_usd, artifact_bytes,
+    # latency_ms_p50 -- unit-suffixed), disjoint from metrics: a scorer judges
+    # answers, only the executor can observe what the run itself cost.
+    # See math-foundations.md 3(iii).
+    observables: dict
     artifacts: TrialArtifacts
     spec: RecipeManifest
     execution: ExecutionInfo
@@ -59,6 +64,7 @@ class Trial:
     status: str = "planned"
     created: str = ""
     metrics: dict = field(default_factory=dict)
+    observables: dict = field(default_factory=dict)
     artifacts: TrialArtifacts = field(default_factory=TrialArtifacts)
     # Empty default only fires for a bare Trial or a load of a manifest missing
     # "spec"; a real recipe always fills every RecipeManifest field.
@@ -79,6 +85,7 @@ class Trial:
             "status": self.status,
             "created": self.created,
             "metrics": self.metrics,
+            "observables": self.observables,
             "artifacts": self.artifacts,
             "spec": self.spec,
             "execution": self.execution,

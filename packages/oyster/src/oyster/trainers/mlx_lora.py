@@ -265,23 +265,28 @@ def train(trial_manifest: TrialManifest) -> TrainerResult:
             pred_text = re.sub(
                 r"<think>.*?</think>", "", pred_text, flags=re.DOTALL
             ).strip()
-            gold = json.loads(row["target"])
-            scores.append(task_obj.score(codec.decode(pred_text), gold))
+            ref = json.loads(row["target"])
+            scores.append(task_obj.score(codec.decode(pred_text), ref))
         gen_seconds = time.time() - gen_start
 
-        # A plain dict, not the stricter AggregateMetrics: run provenance (model, iters, seed...)
-        # isn't part of the task's scoring contract, just this trainer's report alongside it.
+        # A plain dict, not the stricter AggregateMetrics: run provenance (model,
+        # method...) isn't part of the task's scoring contract, just this trainer's
+        # report alongside it. seed isn't repeated here -- the Trial already carries
+        # it. Run-resource facts (wall time, iteration count) belong in observables,
+        # not here: a scorer can't compute them, only the executor observes them --
+        # see math-foundations.md 3(iii).
         metrics: dict = {
             **task_registry.aggregate(scores),
             "model": base_model,
             "backend": "mlx",
             "method": method,
-            "iters": iters,
-            "seed": seed,
             "eval_names_per_s": round(len(scores) / gen_seconds, 2)
             if gen_seconds
             else None,
-            "wall_s": round(time.time() - t0, 0),
+        }
+        observables: dict = {
+            "wall_time_s": round(time.time() - t0, 0),
+            "iters": iters,
         }
 
         adapter_dir = out_dir / "adapters"
@@ -291,4 +296,8 @@ def train(trial_manifest: TrialManifest) -> TrainerResult:
     finally:
         heartbeat.stop()
 
-    return {"metrics": metrics, "artifacts": {"weights": weights_uri}}
+    return {
+        "metrics": metrics,
+        "artifacts": {"weights": weights_uri},
+        "observables": observables,
+    }

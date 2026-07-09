@@ -56,7 +56,44 @@ def test_old_manifest_without_eval_or_predictions_loads():
     t = Trial.from_manifest(old)
     assert t.id == "t-3"
     assert t.eval == {}
+    assert t.observables == {}
     assert "predictions" not in t.artifacts
+
+
+def test_observables_roundtrips():
+    t = Trial(
+        id="t-7",
+        recipe="r",
+        seed=0,
+        observables={"wall_time_s": 42.0, "artifact_bytes": 1024},
+    )
+    back = Trial.from_manifest(t.to_manifest())
+    assert back.observables == t.observables
+
+
+def test_old_manifest_without_observables_loads():
+    old = {
+        "id": "t-8",
+        "recipe": "r",
+        "seed": 0,
+        "status": "done",
+        "created": "2026-07-01T00:00:00+00:00",
+        "metrics": {"f1": 0.9},
+        "artifacts": {},
+        "spec": {},
+        "execution": {},
+    }
+    t = Trial.from_manifest(old)
+    assert t.observables == {}
+
+
+def test_observables_not_shadowed_by_stale_extra():
+    # Same guarantee as test_known_key_not_shadowed_by_stale_extra, for the
+    # newly-added observables field.
+    t = Trial.from_manifest({"id": "t-9", "recipe": "r", "seed": 0})
+    t.extra["observables"] = {"wall_time_s": "STALE"}
+    t.observables = {"wall_time_s": 1.0}
+    assert t.to_manifest()["observables"] == {"wall_time_s": 1.0}
 
 
 def test_manifest_unknown_key_survives_round_trip():
