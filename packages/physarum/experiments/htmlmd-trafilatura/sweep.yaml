@@ -1,8 +1,8 @@
 # mcm sweep optimize experiments/htmlmd-trafilatura/sweep.yaml
 #
 # Searches trafilatura's extraction-config space against the htmlmd task's
-# reference-free scorer (source HTML vs candidate markdown -- see
-# reishi/src/reishi/tasks/htmlmd/scoring.py). No model: accelerator "local"
+# reference-free scorer (source HTML vs candidate markdown; the task is
+# deployment-provided, since reishi ships none). No model: accelerator "local"
 # runs physarum's trafilatura trainer in-process, one Optuna suggestion per
 # trial. Every param below is a boolean toggle, so the search space is the
 # full cartesian product: 2**9 = 512 combinations -- small enough to grid
