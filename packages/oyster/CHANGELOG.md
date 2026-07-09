@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/finngi/mycelium/compare/oyster-v0.5.0...oyster-v0.5.1) (2026-07-09)
+
+
+### Bug Fixes
+
+* **reishi:** preserve unknown manifest keys; tolerate non-scalar board metrics; declare Alpha status ([#20](https://github.com/finngi/mycelium/issues/20)) ([3078a71](https://github.com/finngi/mycelium/commit/3078a71d2f17e22778cb7639fd9ef87f4c2a253d))
+
 ## [0.5.0](https://github.com/finngi/mycelium/compare/oyster-v0.4.1...oyster-v0.5.0) (2026-07-09)
 
 

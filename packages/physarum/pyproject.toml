@@ -1,6 +1,6 @@
 [project]
 name = "physarum"
-version = "0.3.0"
+version = "0.3.1"
 description = "physarum (mcm) — Optuna hyperparameter-search adaptor for mcm sweeps"
 requires-python = ">=3.11"
 license = "Apache-2.0"
