@@ -11,6 +11,10 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    # RELEASE_PLEASE_TOKEN lives as a secret on the `main` environment, so the
+    # job must join that environment to read it (repo-level secrets would work
+    # without this, but the token was scoped to the environment).
+    environment: main
     env:
       # Auto-merge needs a real PAT: PRs opened under the default GITHUB_TOKEN
       # identity gate every CI check behind a manual "Approve and run", so
