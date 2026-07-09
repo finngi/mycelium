@@ -36,5 +36,6 @@ jobs:
           RELEASE_PRS: ${{ steps.release.outputs.prs }}
         run: |
           for number in $(echo "$RELEASE_PRS" | jq -r '.[].number'); do
-            gh pr merge --auto --squash "$number" --repo ${{ github.repository }}
+            gh pr merge --auto --squash "$number" --repo ${{ github.repository }} \
+              || echo "[WARN] could not enable auto-merge on #$number -- enable Settings > General > Allow auto-merge"
           done
