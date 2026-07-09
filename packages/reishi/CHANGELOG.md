@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.6.0](https://github.com/finngi/mycelium/compare/reishi-v0.5.1...reishi-v0.6.0) (2026-07-09)
+
+
+### Features
+
+* add TypedDict manifests, Task.aggregate scoring, and JSON codec ([#8](https://github.com/finngi/mycelium/issues/8)) ([e64ce5a](https://github.com/finngi/mycelium/commit/e64ce5a889c76dd9d55ee76a4dfa1ec921f8a73b))
+* **store:** default to a sqlite manifest backend, add artifact root ([#13](https://github.com/finngi/mycelium/issues/13)) ([c337980](https://github.com/finngi/mycelium/commit/c337980f64d63862ef3c7342476838381c886630))
+* **task:** generalize Task to any f(x)=y + pure eval seam ([#19](https://github.com/finngi/mycelium/issues/19)) ([044a35f](https://github.com/finngi/mycelium/commit/044a35f7e6351f46282f6101ea7cb25599094646))
+* **tasks:** reishi ships no tasks; deployments load them via mcm.tasks entry points ([#16](https://github.com/finngi/mycelium/issues/16)) ([5c95655](https://github.com/finngi/mycelium/commit/5c95655f873ba93fb59c8631039e8e44c026bc8e))
+
+
+### Bug Fixes
+
+* **ci:** check out mcm-enoki as a sibling for experiment_submit tests ([242572a](https://github.com/finngi/mycelium/commit/242572ac54bb538c5a3f3727d9682da19433320e))
+* **ci:** grant contents:read alongside security-events:write in codeql ([da56e13](https://github.com/finngi/mycelium/commit/da56e13be5400a4ad84cc5f2abcedb407b5dd322))
+* **ci:** lint with uvx, not uv run, to avoid syncing project deps ([76cf12a](https://github.com/finngi/mycelium/commit/76cf12af7f28b9d2bee07753a2057457802cf6b2))
+* **cli:** fail loud and clean on task-loading errors; isolate test registry ([#18](https://github.com/finngi/mycelium/issues/18)) ([7c6c8fe](https://github.com/finngi/mycelium/commit/7c6c8fec0512043e21dc1e227858a634d9ae0818))
+* **store:** sqlite root() returns the store dir, not the db file ([ef82f48](https://github.com/finngi/mycelium/commit/ef82f48bb6e7bc9380ddaae6f11ed76c00436d63))
+
+
+### Documentation
+
+* add NOTICE copyright + package authors ([78da29f](https://github.com/finngi/mycelium/commit/78da29f169d64ae1100098b696b38d4a7daaff43))
+* fix stale/inaccurate doc claims and comment restatements ([#11](https://github.com/finngi/mycelium/issues/11)) ([880f2e0](https://github.com/finngi/mycelium/commit/880f2e0cdb20f664dcb8d2475c2b8f52acac53ea))
+* point cross-package links at the mycelium monorepo ([baea95c](https://github.com/finngi/mycelium/commit/baea95ca4fa34d9540d4b9aa595a9cb019bd0c82))
+* **primitives:** rewrite comments/docstrings to actual scope ([621ce90](https://github.com/finngi/mycelium/commit/621ce90f8acb973f1fccf6c06eb9b5806844a816))
+* **reishi:** rewrite non-primitive comments to actual scope ([4c3961e](https://github.com/finngi/mycelium/commit/4c3961edce7d1dafd08b9040601e3b444fbdeff3))
+* set package authors to Finn Danger Cathersides ([a70a2ca](https://github.com/finngi/mycelium/commit/a70a2cada573735a003e52aa89b9f82e5a0cbb6d))
+
 ## [0.5.1](https://github.com/finngi/mycelium/compare/reishi-v0.5.0...reishi-v0.5.1) (2026-07-09)
 
 
