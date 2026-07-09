@@ -5,7 +5,7 @@ label gates *assignment*: with it removed, GitHub never hands this machine
 a job, so there is no pickup/refuse/retry cycle to burn attempts. The busy
 file gates *execution*: it catches only jobs assigned before the label came
 off, failing them fast instead of training on a machine someone is using.
-Drain toggles both; the label is the mechanism, the file is the backstop.
+The label is the mechanism, the busy file the backstop.
 
 The ~/.mycelium-* paths are a fleet contract: every onboarded Mac already
 has them, so renaming the files orphans the fleet.
