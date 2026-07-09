@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.4.0](https://github.com/finngi/mycelium/compare/oyster-v0.3.0...oyster-v0.4.0) (2026-07-09)
+
+
+### Features
+
+* add real MLX LoRA trainer and typed trainer contract ([#8](https://github.com/finngi/mycelium/issues/8)) ([1562b3f](https://github.com/finngi/mycelium/commit/1562b3f1e3a6f25b16f2afdbe8587125aa12c851))
+* move mesh claims off main onto an auto-synced mesh-state branch ([#15](https://github.com/finngi/mycelium/issues/15)) ([28f4f97](https://github.com/finngi/mycelium/commit/28f4f97af419b718bc3d656d8898103b720f7002))
+
+
+### Bug Fixes
+
+* **ci:** grant contents:read alongside security-events:write in codeql ([e9ce5f8](https://github.com/finngi/mycelium/commit/e9ce5f810b5fec193224a9e4761e7697e2f0254a))
+* **ci:** lint with uvx, not uv run, to avoid syncing project deps ([d2039fc](https://github.com/finngi/mycelium/commit/d2039fc3cdb6c155b11428cfcb3938ac5df7bef5))
+* **ci:** pass a token to cross-repo mcm-reishi checkouts ([0672ba2](https://github.com/finngi/mycelium/commit/0672ba23b45d2ba97988d4373b2c0f50bc200bb2))
+* reset local state when a claim/heartbeat push is permanently rejected ([#12](https://github.com/finngi/mycelium/issues/12)) ([1e8d28d](https://github.com/finngi/mycelium/commit/1e8d28d0d2c04b8ac44ecebfb9779f7002e23fb2))
+
+
+### Documentation
+
+* point cross-package links at the mycelium monorepo ([2ec0bb9](https://github.com/finngi/mycelium/commit/2ec0bb924c9003385c4d2e6ce266db5a0951f634))
+
 ## [0.3.0](https://github.com/finngi/mcm-oyster/compare/v0.2.1...v0.3.0) (2026-07-06)
 
 
