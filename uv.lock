@@ -515,7 +515,7 @@ wheels = [
 
 [[package]]
 name = "enoki"
-version = "0.3.0"
+version = "0.0.0a0"
 source = { editable = "packages/enoki" }
 dependencies = [
     { name = "pyyaml", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
@@ -1868,7 +1868,7 @@ wheels = [
 
 [[package]]
 name = "oyster"
-version = "0.5.0"
+version = "0.0.0a0"
 source = { editable = "packages/oyster" }
 dependencies = [
     { name = "huggingface-hub", version = "1.22.0", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine == 'arm64' and sys_platform == 'darwin'" },
@@ -1944,7 +1944,7 @@ wheels = [
 
 [[package]]
 name = "physarum"
-version = "0.3.0"
+version = "0.0.0a0"
 source = { editable = "packages/physarum" }
 dependencies = [
     { name = "optuna", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
@@ -2556,7 +2556,7 @@ wheels = [
 
 [[package]]
 name = "reishi"
-version = "0.6.0"
+version = "0.0.0a0"
 source = { editable = "packages/reishi" }
 dependencies = [
     { name = "pyyaml", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
