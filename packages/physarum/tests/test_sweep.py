@@ -66,3 +66,34 @@ def test_unknown_top_level_field_rejected(tmp_path):
     body = SWEEP_YAML.format(sampler="tpe", n_trials=1) + "extra_field: nope\n"
     with pytest.raises(ValueError, match="unknown sweep fields"):
         Sweep.from_yaml(_write(tmp_path, body))
+
+
+def test_constraints_default_to_empty(tmp_path):
+    sw = Sweep.from_yaml(_write(tmp_path, SWEEP_YAML.format(sampler="tpe", n_trials=1)))
+    assert sw.constraints == []
+    assert sw.to_manifest()["constraints"] == []
+
+
+def test_constraint_roundtrip(tmp_path):
+    body = SWEEP_YAML.format(sampler="tpe", n_trials=1) + (
+        "constraints:\n  - {metric: cost, max: 5.0}\n"
+    )
+    sw = Sweep.from_yaml(_write(tmp_path, body))
+    sw.validate()
+    assert sw.constraints == [{"metric": "cost", "max": 5.0}]
+
+
+def test_constraint_must_set_exactly_one_of_max_or_min(tmp_path):
+    body = SWEEP_YAML.format(sampler="tpe", n_trials=1) + (
+        "constraints:\n  - {metric: cost}\n"
+    )
+    with pytest.raises(ValueError, match="exactly one of 'max' or 'min'"):
+        Sweep.from_yaml(_write(tmp_path, body)).validate()
+
+
+def test_constraint_rejects_both_max_and_min(tmp_path):
+    body = SWEEP_YAML.format(sampler="tpe", n_trials=1) + (
+        "constraints:\n  - {metric: cost, max: 5.0, min: 1.0}\n"
+    )
+    with pytest.raises(ValueError, match="exactly one of 'max' or 'min'"):
+        Sweep.from_yaml(_write(tmp_path, body)).validate()

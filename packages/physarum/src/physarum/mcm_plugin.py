@@ -189,6 +189,15 @@ def sweep_optimize(cmd: Command) -> int:
     parts = [f"{failed} failed"] if failed else []
     if pruned:
         parts.append(f"{pruned} pruned")
+    if sweep.constraints:
+        # mcm_feasible is only ever set by objective() when constraints are
+        # configured -- no point reporting a vacuous "N/N feasible" for an
+        # unconstrained sweep.
+        infeasible = sum(
+            1 for t in completed if t.user_attrs.get("mcm_feasible") is False
+        )
+        if infeasible:
+            parts.append(f"{infeasible}/{len(completed)} infeasible")
     suffix = f" ({', '.join(parts)} of {len(study.trials)} trials)" if parts else ""
     print(
         f"[OK] sweep '{sweep.name}' done: best value {best.value} (mcm trial {best_trial_id}){suffix}",

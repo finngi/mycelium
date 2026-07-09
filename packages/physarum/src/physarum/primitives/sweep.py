@@ -4,7 +4,7 @@ Each suggested point becomes an ordinary reishi Recipe; a Sweep never trains
 anything itself.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import NotRequired, TypedDict
 
@@ -22,8 +22,21 @@ class ParamSpec(TypedDict):
 
 
 class ObjectiveSpec(TypedDict):
-    metric: str  # key into TrainerResult["metrics"], e.g. "f1"
+    # Plain key (looked up in TrainerResult["metrics"], e.g. "f1") or a
+    # dotted path into a trial manifest namespace ("metrics.field_f1",
+    # "observables.wall_time_s") -- see physarum.objective.resolve_metric.
+    metric: str
     direction: str  # "maximize" | "minimize"
+
+
+# Epsilon-constraint, not a weight: math-foundations.md section 1 proves a
+# weighted sum can't reach every Pareto-optimal compromise, while "maximise
+# the objective subject to this bound" can. `metric` uses the same path
+# language as ObjectiveSpec.metric; exactly one of max/min applies per entry.
+class ConstraintSpec(TypedDict):
+    metric: str
+    max: NotRequired[float]
+    min: NotRequired[float]
 
 
 class SweepManifest(TypedDict):
@@ -31,6 +44,7 @@ class SweepManifest(TypedDict):
     template: RecipeManifest
     search_space: dict[str, ParamSpec]
     objective: ObjectiveSpec
+    constraints: list[ConstraintSpec]
     sampler: str
     n_trials: int
 
@@ -56,6 +70,7 @@ class Sweep:
     template: RecipeManifest
     search_space: dict[str, ParamSpec]
     objective: ObjectiveSpec
+    constraints: list[ConstraintSpec] = field(default_factory=list)
     sampler: str = "tpe"  # validated by the resolved backend, not here
     n_trials: int = 20
 
@@ -88,6 +103,13 @@ class Sweep:
             raise ValueError(f"unknown accelerator '{self.template['accelerator']}'")
         if self.objective["direction"] not in ("maximize", "minimize"):
             raise ValueError("objective.direction must be 'maximize' or 'minimize'")
+        for c in self.constraints:
+            if "metric" not in c:
+                raise ValueError(f"constraint missing 'metric': {c}")
+            if ("max" in c) == ("min" in c):
+                raise ValueError(
+                    f"constraint on '{c['metric']}' must set exactly one of 'max' or 'min'"
+                )
         if self.n_trials < 1:
             raise ValueError("n_trials must be >= 1")
         if not self.search_space:
@@ -104,6 +126,7 @@ class Sweep:
             "template": self.template,
             "search_space": dict(self.search_space),
             "objective": dict(self.objective),
+            "constraints": [dict(c) for c in self.constraints],
             "sampler": self.sampler,
             "n_trials": self.n_trials,
         }

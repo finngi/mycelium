@@ -7,7 +7,8 @@ wrapper, so the one unavoidable Optuna import here is optuna.TrialPruned --
 the only way to signal a pruned trial back to study.optimize().
 """
 
-from typing import Callable, Protocol, TypedDict
+from collections.abc import Mapping
+from typing import Callable, NotRequired, Protocol, TypedDict
 
 import optuna
 
@@ -15,11 +16,15 @@ from reishi.primitives import trial as trial_store
 from reishi.primitives.recipe import Recipe, RecipeManifest
 from reishi.primitives.trial import TrialArtifacts, TrialManifest
 
-from physarum.primitives.sweep import ParamSpec, Sweep
+from physarum.primitives.sweep import ConstraintSpec, ParamSpec, Sweep
 
 
 class TrainerResult(TypedDict):
     metrics: dict
+    # Executor-observed run facts (wall_time_s, cost_usd, ...), disjoint from
+    # metrics -- see reishi.primitives.trial.TrialManifest. NotRequired: the
+    # local trafilatura trainer has none to report.
+    observables: NotRequired[dict]
     artifacts: TrialArtifacts
 
 
@@ -70,6 +75,50 @@ def suggest(ot: Suggester, search_space: dict[str, ParamSpec]) -> dict[str, obje
     return out
 
 
+_METRIC_NAMESPACES = ("metrics", "observables")
+
+
+def resolve_metric(namespaces: Mapping[str, Mapping[str, object]], path: str) -> object:
+    """Resolve one objective/constraint metric path against a trial's
+    metrics/observables namespaces (the same two TrialManifest carries).
+
+    'metrics.<key>' and 'observables.<key>' address those namespaces
+    explicitly. Everything else -- including a namespaced metric key like
+    'val/field_f1' (the '/' is record_eval's split-prefix convention, not a
+    path separator) -- is a plain key looked up in metrics: today's
+    behaviour, unchanged.
+    """
+    namespace, dot, key = path.partition(".")
+    if dot and namespace in _METRIC_NAMESPACES:
+        ns = namespaces.get(namespace) or {}
+        if key in ns:
+            return ns[key]
+        available = ", ".join(sorted(ns)) or "none"
+        raise KeyError(f"'{path}' not in trial {namespace} (available: {available})")
+    metrics = namespaces["metrics"]
+    if path in metrics:
+        return metrics[path]
+    available = ", ".join(sorted(metrics)) or "none"
+    raise KeyError(f"'{path}' not in trial metrics (available: {available})")
+
+
+def _is_feasible(
+    namespaces: Mapping[str, Mapping[str, object]], constraints: list[ConstraintSpec]
+) -> bool:
+    for c in constraints:
+        try:
+            value = resolve_metric(namespaces, c["metric"])
+        except KeyError:
+            # Unknown cost can't be assumed within budget: a trial missing a
+            # constrained metric entirely is infeasible, not vacuously fine.
+            return False
+        if "max" in c and value > c["max"]:
+            return False
+        if "min" in c and value < c["min"]:
+            return False
+    return True
+
+
 def build_recipe(
     template: RecipeManifest,
     suggested: dict[str, object],
@@ -93,6 +142,19 @@ def build_recipe(
 
 def make_objective(sweep: Sweep, trainer_fn: Trainer) -> Callable[[Suggester], float]:
     metric = sweep.objective["metric"]
+    constraints = sweep.constraints
+    # Epsilon-constraint (math-foundations.md sections 1 and 5.1): an
+    # infeasible trial's true value must never win. Optuna's own
+    # constraints_func is a sampler-constructor argument, not a study-level
+    # one, and of physarum's four samplers (tpe/cmaes/random/grid) only
+    # TPESampler accepts it -- wiring it here would special-case the sampler
+    # instead of working uniformly. Returning the worst-possible value
+    # instead (section 5.1's "extend u by -inf on the infeasible set") is
+    # sampler-agnostic and still lets the trial's real metrics reach the
+    # store; only what Optuna sees for ranking is clamped.
+    worst = (
+        float("-inf") if sweep.objective["direction"] == "maximize" else float("inf")
+    )
 
     def objective(ot: Suggester) -> float:
         suggested = suggest(ot, sweep.search_space)
@@ -106,12 +168,11 @@ def make_objective(sweep: Sweep, trainer_fn: Trainer) -> Callable[[Suggester], f
 
         try:
             result = trainer_fn(t.to_manifest())
-            if metric not in result["metrics"]:
-                available = ", ".join(sorted(result["metrics"])) or "none"
-                raise KeyError(
-                    f"sweep objective metric '{metric}' not in trial metrics (available: {available})"
-                )
-            value = result["metrics"][metric]
+            observables = result.get("observables", {})
+            namespaces = {"metrics": result["metrics"], "observables": observables}
+            value = resolve_metric(namespaces, metric)
+            feasible = _is_feasible(namespaces, constraints)
+            ot.set_user_attr("mcm_feasible", feasible)
             # trainer_fn runs synchronously to completion -- there is no
             # mid-training callback yet (see physarum AGENTS.md gap #1), so
             # there's only ever one step to report. This can still flag a
@@ -120,15 +181,17 @@ def make_objective(sweep: Sweep, trainer_fn: Trainer) -> Callable[[Suggester], f
             # early to save compute.
             ot.report(value, step=0)
             if ot.should_prune():
-                t.metrics, t.artifacts, t.status = (
+                t.metrics, t.observables, t.artifacts, t.status = (
                     result["metrics"],
+                    observables,
                     result["artifacts"],
                     "pruned",
                 )
                 trial_store.save(t)
                 raise optuna.TrialPruned()
-            t.metrics, t.artifacts, t.status = (
+            t.metrics, t.observables, t.artifacts, t.status = (
                 result["metrics"],
+                observables,
                 result["artifacts"],
                 "done",
             )
@@ -144,6 +207,9 @@ def make_objective(sweep: Sweep, trainer_fn: Trainer) -> Callable[[Suggester], f
             trial_store.save(t)
             raise
 
-        return t.metrics[metric]
+        # The trial record always keeps the true value; only the score
+        # handed back to Optuna is clamped when infeasible, so an infeasible
+        # trial can never become study.best_trial (math-foundations.md 5.1).
+        return value if feasible else worst
 
     return objective
