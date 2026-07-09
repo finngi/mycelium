@@ -21,16 +21,10 @@ supported-markers = [
 [manifest]
 members = [
     "enoki",
+    "mcm-mycelium",
     "oyster",
     "physarum",
     "reishi",
-]
-
-[manifest.dependency-groups]
-dev = [
-    { name = "mypy", specifier = ">=2.1.0" },
-    { name = "pytest", specifier = ">=9.1.1" },
-    { name = "types-pyyaml", specifier = ">=6.0.12.20260518" },
 ]
 
 [[package]]
@@ -1289,6 +1283,68 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/5f/57/1b0b3f100259dc9fffe780cfb60d4be71375510e435efec3d116b6436d43/markupsafe-3.0.3-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:e56b7d45a839a697b5eb268c82a71bd8c7f6c94d6fd50c3d577fa39a9f1409f5", size = 24835, upload-time = "2025-09-27T18:37:23.296Z" },
     { url = "https://files.pythonhosted.org/packages/26/6a/4bf6d0c97c4920f1597cc14dd720705eca0bf7c787aebc6bb4d1bead5388/markupsafe-3.0.3-cp314-cp314t-musllinux_1_2_riscv64.whl", hash = "sha256:f3e98bb3798ead92273dc0e5fd0f31ade220f59a266ffd8a4f6065e0a3ce0523", size = 22733, upload-time = "2025-09-27T18:37:24.237Z" },
     { url = "https://files.pythonhosted.org/packages/14/c7/ca723101509b518797fedc2fdf79ba57f886b4aca8a7d31857ba3ee8281f/markupsafe-3.0.3-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:5678211cb9333a6468fb8d8be0305520aa073f50d17f089b5b4b477ea6e67fdc", size = 23672, upload-time = "2025-09-27T18:37:25.271Z" },
+]
+
+[[package]]
+name = "mcm-mycelium"
+version = "0.0.0a129"
+source = { editable = "." }
+dependencies = [
+    { name = "pyyaml", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+]
+
+[package.optional-dependencies]
+all = [
+    { name = "huggingface-hub", version = "1.22.0", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine == 'arm64' and sys_platform == 'darwin'" },
+    { name = "mlx", marker = "platform_machine == 'arm64' and sys_platform == 'darwin'" },
+    { name = "mlx-lm", marker = "platform_machine == 'arm64' and sys_platform == 'darwin'" },
+    { name = "optuna", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "transformers", version = "5.12.1", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine == 'arm64' and sys_platform == 'darwin'" },
+]
+oyster = [
+    { name = "huggingface-hub", version = "1.22.0", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine == 'arm64' and sys_platform == 'darwin'" },
+    { name = "mlx", marker = "platform_machine == 'arm64' and sys_platform == 'darwin'" },
+    { name = "mlx-lm", marker = "platform_machine == 'arm64' and sys_platform == 'darwin'" },
+    { name = "transformers", version = "5.12.1", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine == 'arm64' and sys_platform == 'darwin'" },
+]
+physarum = [
+    { name = "optuna", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "enoki", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "mypy", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "oyster", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "physarum", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "pytest", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "reishi", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "trafilatura", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "types-pyyaml", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "huggingface-hub", marker = "platform_machine == 'arm64' and sys_platform == 'darwin' and extra == 'oyster'", specifier = ">=1.22.0" },
+    { name = "mcm-mycelium", extras = ["enoki", "oyster", "physarum"], marker = "extra == 'all'" },
+    { name = "mlx", marker = "platform_machine == 'arm64' and sys_platform == 'darwin' and extra == 'oyster'" },
+    { name = "mlx-lm", marker = "platform_machine == 'arm64' and sys_platform == 'darwin' and extra == 'oyster'", specifier = "==0.31.3" },
+    { name = "optuna", marker = "extra == 'physarum'", specifier = ">=4.9.0" },
+    { name = "pyyaml", specifier = ">=6.0.3" },
+    { name = "transformers", marker = "platform_machine == 'arm64' and sys_platform == 'darwin' and extra == 'oyster'", specifier = "==5.12.1" },
+]
+provides-extras = ["enoki", "oyster", "physarum", "all"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "enoki", editable = "packages/enoki" },
+    { name = "mypy", specifier = ">=2.1.0" },
+    { name = "oyster", editable = "packages/oyster" },
+    { name = "physarum", editable = "packages/physarum" },
+    { name = "pytest", specifier = ">=9.1.1" },
+    { name = "reishi", editable = "packages/reishi" },
+    { name = "trafilatura", specifier = ">=2.1.0" },
+    { name = "types-pyyaml", specifier = ">=6.0.12.20260518" },
 ]
 
 [[package]]
