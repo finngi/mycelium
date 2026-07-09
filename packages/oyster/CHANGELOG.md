@@ -1,4 +1,5 @@
 # Changelog
 
-Versioning reset to 0.0.0 alpha prereleases on 2026-07-09. The pre-reset 0.x
-history lives in the git tags (`oyster-v*`) and in this file's git history.
+## 0.0.0-a.129 (2026-07-09)
+
+This baseline encodes the repository's first 129 commits of pre-publication history as a single alpha prerelease; per-commit history lives in git log.
