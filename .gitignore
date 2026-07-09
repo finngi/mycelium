@@ -8,8 +8,12 @@ __pycache__/
 dist/
 build/
 
-# Beads / Dolt files (added by bd init)
+# Beads / Dolt files (added by bd init) -- issue tracking is local-only,
+# nothing beads-related ships to the remote
 .dolt/
 *.db
 .beads-credential-key
-.beads/proxieddb/
+.beads/
+.agents/skills/beads/
+/AGENTS.md
+/CLAUDE.md
