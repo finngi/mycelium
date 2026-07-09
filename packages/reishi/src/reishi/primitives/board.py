@@ -2,9 +2,17 @@
 the rows. Reads trials, persists nothing.
 """
 
+import sys
 from collections import defaultdict
 
 from reishi.primitives import trial as trial_store
+
+
+def _is_scalar(v: object) -> bool:
+    # Only scalar leaves are coordinates the board can aggregate. bool is
+    # excluded: a bare True/False is more likely a stray flag than an intended
+    # 0/1 -- rate-style metrics come from an aggregator, not a raw bool leaf.
+    return isinstance(v, (int, float)) and not isinstance(v, bool)
 
 
 def build(metric: str = "f1", task: str | None = None) -> list[dict]:
@@ -18,7 +26,18 @@ def build(metric: str = "f1", task: str | None = None) -> list[dict]:
 
     rows = []
     for recipe_name, group in by_recipe.items():
-        values = [t.metrics[metric] for t in group if metric in t.metrics]
+        values = []
+        for t in group:
+            if metric not in t.metrics:
+                continue
+            v = t.metrics[metric]
+            if not _is_scalar(v):
+                print(
+                    f"[WARN] metric '{metric}' on trial '{t.id}' is non-scalar; skipped",
+                    file=sys.stderr,
+                )
+                continue
+            values.append(v)
         row = {
             "recipe": recipe_name,
             "task": group[0].spec.get("task"),

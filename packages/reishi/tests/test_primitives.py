@@ -80,7 +80,10 @@ def test_recipe_priority_defaults_and_flows_to_spec(tmp_path):
 def test_trial_manifest_tolerates_unknown_keys():
     t = trial.Trial(id="t-1", recipe="r", seed=0)
     m = t.to_manifest() | {"from_the_future": True}
-    assert trial.Trial.from_manifest(m).id == "t-1"
+    loaded = trial.Trial.from_manifest(m)
+    assert loaded.id == "t-1"
+    # Tolerated means preserved, not silently dropped, so the round trip is lossless.
+    assert loaded.to_manifest()["from_the_future"] is True
 
 
 def test_dataset_task_is_optional():

@@ -65,9 +65,14 @@ class Trial:
     spec: RecipeManifest = field(default_factory=dict)  # type: ignore[assignment]
     execution: ExecutionInfo = field(default_factory=ExecutionInfo)
     eval: EvalInfo = field(default_factory=dict)  # type: ignore[assignment]
+    # Unknown top-level manifest keys, carried verbatim. Without this a newer
+    # manifest loaded in an older checkout would lose its new fields on the next
+    # save (oyster's heartbeat re-saves every 30s) -- the additivity guarantee
+    # depends on the round trip being lossless.
+    extra: dict = field(default_factory=dict)
 
     def to_manifest(self) -> TrialManifest:
-        return {
+        m = {
             "id": self.id,
             "recipe": self.recipe,
             "seed": self.seed,
@@ -79,14 +84,22 @@ class Trial:
             "execution": self.execution,
             "eval": self.eval,
         }
+        # Known keys win, so a stale carried-over value never shadows the live one.
+        return {**self.extra, **m}  # type: ignore[typeddict-item]
 
     @classmethod
     def from_manifest(cls, m: Mapping[str, object]) -> "Trial":
-        # Tolerant reader: drop unknown keys so a newer manifest still loads in an
-        # older checkout. The comprehension widens every value to object, so mypy
-        # can't check the **kwargs unpacking below -- hence the type: ignore.
-        known = cls.__dataclass_fields__
-        return cls(**{k: v for k, v in m.items() if k in known})  # type: ignore[arg-type]
+        # Tolerant reader: unknown keys land in `extra` rather than being dropped,
+        # so a newer manifest round-trips losslessly through an older checkout.
+        # Route both sides off `known` (which excludes the `extra` field itself),
+        # so a manifest key literally named "extra" is preserved, not swallowed.
+        # The comprehensions widen values to object, so mypy can't check the
+        # **kwargs unpacking -- hence the type: ignore.
+        known = {k for k in cls.__dataclass_fields__ if k != "extra"}
+        return cls(
+            **{k: v for k, v in m.items() if k in known},  # type: ignore[arg-type]
+            extra={k: v for k, v in m.items() if k not in known},
+        )
 
 
 def plan(recipe: Recipe) -> list[Trial]:
