@@ -1,8 +1,10 @@
 name: release-please
 
+# Manual-only: cutting (or refreshing) the release PR is a deliberate act,
+# not a side effect of every merge to main. Run it from the Actions tab when
+# you want a release proposed.
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write
