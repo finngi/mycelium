@@ -16,13 +16,18 @@ from reishi import store
 @pytest.fixture(params=["fs", "sqlite"])
 def backend(request, tmp_path, monkeypatch):
     monkeypatch.setenv("MCM_STORE", str(tmp_path))
-    b = store.LocalFilesystemBackend() if request.param == "fs" else store.SqliteBackend()
+    b = (
+        store.LocalFilesystemBackend()
+        if request.param == "fs"
+        else store.SqliteBackend()
+    )
     store.use_backend(b)
     yield request.param
     store.use_backend(store.LocalFilesystemBackend())
 
 
 # --- contract: identical across every backend ---
+
 
 def test_save_load_roundtrip(backend):
     store.save("trials", "demo-s0-abc123", {"id": "demo-s0-abc123", "seed": 0})
@@ -92,7 +97,8 @@ def test_backends_persist_byte_identical_docs(tmp_path, monkeypatch):
     store.use_backend(sq)
     store.save("trials", "t-s0-aaa111", manifest)
     db_doc = sq._db.execute(
-        "SELECT doc FROM manifests WHERE kind = ? AND name = ?", ("trials", "t-s0-aaa111")
+        "SELECT doc FROM manifests WHERE kind = ? AND name = ?",
+        ("trials", "t-s0-aaa111"),
     ).fetchone()[0]
 
     assert file_doc == db_doc
@@ -122,6 +128,7 @@ def test_backend_swap_is_honored():
 
 # --- default selection (sqlite is opt-out) ---
 
+
 def test_default_backend_is_sqlite(tmp_path, monkeypatch):
     monkeypatch.setenv("MCM_STORE", str(tmp_path))
     monkeypatch.delenv("MCM_STORE_BACKEND", raising=False)
@@ -150,6 +157,7 @@ def test_unknown_backend_env_raises(monkeypatch):
 
 # --- sqlite specifics ---
 
+
 def test_sqlite_db_lives_inside_the_mcm_store_dir(tmp_path, monkeypatch):
     # MCM_STORE always names a directory; the db is store.db inside it, whether
     # or not the directory exists yet (no dir-vs-file ambiguity).
@@ -160,6 +168,7 @@ def test_sqlite_db_lives_inside_the_mcm_store_dir(tmp_path, monkeypatch):
 
 
 # --- filesystem specifics (the layout oyster's git-as-queue depends on) ---
+
 
 def test_fs_save_is_atomic_leaves_no_tmp(tmp_path, monkeypatch):
     monkeypatch.setenv("MCM_STORE", str(tmp_path))
@@ -198,6 +207,7 @@ def test_fs_load_all_strict_reraises_on_corrupt(tmp_path, monkeypatch):
 
 
 # --- artifact store root ---
+
 
 def test_artifact_root_default_and_override(monkeypatch):
     monkeypatch.delenv("MCM_ARTF_STORE", raising=False)

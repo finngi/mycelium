@@ -44,7 +44,10 @@ def test_default_path_uses_json_codec_and_field_aggregate():
     decoded = t.decode('garbage before {"a": 1} trailing')
     assert decoded == {"a": 1}
 
-    scores = [_score(t.decode('{"a":1}'), {"a": 1}), _score(t.decode("nonsense"), {"a": 1})]
+    scores = [
+        _score(t.decode('{"a":1}'), {"a": 1}),
+        _score(t.decode("nonsense"), {"a": 1}),
+    ]
     metrics = t.aggregate(scores)
 
     assert metrics == field_aggregate(scores)
@@ -65,6 +68,8 @@ def test_manifest_omits_empty_output_fields():
     assert bare["codec"] == "json"
     assert bare["scorer"] == "missing"
 
-    full = Task(name="full", description="d", output_fields=("a", "b"), score=lambda p, g: {}).to_manifest()
+    full = Task(
+        name="full", description="d", output_fields=("a", "b"), score=lambda p, g: {}
+    ).to_manifest()
     assert full["output_fields"] == ["a", "b"]
     assert full["scorer"] == "registered"

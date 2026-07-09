@@ -8,7 +8,9 @@ from reishi.primitives.trial import TrialArtifacts, TrialManifest
 
 
 class TrainerResult(TypedDict):
-    metrics: dict[str, Any]  # shape is task-defined, so it stays untyped rather than a fixed schema
+    metrics: dict[
+        str, Any
+    ]  # shape is task-defined, so it stays untyped rather than a fixed schema
     artifacts: TrialArtifacts
 
 

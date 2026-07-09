@@ -28,10 +28,20 @@ def isolated_store(tmp_path, monkeypatch):
     store._backend = None
 
 
-def plan_one(name: str, priority: int = 0, base_model: str = "x/tiny-0.5B",
-             accelerator: str = "mlx") -> trial_store.Trial:
-    r = Recipe(name=name, task="fixture", dataset="d-1", base_model=base_model,
-               accelerator=accelerator, priority=priority)
+def plan_one(
+    name: str,
+    priority: int = 0,
+    base_model: str = "x/tiny-0.5B",
+    accelerator: str = "mlx",
+) -> trial_store.Trial:
+    r = Recipe(
+        name=name,
+        task="fixture",
+        dataset="d-1",
+        base_model=base_model,
+        accelerator=accelerator,
+        priority=priority,
+    )
     t = trial_store.plan(r)[0]
     trial_store.save(t)
     return t
@@ -80,8 +90,11 @@ def test_requeue_stale_reaps_dead_runners():
     fresh, stale, exhausted = plan_one("fresh"), plan_one("stale"), plan_one("gone")
     now = datetime.now(timezone.utc)
     old = (now - timedelta(hours=3)).isoformat(timespec="seconds")
-    for t, hb, attempt in ((fresh, now.isoformat(timespec="seconds"), 1),
-                           (stale, old, 1), (exhausted, old, queue.MAX_ATTEMPTS)):
+    for t, hb, attempt in (
+        (fresh, now.isoformat(timespec="seconds"), 1),
+        (stale, old, 1),
+        (exhausted, old, queue.MAX_ATTEMPTS),
+    ):
         t.status = "running"
         t.execution = {"runner": "mac-x", "heartbeat": hb, "attempt": attempt}
         trial_store.save(t)

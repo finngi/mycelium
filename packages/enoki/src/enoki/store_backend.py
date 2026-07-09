@@ -62,7 +62,9 @@ class PostgresBackend:
                 (kind, name),
             ).fetchone()
         if row is None:
-            raise FileNotFoundError(f"no {kind} manifest named '{name}' in Postgres store")
+            raise FileNotFoundError(
+                f"no {kind} manifest named '{name}' in Postgres store"
+            )
         return row[0]
 
     def load_all(self, kind: str, *, tolerant: bool = True) -> list[dict]:

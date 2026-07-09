@@ -44,13 +44,16 @@ def mesh_status(cmd: Command) -> int:
     by_status: dict[str, int] = {}
     for t in trial_store.load_all():
         by_status[t.status] = by_status.get(t.status, 0) + 1
-    emit({
-        "trials": by_status,
-        "machine": machine.name(),
-        "mem_budget_gb": machine.mem_budget_gb(),
-        "busy": machine.is_busy(),
-        "trainers": sorted(trainers.supported()) or None,
-    }, cmd.flags)
+    emit(
+        {
+            "trials": by_status,
+            "machine": machine.name(),
+            "mem_budget_gb": machine.mem_budget_gb(),
+            "busy": machine.is_busy(),
+            "trainers": sorted(trainers.supported()) or None,
+        },
+        cmd.flags,
+    )
     return 0
 
 
@@ -60,13 +63,19 @@ def mesh_next(cmd: Command) -> int:
     if not accelerators:
         # Claiming needs a trainer, but the dry run stays useful without one:
         # show the mlx queue rather than hiding it behind an empty registry.
-        print("[WARN] no trainer installed -> showing the mlx queue; nothing is actually claimable here",
-              file=sys.stderr)
+        print(
+            "[WARN] no trainer installed -> showing the mlx queue; nothing is actually claimable here",
+            file=sys.stderr,
+        )
         accelerators = {"mlx"}
     cands = queue.eligible(machine.mem_budget_gb(), accelerators)
     rows = [
-        {"id": t.id, "priority": t.spec.get("priority", 0),
-         "est_gb": round(footprint.estimate_gb(t.spec), 1), "created": t.created}
+        {
+            "id": t.id,
+            "priority": t.spec.get("priority", 0),
+            "est_gb": round(footprint.estimate_gb(t.spec), 1),
+            "created": t.created,
+        }
         for t in cands[:10]
     ]
     emit(rows, cmd.flags, columns=["id", "priority", "est_gb", "created"])
@@ -82,23 +91,36 @@ def mesh_drain(cmd: Command) -> int:
     # Label first (assignment level: no job lands here at all), busy file
     # second (execution level: catches jobs assigned before the label came off).
     if machine.set_ready(False):
-        print("[OK] `ready` label removed -> no new jobs will be assigned here", file=sys.stderr)
+        print(
+            "[OK] `ready` label removed -> no new jobs will be assigned here",
+            file=sys.stderr,
+        )
     else:
-        print("[WARN] could not toggle `ready` label (gh/repo/runner unreachable) "
-              "-> relying on the busy-file gate only", file=sys.stderr)
+        print(
+            "[WARN] could not toggle `ready` label (gh/repo/runner unreachable) "
+            "-> relying on the busy-file gate only",
+            file=sys.stderr,
+        )
     machine.BUSY_FILE.touch()
-    print(f"[OK] {machine.BUSY_FILE} created -> in-flight worker stops after the current trial",
-          file=sys.stderr)
+    print(
+        f"[OK] {machine.BUSY_FILE} created -> in-flight worker stops after the current trial",
+        file=sys.stderr,
+    )
     return 0
 
 
 def mesh_undrain(cmd: Command) -> int:
     machine.BUSY_FILE.unlink(missing_ok=True)
     if machine.set_ready(True):
-        print("[OK] `ready` label restored -> job assignment re-enabled", file=sys.stderr)
+        print(
+            "[OK] `ready` label restored -> job assignment re-enabled", file=sys.stderr
+        )
     else:
-        print("[WARN] could not restore `ready` label (gh/repo/runner unreachable) "
-              "-> restore it manually or set OYSTER_REPO", file=sys.stderr)
+        print(
+            "[WARN] could not restore `ready` label (gh/repo/runner unreachable) "
+            "-> restore it manually or set OYSTER_REPO",
+            file=sys.stderr,
+        )
     print(f"[OK] {machine.BUSY_FILE} removed -> claiming re-enabled", file=sys.stderr)
     return 0
 
@@ -108,8 +130,11 @@ def mesh_requeue(cmd: Command) -> int:
         print("[FAIL] mcm mesh requeue needs a trial id (prefix ok)", file=sys.stderr)
         return 1
     t = queue.requeue(cmd.objects[0])
-    print(f"[OK] {t.id} -> planned (attempt {t.execution.get('attempt', 0)} "
-          f"of {queue.MAX_ATTEMPTS})", file=sys.stderr)
+    print(
+        f"[OK] {t.id} -> planned (attempt {t.execution.get('attempt', 0)} "
+        f"of {queue.MAX_ATTEMPTS})",
+        file=sys.stderr,
+    )
     return 0
 
 

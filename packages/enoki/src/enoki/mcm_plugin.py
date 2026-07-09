@@ -29,9 +29,24 @@ _GPU_NODE_SELECTORS = {
 }
 _GPU_TOLERATIONS = {
     "l4": [
-        {"key": "cloud.google.com/compute-class", "operator": "Equal", "value": "gpu-l4", "effect": "NoSchedule"},
-        {"key": "nvidia.com/gpu", "operator": "Equal", "value": "present", "effect": "NoSchedule"},
-        {"key": "cloud.google.com/gke-spot", "operator": "Equal", "value": "true", "effect": "NoSchedule"},
+        {
+            "key": "cloud.google.com/compute-class",
+            "operator": "Equal",
+            "value": "gpu-l4",
+            "effect": "NoSchedule",
+        },
+        {
+            "key": "nvidia.com/gpu",
+            "operator": "Equal",
+            "value": "present",
+            "effect": "NoSchedule",
+        },
+        {
+            "key": "cloud.google.com/gke-spot",
+            "operator": "Equal",
+            "value": "true",
+            "effect": "NoSchedule",
+        },
     ],
 }
 
@@ -76,7 +91,9 @@ def experiment_submit(cmd: Command) -> int:
 
     recipe_path = Path("experiments") / name / "recipe.yaml"
     if not recipe_path.exists():
-        return _fail(f"no recipe at {recipe_path} (convention: experiments/<name>/recipe.yaml)")
+        return _fail(
+            f"no recipe at {recipe_path} (convention: experiments/<name>/recipe.yaml)"
+        )
     recipe = Recipe.from_yaml(recipe_path)
     recipe.validate()
 
@@ -94,7 +111,11 @@ def experiment_submit(cmd: Command) -> int:
             "isn't installed from source"
         )
 
-    image = _flag_value(cmd.flags, "--image") or os.environ.get("MCM_TRAIN_IMAGE") or _DEFAULT_IMAGE
+    image = (
+        _flag_value(cmd.flags, "--image")
+        or os.environ.get("MCM_TRAIN_IMAGE")
+        or _DEFAULT_IMAGE
+    )
     node_selector = yaml.safe_dump(
         _GPU_NODE_SELECTORS[recipe.accelerator], default_flow_style=True, width=10**9
     ).strip()
@@ -121,18 +142,25 @@ def experiment_submit(cmd: Command) -> int:
     for placeholder, value in substitutions.items():
         rendered = rendered.replace(placeholder, value)
 
-    with tempfile.NamedTemporaryFile("w", suffix=".yaml", prefix=f"mcm-{name}-", delete=False) as f:
+    with tempfile.NamedTemporaryFile(
+        "w", suffix=".yaml", prefix=f"mcm-{name}-", delete=False
+    ) as f:
         f.write(rendered)
         manifest_path = f.name
 
     try:
-        result = subprocess.run(["kubectl", "apply", "-f", manifest_path], capture_output=True, text=True)
+        result = subprocess.run(
+            ["kubectl", "apply", "-f", manifest_path], capture_output=True, text=True
+        )
         if result.returncode != 0:
             return _fail(f"kubectl apply failed: {result.stderr.strip()}")
     finally:
         os.unlink(manifest_path)
 
-    print(f"[OK] submitted RayJob 'mcm-{name}' -> {result.stdout.strip()}", file=sys.stderr)
+    print(
+        f"[OK] submitted RayJob 'mcm-{name}' -> {result.stdout.strip()}",
+        file=sys.stderr,
+    )
     return 0
 
 

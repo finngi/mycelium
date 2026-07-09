@@ -52,31 +52,46 @@ def train(trial_manifest: TrialManifest) -> TrainerResult:
     spec = trial_manifest["spec"]
     task_obj = task_registry.get(spec["task"])
     if task_obj.score is None:
-        raise ValueError(f"task '{task_obj.name}' has no scorer registered; local trainer can't eval it")
+        raise ValueError(
+            f"task '{task_obj.name}' has no scorer registered; local trainer can't eval it"
+        )
 
     trainer_cfg = dict(spec.get("trainer", {}))
     eval_n = trainer_cfg.pop("eval_n", None)
-    extract_kwargs = {k: trainer_cfg.pop(k) for k in _EXTRACT_PARAMS if k in trainer_cfg}
+    extract_kwargs = {
+        k: trainer_cfg.pop(k) for k in _EXTRACT_PARAMS if k in trainer_cfg
+    }
     if trainer_cfg:
-        raise ValueError(f"local trafilatura trainer: unknown trainer keys {sorted(trainer_cfg)}")
+        raise ValueError(
+            f"local trafilatura trainer: unknown trainer keys {sorted(trainer_cfg)}"
+        )
 
     ds = dataset_registry.load(spec["dataset"])
     rows = _load_rows(ds.uri)
     if eval_n is not None:
         rows = rows[:eval_n]
     if not rows:
-        raise ValueError(f"local trafilatura trainer: eval set is empty (dataset '{spec['dataset']}', eval_n={eval_n})")
+        raise ValueError(
+            f"local trafilatura trainer: eval set is empty (dataset '{spec['dataset']}', eval_n={eval_n})"
+        )
 
     t0 = time.time()
     scores = []
     for row in rows:
         html = row.get("html") or ""
         try:
-            md = trafilatura.extract(html, output_format="markdown", **extract_kwargs) or ""
+            md = (
+                trafilatura.extract(html, output_format="markdown", **extract_kwargs)
+                or ""
+            )
         except Exception:
             md = ""
         pred = {"markdown": md}
-        gold = {"html": html, "markdown": row.get("markdown", ""), "converter": row.get("converter", "")}
+        gold = {
+            "html": html,
+            "markdown": row.get("markdown", ""),
+            "converter": row.get("converter", ""),
+        }
         scores.append(task_obj.score(pred, gold))
 
     metrics: dict[str, Any] = {

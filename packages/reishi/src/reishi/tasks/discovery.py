@@ -34,7 +34,9 @@ def _import_submodules(package: ModuleType) -> None:
     search_paths = getattr(package, "__path__", None)
     if search_paths is None:
         return  # a single module, not a package -- loading it already registered it
-    for info in pkgutil.walk_packages(search_paths, package.__name__ + ".", onerror=_reraise):
+    for info in pkgutil.walk_packages(
+        search_paths, package.__name__ + ".", onerror=_reraise
+    ):
         importlib.import_module(info.name)
 
 

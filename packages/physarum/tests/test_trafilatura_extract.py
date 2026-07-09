@@ -40,7 +40,12 @@ def _register_dataset(tmp_path) -> Dataset:
     with open(data_path, "w") as f:
         for row in HTML_ROWS:
             f.write(json.dumps(row) + "\n")
-    ds = Dataset(name="htmlmd-fixture", uri=str(data_path), task="extract-fixture", eval_only=True)
+    ds = Dataset(
+        name="htmlmd-fixture",
+        uri=str(data_path),
+        task="extract-fixture",
+        eval_only=True,
+    )
     dataset_registry.save(ds)
     return ds
 

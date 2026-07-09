@@ -33,14 +33,20 @@ def status(cmd: Command) -> int:
 
 
 def task_list(cmd: Command) -> int:
-    emit([t.to_manifest() for t in task.all_tasks()], cmd.flags,
-         columns=["name", "output_fields", "codec", "scorer"])
+    emit(
+        [t.to_manifest() for t in task.all_tasks()],
+        cmd.flags,
+        columns=["name", "output_fields", "codec", "scorer"],
+    )
     return 0
 
 
 def dataset_list(cmd: Command) -> int:
-    emit([d.to_manifest() for d in dataset.load_all()], cmd.flags,
-         columns=["name", "task", "uri", "eval_only"])
+    emit(
+        [d.to_manifest() for d in dataset.load_all()],
+        cmd.flags,
+        columns=["name", "task", "uri", "eval_only"],
+    )
     return 0
 
 
@@ -62,8 +68,14 @@ def recipe_run(cmd: Command) -> int:
     if "--plan" in cmd.flags:
         for t in trials:
             trial.save(t)
-        print(f"[OK] planned {len(trials)} trial(s) for recipe '{recipe.name}'", file=sys.stderr)
-        emit([{"id": t.id, "seed": t.seed, "status": t.status} for t in trials], cmd.flags)
+        print(
+            f"[OK] planned {len(trials)} trial(s) for recipe '{recipe.name}'",
+            file=sys.stderr,
+        )
+        emit(
+            [{"id": t.id, "seed": t.seed, "status": t.status} for t in trials],
+            cmd.flags,
+        )
         return 0
 
     return _fail(
@@ -74,11 +86,21 @@ def recipe_run(cmd: Command) -> int:
 
 def trial_list(cmd: Command) -> int:
     rows = [
-        {"id": t.id, "recipe": t.recipe, "seed": t.seed, "status": t.status,
-         "created": t.created, "metrics": t.metrics or None}
+        {
+            "id": t.id,
+            "recipe": t.recipe,
+            "seed": t.seed,
+            "status": t.status,
+            "created": t.created,
+            "metrics": t.metrics or None,
+        }
         for t in trial.load_all()
     ]
-    emit(rows, cmd.flags, columns=["id", "recipe", "seed", "status", "created", "metrics"])
+    emit(
+        rows,
+        cmd.flags,
+        columns=["id", "recipe", "seed", "status", "created", "metrics"],
+    )
     return 0
 
 
@@ -95,7 +117,9 @@ def trial_logs(cmd: Command) -> int:
     if ref is None:
         return 1
     t = trial.resolve(ref)
-    return _fail(f"trial '{t.id}' has no logs yet (status: {t.status}; log streaming lands with the trainer)")
+    return _fail(
+        f"trial '{t.id}' has no logs yet (status: {t.status}; log streaming lands with the trainer)"
+    )
 
 
 def board_show(cmd: Command) -> int:

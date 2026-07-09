@@ -60,19 +60,24 @@ class SqliteBackend:
             (safe_kind(kind), safe_name(name)),
         ).fetchone()
         if row is None:
-            raise FileNotFoundError(f"no {kind} manifest named '{name}' in {self._path}")
+            raise FileNotFoundError(
+                f"no {kind} manifest named '{name}' in {self._path}"
+            )
         return json.loads(row[0])
 
     def load_all(self, kind: str, *, tolerant: bool = True) -> list[dict]:
         out = []
         for name, doc in self._db.execute(
-            "SELECT name, doc FROM manifests WHERE kind = ? ORDER BY name", (safe_kind(kind),)
+            "SELECT name, doc FROM manifests WHERE kind = ? ORDER BY name",
+            (safe_kind(kind),),
         ):
             try:
                 out.append(json.loads(doc))
             except json.JSONDecodeError:
                 if not tolerant:
                     raise
-                print(f"[WARN] skipping unreadable {kind} manifest '{name}' in {self._path}",
-                      file=sys.stderr)
+                print(
+                    f"[WARN] skipping unreadable {kind} manifest '{name}' in {self._path}",
+                    file=sys.stderr,
+                )
         return out

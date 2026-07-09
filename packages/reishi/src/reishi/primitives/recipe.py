@@ -48,10 +48,14 @@ class Recipe:
         known = {f for f in cls.__dataclass_fields__}
         unknown = set(raw) - known
         if unknown:
-            raise ValueError(f"{path}: unknown recipe fields: {', '.join(sorted(unknown))}")
+            raise ValueError(
+                f"{path}: unknown recipe fields: {', '.join(sorted(unknown))}"
+            )
         missing = {"name", "task", "dataset"} - set(raw)
         if missing:
-            raise ValueError(f"{path}: missing required fields: {', '.join(sorted(missing))}")
+            raise ValueError(
+                f"{path}: missing required fields: {', '.join(sorted(missing))}"
+            )
         return cls(**raw)
 
     def validate(self) -> None:

@@ -50,7 +50,9 @@ def _fake_run_ok(calls):
         manifest_path = args[args.index("-f") + 1]
         manifest = yaml.safe_load(open(manifest_path))
         calls.append({"args": args, "manifest": manifest})
-        return SimpleNamespace(returncode=0, stdout="rayjob.ray.io/mcm-fixture-smoke created", stderr="")
+        return SimpleNamespace(
+            returncode=0, stdout="rayjob.ray.io/mcm-fixture-smoke created", stderr=""
+        )
 
     return _run
 
@@ -60,7 +62,9 @@ def test_submit_renders_every_placeholder_for_l4_recipe(tmp_path, monkeypatch, c
     calls = []
     monkeypatch.setattr(mcm_plugin.subprocess, "run", _fake_run_ok(calls))
 
-    rc = mcm_plugin.experiment_submit(Command(domain="experiment", action="submit", objects=["fixture-smoke"]))
+    rc = mcm_plugin.experiment_submit(
+        Command(domain="experiment", action="submit", objects=["fixture-smoke"])
+    )
 
     assert rc == 0
     assert len(calls) == 1
@@ -79,7 +83,9 @@ def test_submit_renders_every_placeholder_for_l4_recipe(tmp_path, monkeypatch, c
     recipe_b64 = entrypoint.split("echo ", 1)[1].split(" | base64", 1)[0]
     assert base64.b64decode(recipe_b64).decode() == RECIPE.format(accelerator="l4")
 
-    head_image = manifest["spec"]["rayClusterSpec"]["headGroupSpec"]["template"]["spec"]["containers"][0]["image"]
+    head_image = manifest["spec"]["rayClusterSpec"]["headGroupSpec"]["template"][
+        "spec"
+    ]["containers"][0]["image"]
     assert head_image == mcm_plugin._DEFAULT_IMAGE
 
     worker = manifest["spec"]["rayClusterSpec"]["workerGroupSpecs"][0]
@@ -89,7 +95,9 @@ def test_submit_renders_every_placeholder_for_l4_recipe(tmp_path, monkeypatch, c
     assert worker_spec["tolerations"] == mcm_plugin._GPU_TOLERATIONS["l4"]
     # yaml.safe_dump must round-trip 'true' as a string, not a YAML bool --
     # a real toleration requires a string value here.
-    spot_toleration = next(t for t in worker_spec["tolerations"] if t["key"] == "cloud.google.com/gke-spot")
+    spot_toleration = next(
+        t for t in worker_spec["tolerations"] if t["key"] == "cloud.google.com/gke-spot"
+    )
     assert spot_toleration["value"] == "true"
     assert isinstance(spot_toleration["value"], str)
 
@@ -102,22 +110,32 @@ def test_submit_honors_image_override_flag(tmp_path, monkeypatch):
     monkeypatch.setattr(mcm_plugin.subprocess, "run", _fake_run_ok(calls))
 
     rc = mcm_plugin.experiment_submit(
-        Command(domain="experiment", action="submit", objects=["fixture-smoke"],
-                flags=["--image", "example.com/custom:tag"])
+        Command(
+            domain="experiment",
+            action="submit",
+            objects=["fixture-smoke"],
+            flags=["--image", "example.com/custom:tag"],
+        )
     )
 
     assert rc == 0
     manifest = calls[0]["manifest"]
-    head_image = manifest["spec"]["rayClusterSpec"]["headGroupSpec"]["template"]["spec"]["containers"][0]["image"]
+    head_image = manifest["spec"]["rayClusterSpec"]["headGroupSpec"]["template"][
+        "spec"
+    ]["containers"][0]["image"]
     assert head_image == "example.com/custom:tag"
 
 
-def test_submit_rejects_unsupported_accelerator_without_calling_kubectl(tmp_path, monkeypatch, capsys):
+def test_submit_rejects_unsupported_accelerator_without_calling_kubectl(
+    tmp_path, monkeypatch, capsys
+):
     _write_recipe(tmp_path, "h100-run", accelerator="h100")
     calls = []
     monkeypatch.setattr(mcm_plugin.subprocess, "run", _fake_run_ok(calls))
 
-    rc = mcm_plugin.experiment_submit(Command(domain="experiment", action="submit", objects=["h100-run"]))
+    rc = mcm_plugin.experiment_submit(
+        Command(domain="experiment", action="submit", objects=["h100-run"])
+    )
 
     assert rc == 1
     assert calls == []
@@ -128,7 +146,9 @@ def test_submit_fails_cleanly_when_recipe_missing(monkeypatch):
     calls = []
     monkeypatch.setattr(mcm_plugin.subprocess, "run", _fake_run_ok(calls))
 
-    rc = mcm_plugin.experiment_submit(Command(domain="experiment", action="submit", objects=["does-not-exist"]))
+    rc = mcm_plugin.experiment_submit(
+        Command(domain="experiment", action="submit", objects=["does-not-exist"])
+    )
 
     assert rc == 1
     assert calls == []
@@ -138,11 +158,15 @@ def test_submit_reports_kubectl_failure(tmp_path, monkeypatch, capsys):
     _write_recipe(tmp_path, "fixture-smoke", accelerator="l4")
 
     def _run_fail(args, capture_output, text):
-        return SimpleNamespace(returncode=1, stdout="", stderr="the server doesn't have a resource type")
+        return SimpleNamespace(
+            returncode=1, stdout="", stderr="the server doesn't have a resource type"
+        )
 
     monkeypatch.setattr(mcm_plugin.subprocess, "run", _run_fail)
 
-    rc = mcm_plugin.experiment_submit(Command(domain="experiment", action="submit", objects=["fixture-smoke"]))
+    rc = mcm_plugin.experiment_submit(
+        Command(domain="experiment", action="submit", objects=["fixture-smoke"])
+    )
 
     assert rc == 1
     assert "kubectl apply failed" in capsys.readouterr().err
@@ -152,19 +176,25 @@ def _rendered_manifest_leftovers() -> list[str]:
     return glob.glob(str(Path(tempfile.gettempdir()) / "mcm-fixture-smoke-*.yaml"))
 
 
-def test_submit_cleans_up_the_rendered_manifest_tempfile_on_success(tmp_path, monkeypatch):
+def test_submit_cleans_up_the_rendered_manifest_tempfile_on_success(
+    tmp_path, monkeypatch
+):
     _write_recipe(tmp_path, "fixture-smoke", accelerator="l4")
     monkeypatch.setattr(mcm_plugin.subprocess, "run", _fake_run_ok([]))
 
     before = _rendered_manifest_leftovers()
-    rc = mcm_plugin.experiment_submit(Command(domain="experiment", action="submit", objects=["fixture-smoke"]))
+    rc = mcm_plugin.experiment_submit(
+        Command(domain="experiment", action="submit", objects=["fixture-smoke"])
+    )
     after = _rendered_manifest_leftovers()
 
     assert rc == 0
     assert after == before
 
 
-def test_submit_cleans_up_the_rendered_manifest_tempfile_on_kubectl_failure(tmp_path, monkeypatch):
+def test_submit_cleans_up_the_rendered_manifest_tempfile_on_kubectl_failure(
+    tmp_path, monkeypatch
+):
     _write_recipe(tmp_path, "fixture-smoke", accelerator="l4")
 
     def _run_fail(args, capture_output, text):
@@ -173,7 +203,9 @@ def test_submit_cleans_up_the_rendered_manifest_tempfile_on_kubectl_failure(tmp_
     monkeypatch.setattr(mcm_plugin.subprocess, "run", _run_fail)
 
     before = _rendered_manifest_leftovers()
-    rc = mcm_plugin.experiment_submit(Command(domain="experiment", action="submit", objects=["fixture-smoke"]))
+    rc = mcm_plugin.experiment_submit(
+        Command(domain="experiment", action="submit", objects=["fixture-smoke"])
+    )
     after = _rendered_manifest_leftovers()
 
     assert rc == 1

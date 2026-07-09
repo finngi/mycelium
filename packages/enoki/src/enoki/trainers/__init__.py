@@ -46,6 +46,7 @@ class _CollatedBatch(TypedDict):
     attention_mask: "torch.Tensor"
     labels: "torch.Tensor"
 
+
 # jinaai/ReaderLM-v2: a ~1.5B param Qwen2 model purpose-built for HTML ->
 # Markdown extraction (confirmed via the HF model API, not assumed), small
 # enough to LoRA fine-tune on a single L4's 24GB.
@@ -76,7 +77,9 @@ _DATA_ROOT = Path(__file__).resolve().parents[3] / "data"
 def _load_local_jsonl(task: str, split: str) -> list[dict]:
     path = _DATA_ROOT / task / f"{split}.jsonl"
     if not path.exists():
-        raise FileNotFoundError(f"no local dataset staged at {path} (and GCS was unreachable)")
+        raise FileNotFoundError(
+            f"no local dataset staged at {path} (and GCS was unreachable)"
+        )
     with path.open() as f:
         return [json.loads(line) for line in f if line.strip()]
 
@@ -89,7 +92,9 @@ def _try_load_gcs_jsonl(uri: str, split: str) -> list[dict] | None:
     try:
         client = storage.Client()
         parsed = urlparse(uri)
-        blob = client.bucket(parsed.netloc).blob(f"{parsed.path.lstrip('/')}{split}.jsonl")
+        blob = client.bucket(parsed.netloc).blob(
+            f"{parsed.path.lstrip('/')}{split}.jsonl"
+        )
         if not blob.exists(client):
             return None
         text = blob.download_as_text()
@@ -136,7 +141,9 @@ def _upload_dir_to_gcs(local_dir: Path, dataset_uri: str, trial_id: str) -> str 
         return None
 
 
-def _build_example(tokenizer, messages: list[_ChatMessage], max_length: int) -> _TokenizedExample | None:
+def _build_example(
+    tokenizer, messages: list[_ChatMessage], max_length: int
+) -> _TokenizedExample | None:
     """Mask the loss to the assistant/completion tokens only. This is
     instruction-tuned chat data (user = HTML + instruction, assistant =
     markdown or INVALID_PAGE): training on the HTML-input tokens too would
@@ -162,11 +169,13 @@ def _build_example(tokenizer, messages: list[_ChatMessage], max_length: int) -> 
     prompt_text = tokenizer.apply_chat_template(
         messages[:-1], tokenize=False, add_generation_prompt=True
     )
-    full_text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=False)
+    full_text = tokenizer.apply_chat_template(
+        messages, tokenize=False, add_generation_prompt=False
+    )
     prompt_ids = tokenizer(prompt_text, add_special_tokens=False)["input_ids"]
     full_ids = tokenizer(full_text, add_special_tokens=False)["input_ids"]
 
-    completion_ids = full_ids[len(prompt_ids):]
+    completion_ids = full_ids[len(prompt_ids) :]
     if len(completion_ids) >= max_length:
         return None
 
@@ -224,7 +233,11 @@ def train_l4(trial_manifest: TrialManifest) -> TrainerResult:
     base_model = spec.get("base_model") or BASE_MODEL
 
     def _cfg(key: str, env: str, default, cast):
-        return cast(trainer_cfg[key]) if key in trainer_cfg else cast(os.environ.get(env, default))
+        return (
+            cast(trainer_cfg[key])
+            if key in trainer_cfg
+            else cast(os.environ.get(env, default))
+        )
 
     max_steps = _cfg("iters", "ENOKI_L4_MAX_STEPS", DEFAULT_MAX_STEPS, int)
     subset_size = _cfg("subset_size", "ENOKI_L4_SUBSET_SIZE", DEFAULT_SUBSET_SIZE, int)
@@ -276,12 +289,22 @@ def train_l4(trial_manifest: TrialManifest) -> TrainerResult:
         lora_dropout=0.05,
         bias="none",
         task_type="CAUSAL_LM",
-        target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
+        target_modules=[
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "o_proj",
+            "gate_proj",
+            "up_proj",
+            "down_proj",
+        ],
     )
     model = get_peft_model(model, lora_config)
 
     artifact_root = os.environ.get("ENOKI_ARTIFACT_ROOT") or str(store.artifact_root())
-    output_dir = trainer_cfg.get("output_dir") or os.path.join(artifact_root, trial_manifest["id"])
+    output_dir = trainer_cfg.get("output_dir") or os.path.join(
+        artifact_root, trial_manifest["id"]
+    )
     os.makedirs(output_dir, exist_ok=True)
 
     args = TrainingArguments(

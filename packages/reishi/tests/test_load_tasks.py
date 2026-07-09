@@ -50,7 +50,9 @@ def _entry_point(dotted: str):
 @pytest.fixture
 def fake_group(monkeypatch):
     eps: list = []
-    monkeypatch.setattr(discovery, "entry_points", lambda group: eps if group == "mcm.tasks" else [])
+    monkeypatch.setattr(
+        discovery, "entry_points", lambda group: eps if group == "mcm.tasks" else []
+    )
     return eps
 
 

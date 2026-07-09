@@ -33,7 +33,15 @@ class Suggester(Protocol):
 
     number: int  # this suggestion's ordinal within its sweep, used to name the Trial it becomes
 
-    def suggest_float(self, name: str, low: float, high: float, *, log: bool = False, step: float | None = None) -> float: ...
+    def suggest_float(
+        self,
+        name: str,
+        low: float,
+        high: float,
+        *,
+        log: bool = False,
+        step: float | None = None,
+    ) -> float: ...
     def suggest_int(self, name: str, low: int, high: int, *, step: int = 1) -> int: ...
     def suggest_categorical(self, name: str, choices: list[object]) -> object: ...
     def set_user_attr(self, key: str, value: object) -> None: ...
@@ -46,9 +54,13 @@ def suggest(ot: Suggester, search_space: dict[str, ParamSpec]) -> dict[str, obje
         if kind == "loguniform":
             out[key] = ot.suggest_float(key, spec["low"], spec["high"], log=True)
         elif kind == "float":
-            out[key] = ot.suggest_float(key, spec["low"], spec["high"], step=spec.get("step"))
+            out[key] = ot.suggest_float(
+                key, spec["low"], spec["high"], step=spec.get("step")
+            )
         elif kind == "int":
-            out[key] = ot.suggest_int(key, int(spec["low"]), int(spec["high"]), step=int(spec.get("step", 1)))
+            out[key] = ot.suggest_int(
+                key, int(spec["low"]), int(spec["high"]), step=int(spec.get("step", 1))
+            )
         elif kind == "categorical":
             out[key] = ot.suggest_categorical(key, spec["choices"])
         else:
@@ -56,7 +68,12 @@ def suggest(ot: Suggester, search_space: dict[str, ParamSpec]) -> dict[str, obje
     return out
 
 
-def build_recipe(template: RecipeManifest, suggested: dict[str, object], sweep_name: str, trial_number: int) -> Recipe:
+def build_recipe(
+    template: RecipeManifest,
+    suggested: dict[str, object],
+    sweep_name: str,
+    trial_number: int,
+) -> Recipe:
     trainer_cfg = dict(template["trainer"])
     for key, value in suggested.items():
         trainer_cfg[key.removeprefix("trainer.")] = value
@@ -81,14 +98,22 @@ def make_objective(sweep: Sweep, trainer_fn: Trainer) -> Callable[[Suggester], f
 
         [t] = trial_store.plan(recipe)  # validates recipe internally
         trial_store.save(t)
-        ot.set_user_attr("mcm_trial_id", t.id)  # the only link between the search backend's state and reishi's
+        ot.set_user_attr(
+            "mcm_trial_id", t.id
+        )  # the only link between the search backend's state and reishi's
 
         try:
             result = trainer_fn(t.to_manifest())
             if metric not in result["metrics"]:
                 available = ", ".join(sorted(result["metrics"])) or "none"
-                raise KeyError(f"sweep objective metric '{metric}' not in trial metrics (available: {available})")
-            t.metrics, t.artifacts, t.status = result["metrics"], result["artifacts"], "done"
+                raise KeyError(
+                    f"sweep objective metric '{metric}' not in trial metrics (available: {available})"
+                )
+            t.metrics, t.artifacts, t.status = (
+                result["metrics"],
+                result["artifacts"],
+                "done",
+            )
             trial_store.save(t)
         except Exception as e:
             # One bad trial (a trainer crash, a missing metric) must not sink a

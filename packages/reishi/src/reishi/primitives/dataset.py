@@ -21,7 +21,9 @@ class DatasetManifest(TypedDict):
 class Dataset:
     name: str  # convention: <slug>-<ddmmyy>, e.g. identify-orgs-040726
     uri: str  # gs:// prefix (or local path during development)
-    task: str = ""  # advisory provenance only; the recipe owns the task x dataset binding
+    task: str = (
+        ""  # advisory provenance only; the recipe owns the task x dataset binding
+    )
     revision: str = ""  # opaque content-id naming an immutable published prefix (GCS-native versioning)
     card: str = ""
     eval_only: bool = False
@@ -68,7 +70,9 @@ def leaks(train: list["Dataset"], evals: list["Dataset"]) -> list[str]:
         if d.eval_only:
             problems.append(f"{d.name} is eval_only but used as a training input")
         if d.name in eval_names:
-            problems.append(f"{d.name} is used as both a training input and an eval set")
+            problems.append(
+                f"{d.name} is used as both a training input and an eval set"
+            )
         for forbidden in d.disjoint_from:
             if forbidden in eval_names:
                 problems.append(

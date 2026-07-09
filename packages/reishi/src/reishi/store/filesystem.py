@@ -32,7 +32,9 @@ class LocalFilesystemBackend:
         # unique temp name per write: two writers to the same manifest in one
         # process would otherwise share a pid-derived name and clobber each
         # other's temp before os.replace.
-        fd, tmp_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+        fd, tmp_name = tempfile.mkstemp(
+            prefix=f".{path.name}.", suffix=".tmp", dir=path.parent
+        )
         tmp = Path(tmp_name)
         try:
             with os.fdopen(fd, "w", encoding="utf-8") as f:
@@ -44,7 +46,9 @@ class LocalFilesystemBackend:
     def load(self, kind: str, name: str) -> dict:
         path = self._dir(kind) / f"{safe_name(name)}.json"
         if not path.exists():
-            raise FileNotFoundError(f"no {kind} manifest named '{name}' in {self.root()}")
+            raise FileNotFoundError(
+                f"no {kind} manifest named '{name}' in {self.root()}"
+            )
         return json.loads(path.read_text())
 
     def load_all(self, kind: str, *, tolerant: bool = True) -> list[dict]:
@@ -55,5 +59,8 @@ class LocalFilesystemBackend:
             except (json.JSONDecodeError, UnicodeDecodeError, OSError) as e:
                 if not tolerant:
                     raise
-                print(f"[WARN] skipping unreadable {kind} manifest {p.name}: {e}", file=sys.stderr)
+                print(
+                    f"[WARN] skipping unreadable {kind} manifest {p.name}: {e}",
+                    file=sys.stderr,
+                )
         return out

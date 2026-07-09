@@ -16,7 +16,9 @@ psycopg = pytest.importorskip("psycopg")
 from enoki.store_backend import PostgresBackend  # noqa: E402
 
 DSN = os.environ.get("MCM_PG_TEST_DSN")
-pytestmark = pytest.mark.skipif(not DSN, reason="MCM_PG_TEST_DSN not set; no live Postgres to test against")
+pytestmark = pytest.mark.skipif(
+    not DSN, reason="MCM_PG_TEST_DSN not set; no live Postgres to test against"
+)
 
 
 @pytest.fixture
@@ -56,8 +58,12 @@ def test_claim_next_returns_none_when_nothing_planned(backend):
 
 
 def test_claim_next_picks_highest_priority(backend):
-    backend.save("trials", "low", {"id": "low", "status": "planned", "spec": {"priority": 0}})
-    backend.save("trials", "high", {"id": "high", "status": "planned", "spec": {"priority": 5}})
+    backend.save(
+        "trials", "low", {"id": "low", "status": "planned", "spec": {"priority": 0}}
+    )
+    backend.save(
+        "trials", "high", {"id": "high", "status": "planned", "spec": {"priority": 5}}
+    )
     claimed = backend.claim_next("trials", "runner-a")
     assert claimed["id"] == "high"
     assert claimed["status"] == "running"

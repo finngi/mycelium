@@ -26,7 +26,9 @@ class SweepTrialRow(TypedDict):
     params: dict
 
 
-def trials_for_sweep(sweep_name: str, started_at: str | None = None) -> list[SweepTrialRow]:
+def trials_for_sweep(
+    sweep_name: str, started_at: str | None = None
+) -> list[SweepTrialRow]:
     """Every Trial whose recipe is '<sweep_name>-t<N>' (objective.build_recipe's
     naming -- the '-s<seed>-<uuid>' suffix lives only on Trial.id, never on
     Trial.recipe), ascending by trial number.
@@ -407,7 +409,10 @@ def serve(sweep_name: str, port: int = DEFAULT_PORT) -> None:
     # client (a half-open socket, a slow read) freezes every other poll --
     # indistinguishable from the sweep having converged.
     server = ThreadingHTTPServer(("127.0.0.1", port), _make_handler(sweep_name))
-    print(f"[OK] watching sweep '{sweep_name}' -> http://127.0.0.1:{port}", file=sys.stderr)
+    print(
+        f"[OK] watching sweep '{sweep_name}' -> http://127.0.0.1:{port}",
+        file=sys.stderr,
+    )
     try:
         server.serve_forever()
     except KeyboardInterrupt:

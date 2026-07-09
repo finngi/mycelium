@@ -41,10 +41,14 @@ def _recipe_from_dict(d: dict) -> Recipe:
     known = {f for f in Recipe.__dataclass_fields__}
     unknown = set(d) - known
     if unknown:
-        raise ValueError(f"sweep template: unknown recipe fields: {', '.join(sorted(unknown))}")
+        raise ValueError(
+            f"sweep template: unknown recipe fields: {', '.join(sorted(unknown))}"
+        )
     missing = {"name", "task", "dataset"} - set(d)
     if missing:
-        raise ValueError(f"sweep template: missing required fields: {', '.join(sorted(missing))}")
+        raise ValueError(
+            f"sweep template: missing required fields: {', '.join(sorted(missing))}"
+        )
     return Recipe(**d)
 
 
@@ -65,10 +69,14 @@ class Sweep:
         known = {f for f in cls.__dataclass_fields__}
         unknown = set(raw) - known
         if unknown:
-            raise ValueError(f"{path}: unknown sweep fields: {', '.join(sorted(unknown))}")
+            raise ValueError(
+                f"{path}: unknown sweep fields: {', '.join(sorted(unknown))}"
+            )
         missing = {"name", "template", "search_space", "objective"} - set(raw)
         if missing:
-            raise ValueError(f"{path}: missing required fields: {', '.join(sorted(missing))}")
+            raise ValueError(
+                f"{path}: missing required fields: {', '.join(sorted(missing))}"
+            )
         if not isinstance(raw["template"], dict):
             raise ValueError(f"{path}: template must be a mapping")
         template = _recipe_from_dict(raw["template"]).to_manifest()
@@ -88,7 +96,9 @@ class Sweep:
             raise ValueError("search_space must have at least one parameter")
         for key in self.search_space:
             if not key.startswith("trainer."):
-                raise ValueError(f"search_space key '{key}' must start with 'trainer.' (only trainer hyperparameters are swept)")
+                raise ValueError(
+                    f"search_space key '{key}' must start with 'trainer.' (only trainer hyperparameters are swept)"
+                )
 
     def to_manifest(self) -> SweepManifest:
         return {

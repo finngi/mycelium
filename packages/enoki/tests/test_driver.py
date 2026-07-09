@@ -35,9 +35,14 @@ def _write_recipe(tmp_path, body: str = RECIPE):
     return p
 
 
-def test_run_success_marks_trials_done_with_metrics_and_artifacts(tmp_path, monkeypatch):
+def test_run_success_marks_trials_done_with_metrics_and_artifacts(
+    tmp_path, monkeypatch
+):
     def fake_trainer(manifest):
-        return {"metrics": {"train_loss": 0.5}, "artifacts": {"weights": "/tmp/adapter"}}
+        return {
+            "metrics": {"train_loss": 0.5},
+            "artifacts": {"weights": "/tmp/adapter"},
+        }
 
     monkeypatch.setitem(TRAINERS, "l4", fake_trainer)
 
@@ -67,7 +72,9 @@ def test_run_failure_marks_trial_failed_and_records_last_error(tmp_path, monkeyp
 
 
 def test_run_unknown_accelerator_fails_before_planning_any_trial(tmp_path):
-    recipe_path = _write_recipe(tmp_path, RECIPE.replace("accelerator: l4", "accelerator: h100"))
+    recipe_path = _write_recipe(
+        tmp_path, RECIPE.replace("accelerator: l4", "accelerator: h100")
+    )
 
     rc = driver.run(str(recipe_path))
 

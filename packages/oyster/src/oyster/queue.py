@@ -26,7 +26,10 @@ def fits(t: Trial, budget_gb: float, accelerators: set[str]) -> tuple[bool, str]
     if t.status != "planned":
         return False, f"status is {t.status}"
     if t.spec.get("accelerator") not in accelerators:
-        return False, f"needs {t.spec.get('accelerator')}, this machine runs {sorted(accelerators) or 'nothing'}"
+        return (
+            False,
+            f"needs {t.spec.get('accelerator')}, this machine runs {sorted(accelerators) or 'nothing'}",
+        )
     if t.execution.get("attempt", 0) >= MAX_ATTEMPTS:
         return False, f"exhausted {MAX_ATTEMPTS} attempts"
     est = footprint.estimate_gb(t.spec)
@@ -110,7 +113,9 @@ def requeue_stale(timeout_min: float) -> list[str]:
         if t.execution.get("attempt", 0) >= MAX_ATTEMPTS:
             t.status = "failed"
             t.execution["last_error"] = f"lost on {runner}, attempts exhausted"
-            actions.append(f"[FAIL] {t.id}: lost on {runner}, {MAX_ATTEMPTS} attempts used")
+            actions.append(
+                f"[FAIL] {t.id}: lost on {runner}, {MAX_ATTEMPTS} attempts used"
+            )
         else:
             t.status = "planned"
             t.execution.pop("runner", None)

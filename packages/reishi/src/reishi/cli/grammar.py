@@ -60,7 +60,9 @@ def extend(domains: tuple[str, ...] = (), verbs: tuple[Verb, ...] = ()) -> None:
         set(candidate_domains) | candidate_plurals
     )
     if overlap:
-        raise GrammarError(f"plugin vocabulary collides with grammar: {sorted(overlap)}")
+        raise GrammarError(
+            f"plugin vocabulary collides with grammar: {sorted(overlap)}"
+        )
 
     DOMAINS = candidate_domains
     _PLURALS.update({d + "s": d for d in new_domains})
@@ -79,7 +81,13 @@ class Command:
     flags: list[str] = field(default_factory=list)
 
     def canonical(self) -> str:
-        parts = ["mcm", self.domain or "", self.action or "", *self.objects, *self.flags]
+        parts = [
+            "mcm",
+            self.domain or "",
+            self.action or "",
+            *self.objects,
+            *self.flags,
+        ]
         return " ".join(p for p in parts if p)
 
 
@@ -125,7 +133,9 @@ def canonicalize(argv: list[str]) -> Command:
     if domain is None and action is not None:
         home = VERBS[action].home
         if home is None:
-            raise GrammarError(f"'{action}' needs a domain: one of {', '.join(DOMAINS)}")
+            raise GrammarError(
+                f"'{action}' needs a domain: one of {', '.join(DOMAINS)}"
+            )
         domain = home
 
     return Command(domain=domain, action=action, objects=objects, flags=flags)

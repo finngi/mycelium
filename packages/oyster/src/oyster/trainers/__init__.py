@@ -22,7 +22,10 @@ except ImportError as e:
     # should surface loudly, not silently shrink the trainer registry.
     if not (e.name or "").startswith("mlx"):
         raise
-    print(f"[WARN] mlx trainer unavailable ({e}) -> this machine can't claim mlx trials", file=sys.stderr)
+    print(
+        f"[WARN] mlx trainer unavailable ({e}) -> this machine can't claim mlx trials",
+        file=sys.stderr,
+    )
 
 
 def supported() -> set[str]:

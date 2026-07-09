@@ -10,7 +10,9 @@ from oyster import gitstore
 
 
 def _git(*args, cwd):
-    return subprocess.run(["git", "-C", str(cwd), *args], capture_output=True, text=True, check=True)
+    return subprocess.run(
+        ["git", "-C", str(cwd), *args], capture_output=True, text=True, check=True
+    )
 
 
 @pytest.fixture
@@ -42,7 +44,9 @@ def repo_with_rejecting_remote(tmp_path, monkeypatch):
     return origin, work
 
 
-def test_publish_resets_local_state_when_push_is_permanently_rejected(repo_with_rejecting_remote):
+def test_publish_resets_local_state_when_push_is_permanently_rejected(
+    repo_with_rejecting_remote,
+):
     origin, work = repo_with_rejecting_remote
     origin_head = _git("rev-parse", "HEAD", cwd=origin).stdout.strip()
 

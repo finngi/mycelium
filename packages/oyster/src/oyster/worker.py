@@ -14,19 +14,28 @@ from oyster import gitstore, machine, queue, trainers
 
 def run(max_trials: int | None = None) -> int:
     if machine.training_process_running():
-        print("[FAIL] a training process is already running here -> refusing to start", file=sys.stderr)
+        print(
+            "[FAIL] a training process is already running here -> refusing to start",
+            file=sys.stderr,
+        )
         return 1
 
     done = 0
     while max_trials is None or done < max_trials:
         if machine.is_busy():
-            print(f"[INFO] drained ({machine.BUSY_FILE} present) -> stopping after {done} trial(s)", file=sys.stderr)
+            print(
+                f"[INFO] drained ({machine.BUSY_FILE} present) -> stopping after {done} trial(s)",
+                file=sys.stderr,
+            )
             break
 
         gitstore.sync()
         cands = queue.eligible(machine.mem_budget_gb(), trainers.supported())
         if not cands:
-            print(f"[INFO] nothing claimable for this machine -> done ({done} trial(s))", file=sys.stderr)
+            print(
+                f"[INFO] nothing claimable for this machine -> done ({done} trial(s))",
+                file=sys.stderr,
+            )
             break
 
         t = queue.claim(cands[0], machine.name())

@@ -17,12 +17,26 @@ def store(tmp_path, monkeypatch):
     monkeypatch.setenv("MCM_STORE", str(tmp_path))
 
 
-def _save(recipe_name: str, status: str, metrics: dict, trainer: dict, seed: int = 0, created: str = "") -> None:
+def _save(
+    recipe_name: str,
+    status: str,
+    metrics: dict,
+    trainer: dict,
+    seed: int = 0,
+    created: str = "",
+) -> None:
     # recipe_name must be the bare '<sweep>-t<N>' shape build_recipe actually
     # produces -- the '-s<seed>-<uuid>' suffix lives only on Trial.id (trial.py
     # plan()), never on Trial.recipe itself.
-    t = Trial(id=f"{recipe_name}-s{seed}-abc123", recipe=recipe_name, seed=seed, status=status, metrics=metrics,
-               spec={"trainer": trainer}, created=created)
+    t = Trial(
+        id=f"{recipe_name}-s{seed}-abc123",
+        recipe=recipe_name,
+        seed=seed,
+        status=status,
+        metrics=metrics,
+        spec={"trainer": trainer},
+        created=created,
+    )
     trial_store.save(t)
 
 
@@ -51,8 +65,15 @@ def test_build_recipe_naming_matches_trials_for_sweep_parsing(tmp_path):
     # watch.trials_for_sweep, not a hand-fabricated recipe string standing in
     # for it -- a naming change on either side should fail this test.
     template = {
-        "name": "tpl", "task": "extract-fixture", "base_model": None, "dataset": "d",
-        "accelerator": "local", "prompt": None, "seeds": 1, "priority": 0, "trainer": {},
+        "name": "tpl",
+        "task": "extract-fixture",
+        "base_model": None,
+        "dataset": "d",
+        "accelerator": "local",
+        "prompt": None,
+        "seeds": 1,
+        "priority": 0,
+        "trainer": {},
     }
     recipe = build_recipe(template, {"trainer.include_tables": True}, "my-sweep", 3)
     [t] = trial_store.plan(recipe)
@@ -75,8 +96,15 @@ def test_sweep_sidecar_reads_what_optimize_writes(tmp_path):
     from physarum.watch import _sweep_sidecar
 
     assert _sweep_sidecar("my-sweep") == {"n_trials": None, "started_at": None}
-    reishi_store.save("sweeps", "my-sweep", {"name": "my-sweep", "n_trials": 60, "started_at": "2026-07-06T12:00:00+00:00"})
-    assert _sweep_sidecar("my-sweep") == {"n_trials": 60, "started_at": "2026-07-06T12:00:00+00:00"}
+    reishi_store.save(
+        "sweeps",
+        "my-sweep",
+        {"name": "my-sweep", "n_trials": 60, "started_at": "2026-07-06T12:00:00+00:00"},
+    )
+    assert _sweep_sidecar("my-sweep") == {
+        "n_trials": 60,
+        "started_at": "2026-07-06T12:00:00+00:00",
+    }
 
 
 def test_trials_for_sweep_hides_trials_from_before_the_current_run_started(tmp_path):
@@ -84,8 +112,21 @@ def test_trials_for_sweep_hides_trials_from_before_the_current_run_started(tmp_p
     # (created before this run's started_at) must not resurface in the
     # dashboard alongside the new run's trials -- reishi's store never
     # deletes, so this filter is the only thing preventing that.
-    _save("my-sweep-t0", "done", {"field_f1": 0.5}, {"a": True}, created="2026-07-06T10:00:00+00:00")
-    _save("my-sweep-t0", "done", {"field_f1": 0.9}, {"a": False}, seed=1, created="2026-07-06T12:00:00+00:00")
+    _save(
+        "my-sweep-t0",
+        "done",
+        {"field_f1": 0.5},
+        {"a": True},
+        created="2026-07-06T10:00:00+00:00",
+    )
+    _save(
+        "my-sweep-t0",
+        "done",
+        {"field_f1": 0.9},
+        {"a": False},
+        seed=1,
+        created="2026-07-06T12:00:00+00:00",
+    )
 
     rows = trials_for_sweep("my-sweep", started_at="2026-07-06T12:00:00+00:00")
     assert len(rows) == 1
@@ -98,7 +139,9 @@ def test_trials_for_sweep_hides_trials_from_before_the_current_run_started(tmp_p
 def test_sweep_watch_needs_a_sweep_name():
     from reishi.cli.grammar import Command
 
-    assert mcm_plugin.sweep_watch(Command(domain="sweep", action="watch", objects=[])) == 1
+    assert (
+        mcm_plugin.sweep_watch(Command(domain="sweep", action="watch", objects=[])) == 1
+    )
 
 
 def test_watch_verb_registered_and_readonly():
