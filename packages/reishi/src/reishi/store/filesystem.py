@@ -9,10 +9,10 @@ import json
 import os
 import sys
 import tempfile
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
 from pathlib import Path
 
-from reishi.store.base import dump_doc, safe_kind, safe_name
+from reishi.store.base import dump_doc, matches, safe_filter_key, safe_kind, safe_name
 
 
 class LocalFilesystemBackend:
@@ -63,3 +63,20 @@ class LocalFilesystemBackend:
                     file=sys.stderr,
                 )
         return out
+
+    def stream(self, kind: str) -> Iterator[dict]:
+        # One file read per yield -- never holds more than one manifest in
+        # memory, unlike load_all's list.
+        for p in sorted(self._dir(kind).glob("*.json")):
+            try:
+                yield json.loads(p.read_text())
+            except (json.JSONDecodeError, UnicodeDecodeError, OSError) as e:
+                print(
+                    f"[WARN] skipping unreadable {kind} manifest {p.name}: {e}",
+                    file=sys.stderr,
+                )
+
+    def query(self, kind: str, **filters: object) -> list[dict]:
+        for key in filters:
+            safe_filter_key(key)
+        return [m for m in self.stream(kind) if matches(m, filters)]

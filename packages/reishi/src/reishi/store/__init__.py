@@ -8,10 +8,10 @@ live under artifact_root(), not here.
 """
 
 import os
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
 from pathlib import Path
 
-from reishi.store.base import StorageBackend, StoreError, safe_name
+from reishi.store.base import StorageBackend, StoreError, matches, safe_name
 from reishi.store.filesystem import LocalFilesystemBackend
 from reishi.store.sqlite import SqliteBackend
 
@@ -27,6 +27,8 @@ __all__ = [
     "save",
     "load",
     "load_all",
+    "query",
+    "stream",
     "root",
     "artifact_root",
 ]
@@ -67,6 +69,27 @@ def load(kind: str, name: str) -> dict:
 
 def load_all(kind: str, *, tolerant: bool = True) -> list[dict]:
     return _active().load_all(kind, tolerant=tolerant)
+
+
+def query(kind: str, **filters: object) -> list[dict]:
+    backend = _active()
+    # getattr, not a direct call: StorageBackend's protocol default gives
+    # query() to anything that subclasses it, but a duck-typed backend that
+    # predates this reservation (e.g. enoki's PostgresBackend) never inherits
+    # that default, so the attribute genuinely may not exist at runtime.
+    native = getattr(backend, "query", None)
+    if native is not None:
+        return native(kind, **filters)  # type: ignore[no-any-return]
+    return [m for m in backend.load_all(kind) if matches(m, filters)]
+
+
+def stream(kind: str) -> Iterator[dict]:
+    backend = _active()
+    native = getattr(backend, "stream", None)
+    if native is not None:
+        yield from native(kind)
+        return
+    yield from backend.load_all(kind)
 
 
 def root() -> Path:
