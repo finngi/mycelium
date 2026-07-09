@@ -1,6 +1,5 @@
 """In-cluster entrypoint: recipe -> trials -> trainer -> manifests.
 
-This module and the mcm CLI are the only places allowed to know Ray exists.
 Ray is imported lazily so the driver can plan trials on a laptop without the
 cluster dependency group installed.
 """
@@ -19,7 +18,7 @@ from enoki.trainers.contract import Trainer, TrainerResult
 
 
 def _use_cluster_store() -> None:
-    # No MCM_PG_DSN -> local filesystem store, exactly like running on a laptop.
+    # No MCM_PG_DSN -> keep the default local filesystem store.
     dsn = os.environ.get("MCM_PG_DSN")
     if not dsn:
         return
@@ -29,13 +28,9 @@ def _use_cluster_store() -> None:
 
 
 def _make_trainer_call(trainer_fn: Trainer, accelerator: str) -> Trainer:
-    """Route the actual training call onto a GPU-holding Ray worker rather
-    than running it in-process on the (CPU-only) head node.
-
-    Ray is only installed in the training image (the 'cluster' dependency
-    group) -- on a laptop, or in tests that monkeypatch TRAINERS with plain
-    functions, it isn't there, so this falls back to calling trainer_fn
-    directly, exactly like before this routing existed."""
+    """Route the training call onto a GPU-holding Ray worker rather than the
+    CPU-only head node. Falls back to calling trainer_fn directly when Ray
+    isn't installed (a laptop, or tests that monkeypatch TRAINERS)."""
     try:
         import ray
     except ImportError:
@@ -54,9 +49,8 @@ def _make_trainer_call(trainer_fn: Trainer, accelerator: str) -> Trainer:
 
 
 def run(recipe_path: str) -> int:
-    # The deployment's tasks live in its own package, advertised via an
-    # mcm.tasks entry point; this is what makes the recipe's task resolvable
-    # in-cluster, exactly as the CLI resolves it on a laptop.
+    # Populate the task registry (via mcm.tasks entry points) so the recipe's
+    # task name resolves.
     load_tasks()
     _use_cluster_store()
     recipe = Recipe.from_yaml(recipe_path)

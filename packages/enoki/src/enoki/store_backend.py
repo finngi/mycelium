@@ -1,14 +1,9 @@
-"""Postgres StorageBackend: the store of record once trials run in the
-cluster instead of on a laptop.
+"""Postgres StorageBackend, swapped in via reishi.store.use_backend().
 
-Kept out of mcm core so the contract layer stays free of database clients --
-enoki is the one place allowed to know Postgres exists, same rule that
-already applies to Ray. The driver swaps this in via reishi.store.use_backend()
-before it plans or claims any trial; mcm's primitives never change.
-
-One JSONB table for every kind (trials/datasets/recipes): the manifest stays
-exactly the shape mcm already defines, and Postgres adds the transactional
-and concurrent-claim guarantees a directory of files can't.
+Kept out of the contract layer so it stays free of database clients. One JSONB
+table for every kind (trials/datasets/recipes) keeps the manifest at the shape
+mcm defines while adding the transactional concurrent-claim guarantees a
+directory of files can't provide (see claim_next).
 """
 
 import json
@@ -28,7 +23,7 @@ CREATE TABLE IF NOT EXISTS manifests (
 
 class PostgresBackend:
     def __init__(self, dsn: str):
-        import psycopg  # lazy: only paid for when this backend is actually selected
+        import psycopg  # lazy: only imported when this backend is selected
 
         self._psycopg = psycopg
         self._dsn = dsn

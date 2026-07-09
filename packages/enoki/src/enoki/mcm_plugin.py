@@ -1,12 +1,8 @@
 """mcm plugin: enoki implements `experiment submit` -- render a recipe into a
-KubeRay RayJob and kubectl apply it. With enoki installed, the one mcm CLI can
-dispatch a recipe to the cloud cluster; without it, `mcm experiment submit`
-degrades to a clean "not implemented".
+KubeRay RayJob and kubectl apply it.
 
-The `experiment`/`submit` vocabulary is reishi's (canonical grammar); enoki only
-contributes the HANDLER, so it declares no new DOMAINS/VERBS. Execution knowledge
--- the node selectors, the training image, the RayJob template, kubectl -- lives
-here in the executor, never in reishi.
+The `experiment`/`submit` vocabulary is reishi's, so enoki contributes only the
+HANDLER and declares no new DOMAINS/VERBS.
 """
 
 import base64
@@ -21,9 +17,8 @@ import yaml
 from reishi.cli.grammar import Command
 from reishi.primitives.recipe import Recipe
 
-# Only accelerators with a verified-correct node selector/toleration entry
-# here are supported; anything else fails cleanly rather than guessing at
-# values the scheduler would silently mis-place on.
+# experiment_submit gates on membership here: an accelerator without a
+# node-selector/toleration entry fails rather than scheduling on guessed values.
 _GPU_NODE_SELECTORS = {
     "l4": {"cloud.google.com/compute-class": "gpu-l4", "kubernetes.io/arch": "amd64"},
 }
@@ -50,8 +45,7 @@ _GPU_TOLERATIONS = {
     ],
 }
 
-# No real registry is baked into the open build: point this at your own training
-# image with --image or the MCM_TRAIN_IMAGE env var. This placeholder is inert.
+# Inert placeholder: override with --image or the MCM_TRAIN_IMAGE env var.
 _DEFAULT_IMAGE = "localhost/enoki-train:latest"
 
 
@@ -75,9 +69,9 @@ def _flag_value(flags: list[str], name: str) -> str | None:
 
 
 def _enoki_root() -> Path:
-    # jobs/rayjob.yaml ships at the enoki package root; this file lives at
-    # <root>/src/enoki/mcm_plugin.py. ENOKI_HOME overrides for the training
-    # image or any layout where enoki isn't installed from source.
+    # parents[2] resolves <root> from <root>/src/enoki/mcm_plugin.py, where
+    # jobs/rayjob.yaml ships. ENOKI_HOME overrides for layouts not installed
+    # from source (e.g. the training image).
     env = os.environ.get("ENOKI_HOME")
     if env:
         return Path(env)
@@ -127,13 +121,11 @@ def experiment_submit(cmd: Command) -> int:
     substitutions = {
         "{{name}}": name,
         "{{image}}": image,
-        # /recipes/ is the path the entrypoint writes the recipe to inside
-        # the container (nothing mounts it -- see rayjob.yaml); nested under
-        # <name>/ to mirror the experiments/<name>/recipe.yaml convention
-        # and avoid collisions between experiments sharing a filename.
+        # Nested under <name>/ so experiments sharing a filename don't collide
+        # at the in-container /recipes/ path the entrypoint writes to.
         "{{recipe}}": f"{name}/recipe.yaml",
-        # The image has no experiments/ directory baked in, so the
-        # entrypoint recreates the recipe file itself from this inline blob.
+        # Nothing mounts the recipe into the image, so the entrypoint recreates
+        # it from this inline blob.
         "{{recipe_b64}}": base64.b64encode(recipe_path.read_bytes()).decode("ascii"),
         "{{accelerator}}": recipe.accelerator,
         "{{gpu_node_selector}}": node_selector,
