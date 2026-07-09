@@ -5,10 +5,9 @@ A trainer is a callable: (trial_manifest: TrialManifest) -> TrainerResult
 domain an adapter is the LoRA artifact a trial produces.
 
 Heavy ML deps (torch/transformers/peft/google-cloud-storage) are imported
-lazily inside train_l4, not at module scope: `enoki.trainers` is imported
-unconditionally by the driver, including on a laptop with only the base
-dependency group installed, and only actually calling a trainer should pay
-for the cluster group.
+lazily inside train_l4, not at module scope: the driver imports this module
+unconditionally, including on a laptop with only the base dependency group,
+so only calling a trainer should pull in the cluster group.
 """
 
 import json
@@ -25,9 +24,8 @@ from reishi.primitives.trial import TrialManifest
 from enoki.trainers.contract import Trainer, TrainerResult
 
 if TYPE_CHECKING:
-    # torch is a lazy, optional import (see module docstring) -- this branch
-    # never runs, so referencing it in an annotation doesn't force the import
-    # on a laptop with only the base dependency group installed.
+    # Annotation-only: keeps torch out of the runtime import path (see module
+    # docstring) while still typing the tensor fields below.
     import torch
 
 
@@ -47,20 +45,15 @@ class _CollatedBatch(TypedDict):
     labels: "torch.Tensor"
 
 
-# jinaai/ReaderLM-v2: a ~1.5B param Qwen2 model purpose-built for HTML ->
-# Markdown extraction (confirmed via the HF model API, not assumed), small
-# enough to LoRA fine-tune on a single L4's 24GB.
+# ~1.5B-param model for HTML -> Markdown extraction, small enough to LoRA
+# fine-tune on a single L4's 24GB.
 BASE_MODEL = "jinaai/ReaderLM-v2"
 
-# Smoke-scale by default so this is fast and cheap to actually exercise --
-# every knob here is overridable per-recipe via `trainer:` in the recipe
-# yaml (surfaces as trial_manifest["spec"]["trainer"]) or via the matching
-# ENOKI_L4_* env var, so a real run never needs a code change.
-# 4096, not 2048: median (system+HTML-user+assistant-markdown) length across
-# the real htmlmd corpus is ~2251 estimated tokens, so 2048 truncated over
-# half the corpus. Truncation itself can no longer corrupt supervision (see
-# _build_example), but a bigger default still means less HTML gets dropped
-# for the common case.
+# Smoke-scale defaults, all overridable per-recipe via `trainer:` (surfaces as
+# trial_manifest["spec"]["trainer"]) or the matching ENOKI_L4_* env var.
+# max_length 4096, not 2048: median htmlmd corpus length is ~2251 tokens, so
+# 2048 would truncate over half the corpus. Truncation no longer corrupts
+# supervision (see _build_example), but a larger default still drops less HTML.
 DEFAULT_MAX_STEPS = 30
 DEFAULT_SUBSET_SIZE = 64
 DEFAULT_MAX_LENGTH = 4096
@@ -69,8 +62,8 @@ DEFAULT_LR = 2e-4
 DEFAULT_BATCH_SIZE = 1
 DEFAULT_GRAD_ACCUM = 4
 
-# mcm-enoki/data/<task>/{train,valid}.jsonl -- the local staging copy used
-# until the real gs:// bucket exists (see _load_split).
+# Local staging copy (data/<task>/{train,valid}.jsonl) used as the fallback
+# when a dataset's gs:// bucket isn't reachable (see _load_split).
 _DATA_ROOT = Path(__file__).resolve().parents[3] / "data"
 
 
@@ -104,9 +97,8 @@ def _try_load_gcs_jsonl(uri: str, split: str) -> list[dict] | None:
 
 
 def _load_split(dataset, split: str) -> list[dict]:
-    """Real once the bucket exists, no code change needed: gs:// uris are
-    tried first and only fall back to the local staged copy when the
-    bucket/blob isn't reachable (placeholder bucket, no creds, etc.)."""
+    """Try the dataset's gs:// uri first; fall back to the local staged copy
+    when the bucket/blob isn't reachable (placeholder bucket, no creds, etc.)."""
     if dataset.uri.startswith("gs://"):
         rows = _try_load_gcs_jsonl(dataset.uri, split)
         if rows is not None:
@@ -115,11 +107,10 @@ def _load_split(dataset, split: str) -> list[dict]:
 
 
 def _upload_dir_to_gcs(local_dir: Path, dataset_uri: str, trial_id: str) -> str | None:
-    """Best-effort upload of the already-saved local checkpoint to the
-    dataset's bucket, under artifacts/<trial_id>/. Upload-then-commit: the
-    caller only ever reports this URI as the artifact of record once the
-    upload has actually succeeded; an unreachable/placeholder bucket just
-    leaves the local path as the result, silently."""
+    """Best-effort upload of the saved local checkpoint to the dataset's
+    bucket, under artifacts/<trial_id>/. Returns the gs:// URI only on a
+    completed upload; any failure returns None so the caller keeps the local
+    path as the artifact of record."""
     if not dataset_uri.startswith("gs://"):
         return None
     try:
