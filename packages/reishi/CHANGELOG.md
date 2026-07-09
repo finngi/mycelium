@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/finngi/mycelium/compare/reishi-v0.6.0...reishi-v0.6.1) (2026-07-09)
+
+
+### Bug Fixes
+
+* **reishi:** preserve unknown manifest keys; tolerate non-scalar board metrics; declare Alpha status ([#20](https://github.com/finngi/mycelium/issues/20)) ([3078a71](https://github.com/finngi/mycelium/commit/3078a71d2f17e22778cb7639fd9ef87f4c2a253d))
+
 ## [0.6.0](https://github.com/finngi/mycelium/compare/reishi-v0.5.1...reishi-v0.6.0) (2026-07-09)
 
 
