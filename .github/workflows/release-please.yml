@@ -13,29 +13,16 @@ jobs:
     runs-on: ubuntu-latest
     # RELEASE_PLEASE_TOKEN lives as a secret on the `main` environment, so the
     # job must join that environment to read it (repo-level secrets would work
-    # without this, but the token was scoped to the environment).
+    # without this, but the token was scoped to the environment). A real PAT,
+    # not GITHUB_TOKEN, so the release PR it opens can trigger the required CI
+    # checks (GITHUB_TOKEN-authored PRs don't).
     environment: main
-    env:
-      # Auto-merge needs a real PAT: PRs opened under the default GITHUB_TOKEN
-      # identity gate every CI check behind a manual "Approve and run", so
-      # required checks never go green on their own and auto-merge never fires.
-      # Until a RELEASE_PLEASE_TOKEN secret is set, fall back to GITHUB_TOKEN --
-      # release PRs still open, they just need a manual merge.
-      HAS_PAT: ${{ secrets.RELEASE_PLEASE_TOKEN != '' }}
     steps:
       - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5
-        id: release
         with:
           token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
-      - name: Enable auto-merge on the release PR(s)
-        if: ${{ steps.release.outputs.prs_created == 'true' && env.HAS_PAT == 'true' }}
-        env:
-          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-          RELEASE_PRS: ${{ steps.release.outputs.prs }}
-        run: |
-          for number in $(echo "$RELEASE_PRS" | jq -r '.[].number'); do
-            gh pr merge --auto --squash "$number" --repo ${{ github.repository }} \
-              || echo "[WARN] could not enable auto-merge on #$number -- enable Settings > General > Allow auto-merge"
-          done
+      # No auto-merge: the release PR is the deliberate "ship it" gate. Review
+      # and merge it by hand (as admin) when you want to cut -- especially once
+      # a PyPI publish workflow makes merging it publish.
