@@ -1,5 +1,5 @@
-"""f(x)=y generalization: a Task can replace every extraction default while the
-default path stays byte-for-byte the old extraction behavior.
+"""Task customization: custom decoder/aggregator/scorer override the defaults,
+and the default path is the JSON codec plus field_aggregate.
 """
 
 from reishi.primitives.task import Task, aggregate, field_aggregate

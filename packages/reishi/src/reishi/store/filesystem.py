@@ -1,9 +1,8 @@
 """One-JSON-file-per-manifest backend.
 
-Kept for the executors whose mechanism is coupled to the physical layout --
-oyster's git-as-queue makes a claim by committing a single changed file, which
-only works with one file per manifest. It is no longer the default (sqlite is);
-select it with MCM_STORE_BACKEND=fs or pin it explicitly via use_backend().
+Kept for oyster, whose git-as-queue claims a trial by committing one changed
+file and so needs exactly one file per manifest. No longer the default
+(sqlite is); select with MCM_STORE_BACKEND=fs or use_backend().
 """
 
 import json

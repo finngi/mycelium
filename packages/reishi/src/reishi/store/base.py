@@ -1,11 +1,9 @@
 """Store contract shared by every manifest backend.
 
-A manifest is small JSON reached by a (kind, name) key. Both halves of the key
-become path components (filesystem) or primary-key values (sqlite/postgres); a
-value with a separator or traversal segment could escape the store root, so
-reject both here once for every backend rather than per-backend. Backends also
-share one serialisation (dump_doc) so a manifest is byte-identical whichever
-backend wrote it.
+A manifest is small JSON keyed by (kind, name). Both halves become path
+components (fs) or primary-key values (sqlite), so a value with a separator
+or traversal segment could escape the store root -- reject it here once for
+every backend rather than per-backend.
 """
 
 import json
@@ -35,10 +33,9 @@ def safe_kind(kind: str) -> str:
 
 
 def dump_doc(manifest: Mapping[str, object]) -> str:
-    """The one on-disk manifest serialisation shared by every local backend:
-    indented, utf-8 (non-ASCII kept verbatim), one trailing newline. Both
-    backends persist this exact string so a manifest is byte-identical
-    whichever wrote it."""
+    """Serialise a manifest to the one on-disk form shared by every backend:
+    indented, utf-8 (non-ASCII verbatim), one trailing newline. Byte-identical
+    whichever backend writes it."""
     return json.dumps(dict(manifest), indent=2, ensure_ascii=False) + "\n"
 
 

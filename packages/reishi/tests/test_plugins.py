@@ -24,7 +24,7 @@ def test_extend_adds_domain_and_verbs():
     grammar.extend(("mesh",), (Verb("work", home="mesh", readonly=False),))
     cmd = canonicalize(["work"])
     assert (cmd.domain, cmd.action) == ("mesh", "work")
-    assert canonicalize(["mesh"]).action == "list"  # read-only default applies
+    assert canonicalize(["mesh"]).action == "list"
 
 
 def test_extend_rejects_verb_colliding_with_domain():
@@ -48,7 +48,7 @@ def test_extend_rejects_verb_colliding_with_builtin_verb():
     # built-in 'list' verb with the plugin's -- no error, just wrong behavior.
     with pytest.raises(GrammarError, match="collides"):
         grammar.extend((), (Verb("list", home="mesh", readonly=True),))
-    assert grammar.VERBS["list"].home is None  # built-in survives
+    assert grammar.VERBS["list"].home is None
 
 
 def test_extend_rejects_verb_shadowed_by_alias():

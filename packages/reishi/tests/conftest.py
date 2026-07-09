@@ -1,10 +1,8 @@
 """A registered fixture task for the contract tests.
 
-reishi ships no tasks -- real ones live in deployment workspaces (e.g. mcm-lab).
-But the primitive tests need *some* registered task to resolve, since
-Recipe.validate() checks the name against the registry. This registers a trivial
-one so the contract tests exercise recipe/trial/experiment_submit without
-reishi depending on any real experiment's task.
+reishi ships no tasks of its own, but Recipe.validate() checks the task name
+against the registry, so the primitive tests need some task registered to
+resolve against. This provides a trivial one.
 """
 
 from reishi.primitives.task import ScoreCounts, Task, register

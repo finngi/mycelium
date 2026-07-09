@@ -1,4 +1,4 @@
-"""Leak contract: the structural train/eval checks mcm enforces natively."""
+"""Tests for dataset.leaks(): the structural train/eval leak checks."""
 
 from reishi.primitives.dataset import Dataset, leaks
 
