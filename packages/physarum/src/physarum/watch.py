@@ -1,11 +1,7 @@
 """'mcm sweep watch <sweep-name>': a read-only localhost page for watching a
-sweep converge. Deliberately decoupled from 'sweep optimize' -- it only reads
-Trial manifests reishi.store already persists after every trial, so it can be
-started, stopped, or pointed at a finished sweep independently of whichever
-process is actually running study.optimize(). No websockets/SSE: the page
-polls a plain JSON endpoint, which is enough for a human watching trials land
-every few seconds and keeps this stdlib-only, matching reishi/physarum's
-near-zero-dependency rule.
+sweep converge. It only reads persisted Trial manifests, so it runs
+independently of whichever process is running study.optimize(). The page
+polls a plain JSON endpoint (no websockets/SSE), keeping this stdlib-only.
 """
 
 import json
@@ -29,18 +25,14 @@ class SweepTrialRow(TypedDict):
 def trials_for_sweep(
     sweep_name: str, started_at: str | None = None
 ) -> list[SweepTrialRow]:
-    """Every Trial whose recipe is '<sweep_name>-t<N>' (objective.build_recipe's
-    naming -- the '-s<seed>-<uuid>' suffix lives only on Trial.id, never on
-    Trial.recipe), ascending by trial number.
+    """Every Trial whose recipe is '<sweep_name>-t<N>', ascending by N. The
+    trial number is parsed from the recipe name (build_recipe's '-t<N>'; the
+    '-s<seed>-<uuid>' suffix lives only on Trial.id) -- it's all a Trial keeps
+    of its sweep lineage.
 
-    Trial numbers come from that recipe name, not a stored field -- it's all a
-    Trial keeps of its sweep lineage.
-
-    started_at (from the "sweeps" sidecar's most recent `sweep optimize`
-    invocation) drops any Trial saved before it -- reishi's store never
-    deletes, so re-running a sweep under the same name would otherwise mix
-    this run's trials with every previous run's leftovers. Trial.created is
-    an ISO-8601 UTC string, so plain string comparison orders correctly.
+    started_at drops any Trial created before it: reishi's store never deletes,
+    so re-running a same-named sweep would otherwise mix in the prior run's
+    trials. Trial.created is ISO-8601 UTC, so string comparison orders it.
     """
     prefix = f"{sweep_name}-t"
     rows: list[SweepTrialRow] = []
@@ -71,10 +63,9 @@ class SweepSidecar(TypedDict):
 
 
 def _sweep_sidecar(sweep_name: str) -> SweepSidecar:
-    """The current run's bookkeeping, if `sweep optimize` has started (it
-    writes this before the first trial) -- both fields fall back to None for
-    a sweep watch started before that, or for a sweep that predates this
-    sidecar existing."""
+    """The current run's bookkeeping; both fields fall back to None if the
+    sidecar isn't there yet (watch started before the first trial, or a sweep
+    predating the sidecar)."""
     try:
         m = store.load("sweeps", sweep_name)
     except FileNotFoundError:
@@ -404,10 +395,8 @@ def _make_handler(sweep_name: str) -> type[BaseHTTPRequestHandler]:
 
 
 def serve(sweep_name: str, port: int = DEFAULT_PORT) -> None:
-    # Threading, not plain HTTPServer: serve_forever() otherwise handles one
-    # request at a time with no per-request timeout, so a single stalled
-    # client (a half-open socket, a slow read) freezes every other poll --
-    # indistinguishable from the sweep having converged.
+    # Threading, not plain HTTPServer: the latter serves one request at a time,
+    # so a single stalled client would freeze every other poll.
     server = ThreadingHTTPServer(("127.0.0.1", port), _make_handler(sweep_name))
     print(
         f"[OK] watching sweep '{sweep_name}' -> http://127.0.0.1:{port}",

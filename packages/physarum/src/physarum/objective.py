@@ -1,13 +1,8 @@
-"""Turns one Sweep and one already-resolved Trainer into a search backend's objective.
+"""Turns one Sweep and one resolved Trainer into a search backend's objective.
 
-physarum's real job is consuming trials for an optimize -> result -> suggest
--> action loop; Optuna is one pluggable search backend behind that loop, not
-its foundation, so nothing here is typed against Optuna directly -- only
-against the scalar-suggestion surface a backend must offer (see Suggester).
-Building an actual mcm Trial from those suggestions, running it, and
-reporting the result back is entirely this module's job, not the backend's.
-Keeping Trainer structural (not imported from oyster/enoki) means this
-module has no sibling dependency beyond reishi.
+Nothing here is typed against Optuna: the objective takes only the
+scalar-suggestion surface a backend must offer (see Suggester), and Trainer
+is a structural callable, so this module's only import is reishi.
 """
 
 from typing import Callable, Protocol, TypedDict
@@ -28,10 +23,10 @@ Trainer = Callable[[TrialManifest], TrainerResult]
 
 
 class Suggester(Protocol):
-    """The only surface a search backend must offer to drive a Sweep -- Optuna's
-    Trial satisfies this structurally, so nothing here imports optuna."""
+    """The surface a search backend must offer to drive a Sweep. Optuna's
+    Trial satisfies it structurally, so nothing here imports optuna."""
 
-    number: int  # this suggestion's ordinal within its sweep, used to name the Trial it becomes
+    number: int  # ordinal within the sweep; names the Trial it becomes
 
     def suggest_float(
         self,
@@ -84,7 +79,7 @@ def build_recipe(
         base_model=template["base_model"],
         accelerator=template["accelerator"],
         prompt=template["prompt"],
-        seeds=1,  # one suggestion -> exactly one Trial, by design
+        seeds=1,  # one suggestion -> exactly one Trial
         trainer=trainer_cfg,
     )
 
@@ -100,7 +95,7 @@ def make_objective(sweep: Sweep, trainer_fn: Trainer) -> Callable[[Suggester], f
         trial_store.save(t)
         ot.set_user_attr(
             "mcm_trial_id", t.id
-        )  # the only link between the search backend's state and reishi's
+        )  # the only link between the backend's state and reishi's
 
         try:
             result = trainer_fn(t.to_manifest())
@@ -116,12 +111,9 @@ def make_objective(sweep: Sweep, trainer_fn: Trainer) -> Callable[[Suggester], f
             )
             trial_store.save(t)
         except Exception as e:
-            # One bad trial (a trainer crash, a missing metric) must not sink a
-            # 60-trial sweep -- mark it failed and re-raise so the search
-            # backend's own per-trial failure handling (Optuna's `catch=`, set
-            # at the study.optimize() call site) can record it and move on,
-            # instead of the exception unwinding study.optimize() entirely and
-            # losing every trial after it.
+            # Mark failed before re-raising: the backend's per-trial handling
+            # (Optuna's catch= at the study.optimize() call site) then records
+            # it and moves on, rather than the exception sinking the whole sweep.
             t.status = "failed"
             t.execution = {**t.execution, "last_error": str(e)}
             trial_store.save(t)
