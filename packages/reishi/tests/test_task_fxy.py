@@ -20,8 +20,8 @@ def test_custom_aggregator_returns_arbitrary_dict():
 
 
 def test_loosely_typed_scorer_end_to_end():
-    def scorer(pred: str, gold: str) -> dict:
-        return {"correct": 1 if pred == gold else 0}
+    def scorer(pred: str, ref: str) -> dict:
+        return {"correct": 1 if pred == ref else 0}
 
     t = Task(name="strcmp", description="d", score=scorer, codec="json")
     scores = [t.score(t.decode('{"a":1}'), {"a": 1})]
@@ -29,13 +29,13 @@ def test_loosely_typed_scorer_end_to_end():
 
 
 def test_default_path_uses_json_codec_and_field_aggregate():
-    def _score(pred: dict, gold: dict):
-        cand, ref = set((pred or {}).items()), set((gold or {}).items())
+    def _score(pred: dict, ref: dict):
+        cand, truth = set((pred or {}).items()), set((ref or {}).items())
         return {
-            "tp": len(cand & ref),
-            "fp": len(cand - ref),
-            "fn": len(ref - cand),
-            "exact_match": pred == gold,
+            "tp": len(cand & truth),
+            "fp": len(cand - truth),
+            "fn": len(truth - cand),
+            "exact_match": pred == ref,
             "invalid": not pred,
         }
 
@@ -69,7 +69,7 @@ def test_manifest_omits_empty_output_fields():
     assert bare["scorer"] == "missing"
 
     full = Task(
-        name="full", description="d", output_fields=("a", "b"), score=lambda p, g: {}
+        name="full", description="d", output_fields=("a", "b"), score=lambda p, r: {}
     ).to_manifest()
     assert full["output_fields"] == ["a", "b"]
     assert full["scorer"] == "registered"

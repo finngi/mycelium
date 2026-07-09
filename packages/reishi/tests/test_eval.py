@@ -14,8 +14,8 @@ class FakeTask:
     def decode(self, raw: str) -> Any:
         return raw
 
-    def score(self, pred: Any, gold: Any) -> Mapping[str, object]:
-        self.scored.append((pred, gold))
+    def score(self, pred: Any, ref: Any) -> Mapping[str, object]:
+        self.scored.append((pred, ref))
         return {"ok": 1}
 
     def aggregate(self, scores: list[Mapping[str, object]]) -> dict:
@@ -77,12 +77,12 @@ def test_sink_records_are_directly_replayable_by_rescore():
     assert replayed.scored == [("one", "One"), ("two", "Two")]
 
 
-def test_str_pred_and_gold_are_unbounded():
+def test_str_pred_and_ref_are_unbounded():
     task = FakeTask()
     run_eval(task=task, rows=_rows(), generate=_echo)
-    pred, gold = task.scored[0]
+    pred, ref = task.scored[0]
     assert pred == "one"
-    assert gold == "One"
+    assert ref == "One"
 
 
 def test_render_variants():

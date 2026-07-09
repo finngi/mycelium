@@ -24,14 +24,14 @@ def _isolated_store(tmp_path, monkeypatch):
     monkeypatch.setattr(store, "_backend", None)
 
 
-def _fixture_score(pred: dict, gold: dict) -> ScoreCounts:
+def _fixture_score(pred: dict, ref: dict) -> ScoreCounts:
     cand = set((pred.get("markdown") or "").split())
-    ref = set((gold.get("markdown") or "").split())
+    truth = set((ref.get("markdown") or "").split())
     return {
-        "tp": len(cand & ref),
-        "fp": len(cand - ref),
-        "fn": len(ref - cand),
-        "exact_match": (pred.get("markdown") or "") == (gold.get("markdown") or ""),
+        "tp": len(cand & truth),
+        "fp": len(cand - truth),
+        "fn": len(truth - cand),
+        "exact_match": (pred.get("markdown") or "") == (ref.get("markdown") or ""),
         "invalid": not (pred.get("markdown") or "").strip(),
     }
 
