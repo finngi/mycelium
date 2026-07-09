@@ -27,6 +27,17 @@ class EvalInfo(TypedDict, total=False):
     scored_at: str
     placement: str  # cpu | accelerator | local -- where scoring ran
     source: str  # "live" | "replay"
+    # Measurement-key (K) pinning fields, see math-foundations.md section 0:
+    # K = (task, codec, scorer closure, aggregator, dataset version, split,
+    # n_eval). Two trials are comparable only if they share K; board.build
+    # warns when a recipe group mixes these.
+    task: str  # Task.name active at scoring time
+    codec: str  # Task.codec active at scoring time
+    scorer_version: str  # scorer closure id (e.g. oracle model/lib versions)
+    dataset: str  # Dataset.name -- the eval set's ref
+    dataset_revision: str  # Dataset.revision -- the pinned version within K
+    split: str  # eval split name (test | val | ood)
+    eval_n: int  # number of eval rows scored -- n_eval in K
 
 
 class ExecutionInfo(TypedDict):

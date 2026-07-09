@@ -41,6 +41,26 @@ def test_eval_block_roundtrips():
     assert back.eval == t.eval
 
 
+def test_eval_measurement_key_fields_roundtrip():
+    t = Trial(
+        id="t-11",
+        recipe="r",
+        seed=0,
+        eval={
+            "scorer": "extract",
+            "task": "extract",
+            "codec": "json",
+            "scorer_version": "trafilatura==1.2.0,spacy==3.7.0",
+            "dataset": "htmlmd-eval",
+            "dataset_revision": "2026-01-01",
+            "split": "test",
+            "eval_n": 500,
+        },
+    )
+    back = Trial.from_manifest(t.to_manifest())
+    assert back.eval == t.eval
+
+
 def test_old_manifest_without_eval_or_predictions_loads():
     old = {
         "id": "t-3",
