@@ -25,6 +25,10 @@ def build(metric: str = "f1", task: str | None = None) -> list[dict]:
         by_recipe[t.recipe].append(t)
 
     rows = []
+    # Warn once per (recipe, metric), not per trial: a recipe whose task stores
+    # rich metrics on every trial would otherwise flood stderr and bury other
+    # warnings sharing the stream.
+    non_scalar: set[tuple[str, str]] = set()
     for recipe_name, group in by_recipe.items():
         values = []
         for t in group:
@@ -32,10 +36,7 @@ def build(metric: str = "f1", task: str | None = None) -> list[dict]:
                 continue
             v = t.metrics[metric]
             if not _is_scalar(v):
-                print(
-                    f"[WARN] metric '{metric}' on trial '{t.id}' is non-scalar; skipped",
-                    file=sys.stderr,
-                )
+                non_scalar.add((recipe_name, metric))
                 continue
             values.append(v)
         row = {
@@ -56,6 +57,11 @@ def build(metric: str = "f1", task: str | None = None) -> list[dict]:
             row[f"{metric}_min"] = None
             row[f"{metric}_max"] = None
         rows.append(row)
+    for recipe_name, metric_name in sorted(non_scalar):
+        print(
+            f"[WARN] metric '{metric_name}' on recipe '{recipe_name}' has non-scalar values; skipped",
+            file=sys.stderr,
+        )
     return sorted(
         rows,
         key=lambda r: r[metric] if r[metric] is not None else float("-inf"),

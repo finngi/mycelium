@@ -1,7 +1,0 @@
-{
-  "database": "dolt",
-  "backend": "dolt",
-  "dolt_mode": "embedded",
-  "dolt_database": "mycelium",
-  "project_id": "124f423a-2013-4494-a24c-03b020ec3c8d"
-}

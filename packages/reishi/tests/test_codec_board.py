@@ -78,8 +78,9 @@ def test_board_skips_non_scalar_metric_leaves(monkeypatch, capsys):
     assert rows["rich_only"]["f1"] is None
 
     err = capsys.readouterr().err
-    assert "[WARN]" in err
     assert "non-scalar" in err
+    # Deduplicated: one line per offending recipe, not per trial.
+    assert err.count("[WARN]") == 2
 
 
 def test_board_sorts_unscored_last(monkeypatch):

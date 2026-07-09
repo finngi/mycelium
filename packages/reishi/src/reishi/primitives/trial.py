@@ -93,13 +93,14 @@ class Trial:
         # so a newer manifest round-trips losslessly through an older checkout.
         # Route both sides off `known` (which excludes the `extra` field itself),
         # so a manifest key literally named "extra" is preserved, not swallowed.
-        # The comprehensions widen values to object, so mypy can't check the
+        # The loop widens values to object, so mypy can't check the
         # **kwargs unpacking -- hence the type: ignore.
         known = {k for k in cls.__dataclass_fields__ if k != "extra"}
-        return cls(
-            **{k: v for k, v in m.items() if k in known},  # type: ignore[arg-type]
-            extra={k: v for k, v in m.items() if k not in known},
-        )
+        fields: dict = {}
+        extra: dict = {}
+        for k, v in m.items():
+            (fields if k in known else extra)[k] = v
+        return cls(**fields, extra=extra)  # type: ignore[arg-type]
 
 
 def plan(recipe: Recipe) -> list[Trial]:

@@ -1,4 +1,0 @@
-{"id":"int-a7b2e49f1e060c4d5f60d5710147270a","kind":"field_change","created_at":"2026-07-09T18:35:28.045033Z","actor":"Finn Cathersides","issue_id":"mycelium-uex.1","extra":{"field":"status","new_value":"closed","old_value":"open"}}
-{"id":"int-3f89a2fa5b2cea9ac66227f80f8fa7b7","kind":"field_change","created_at":"2026-07-09T18:35:28.925406Z","actor":"Finn Cathersides","issue_id":"mycelium-uex.2","extra":{"field":"status","new_value":"closed","old_value":"open"}}
-{"id":"int-7a152541bd4c0786923b34c4bca8e81d","kind":"field_change","created_at":"2026-07-09T18:35:29.407542Z","actor":"Finn Cathersides","issue_id":"mycelium-uex.4","extra":{"field":"status","new_value":"closed","old_value":"open"}}
-{"id":"int-08ff6a8b99416c39ec3ecd0f6331cc74","kind":"field_change","created_at":"2026-07-09T18:35:43.990151Z","actor":"Finn Cathersides","issue_id":"mycelium-uex.3","extra":{"field":"status","new_value":"closed","old_value":"open"}}
