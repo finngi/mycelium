@@ -65,6 +65,10 @@ class TrialManifest(TypedDict):
     spec: RecipeManifest
     execution: ExecutionInfo
     eval: NotRequired[EvalInfo]
+    # One EvalInfo per eval run (val, OOD, adversarial, ...). Additive
+    # alongside `eval`, which stays the primary/most-recent one -- see
+    # record_eval().
+    evals: NotRequired[list[EvalInfo]]
 
 
 @dataclass
@@ -81,7 +85,10 @@ class Trial:
     # "spec"; a real recipe always fills every RecipeManifest field.
     spec: RecipeManifest = field(default_factory=dict)  # type: ignore[assignment]
     execution: ExecutionInfo = field(default_factory=ExecutionInfo)
+    # `eval` is the primary/most-recent eval; `evals` is the full multi-eval-set
+    # history (val + OOD + adversarial, ...) -- record_eval() keeps both in sync.
     eval: EvalInfo = field(default_factory=dict)  # type: ignore[assignment]
+    evals: list[EvalInfo] = field(default_factory=list)
     # Unknown top-level manifest keys, carried verbatim. Without this a newer
     # manifest loaded in an older checkout would lose its new fields on the next
     # save (oyster's heartbeat re-saves every 30s) -- the additivity guarantee
@@ -101,6 +108,7 @@ class Trial:
             "spec": self.spec,
             "execution": self.execution,
             "eval": self.eval,
+            "evals": self.evals,
         }
         # Known keys win, so a stale carried-over value never shadows the live one.
         return {**self.extra, **m}  # type: ignore[typeddict-item]
@@ -119,6 +127,24 @@ class Trial:
         for k, v in m.items():
             (fields if k in known else extra)[k] = v
         return cls(**fields, extra=extra)  # type: ignore[arg-type]
+
+
+def record_eval(trial: Trial, metrics: dict, info: EvalInfo) -> None:
+    """Record one eval run (val, OOD, adversarial, ...): dual-write, never a
+    relocate. Appends `info` to `trial.evals` and sets `trial.eval` to it (the
+    primary = most recent), then merges `metrics` into `trial.metrics` bare
+    (so existing board/objective/watch consumers stay sighted) and, when
+    `info` carries a split, again under a `'<split>/'` prefix. No split ->
+    bare write only. An existing metrics key is only ever overwritten with a
+    newer value for the same name, never deleted or renamed.
+    """
+    trial.evals.append(info)
+    trial.eval = info
+    split = info.get("split")
+    for key, value in metrics.items():
+        trial.metrics[key] = value
+        if split:
+            trial.metrics[f"{split}/{key}"] = value
 
 
 def plan(recipe: Recipe) -> list[Trial]:
