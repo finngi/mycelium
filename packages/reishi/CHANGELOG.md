@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.5.1](https://github.com/finngi/mycelium/compare/reishi-v0.5.0...reishi-v0.5.1) (2026-07-09)
+
+
+### Documentation
+
+* add NOTICE copyright + package authors ([60714a8](https://github.com/finngi/mycelium/commit/60714a8524504b5c2b374bac0fa2ddbca899ae46))
+* **primitives:** rewrite comments/docstrings to actual scope ([b5127c4](https://github.com/finngi/mycelium/commit/b5127c4631b8e074579c424fc70067a8e2f7187d))
+* **reishi:** rewrite non-primitive comments to actual scope ([c7c6817](https://github.com/finngi/mycelium/commit/c7c6817e802f6f6d56413d3e00847c03fb1456b4))
+* set package authors to Finn Danger Cathersides ([c2a52a6](https://github.com/finngi/mycelium/commit/c2a52a6aa57c9e0b6204e3ca56d752986a88bc61))
+
 ## [0.5.0](https://github.com/finngi/mycelium/compare/reishi-v0.4.1...reishi-v0.5.0) (2026-07-09)
 
 
