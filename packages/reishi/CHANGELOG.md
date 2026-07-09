@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.5.0](https://github.com/finngi/mycelium/compare/reishi-v0.4.1...reishi-v0.5.0) (2026-07-09)
+
+
+### Features
+
+* add TypedDict manifests, Task.aggregate scoring, and JSON codec ([#8](https://github.com/finngi/mycelium/issues/8)) ([f700700](https://github.com/finngi/mycelium/commit/f700700c418170be5a9f90a7f8b507f14454b536))
+* **store:** default to a sqlite manifest backend, add artifact root ([#13](https://github.com/finngi/mycelium/issues/13)) ([d7d570b](https://github.com/finngi/mycelium/commit/d7d570bbb84d2774151be7e4b49579488dfe4e11))
+* **task:** generalize Task to any f(x)=y + pure eval seam ([#19](https://github.com/finngi/mycelium/issues/19)) ([cabdcfb](https://github.com/finngi/mycelium/commit/cabdcfb3a25794df1bc72f87ef8a07324e42b19f))
+* **tasks:** reishi ships no tasks; deployments load them via mcm.tasks entry points ([#16](https://github.com/finngi/mycelium/issues/16)) ([db3f238](https://github.com/finngi/mycelium/commit/db3f2381ad95c07083060ef5a8b9b631b2e4ad94))
+
+
+### Bug Fixes
+
+* **ci:** check out mcm-enoki as a sibling for experiment_submit tests ([55ff3dc](https://github.com/finngi/mycelium/commit/55ff3dc4b85b2c395bd91ecb406de0a1d954fa85))
+* **ci:** grant contents:read alongside security-events:write in codeql ([87d45d3](https://github.com/finngi/mycelium/commit/87d45d3e3c97c7abd4cbfa0c1425e391c58d5672))
+* **ci:** lint with uvx, not uv run, to avoid syncing project deps ([d2c1a09](https://github.com/finngi/mycelium/commit/d2c1a0943790b6af19b338d3169a641d03f620b0))
+* **cli:** fail loud and clean on task-loading errors; isolate test registry ([#18](https://github.com/finngi/mycelium/issues/18)) ([a6c8944](https://github.com/finngi/mycelium/commit/a6c89443e7beb89b820c977f2a43138e31c44049))
+* **store:** sqlite root() returns the store dir, not the db file ([22dd3d4](https://github.com/finngi/mycelium/commit/22dd3d4af2ebea8991f07d328cc8388b27dd7d66))
+
+
+### Documentation
+
+* fix stale/inaccurate doc claims and comment restatements ([#11](https://github.com/finngi/mycelium/issues/11)) ([dce7420](https://github.com/finngi/mycelium/commit/dce74207a1376f311b2f28008f6494c5adb90cab))
+* point cross-package links at the mycelium monorepo ([2ec0bb9](https://github.com/finngi/mycelium/commit/2ec0bb924c9003385c4d2e6ce266db5a0951f634))
+
 ## [0.4.1](https://github.com/finngi/mcm-reishi/compare/v0.4.0...v0.4.1) (2026-07-07)
 
 
