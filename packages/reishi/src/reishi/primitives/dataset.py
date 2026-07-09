@@ -1,4 +1,6 @@
-"""Dataset: a versioned storage prefix plus its card and leak contract."""
+"""Dataset: a name, a storage location, and leak metadata, round-tripped
+through a manifest. leaks() does name-level train/eval overlap checks.
+"""
 
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -19,15 +21,13 @@ class DatasetManifest(TypedDict):
 
 @dataclass(frozen=True)
 class Dataset:
-    name: str  # convention: <slug>-<ddmmyy>, e.g. identify-orgs-040726
-    uri: str  # gs:// prefix (or local path during development)
-    task: str = (
-        ""  # advisory provenance only; the recipe owns the task x dataset binding
-    )
-    revision: str = ""  # opaque content-id naming an immutable published prefix (GCS-native versioning)
+    name: str  # the key this dataset is saved and loaded under
+    uri: str  # opaque location string; carried into the manifest, never read here
+    task: str = ""  # advisory only; not used here to bind task to dataset
+    revision: str = ""  # opaque version id, carried in the manifest
     card: str = ""
     eval_only: bool = False
-    disjoint_from: tuple[str, ...] = ()  # eval sets this must never leak into
+    disjoint_from: tuple[str, ...] = ()  # eval-set names leaks() flags on overlap
 
     def to_manifest(self) -> DatasetManifest:
         return {
@@ -42,9 +42,8 @@ class Dataset:
 
     @classmethod
     def from_manifest(cls, m: Mapping[str, object]) -> "Dataset":
-        # m is raw store.load() output, not yet trusted as DatasetManifest-shaped -- unlike
-        # to_manifest() (a construction we control), this is a read boundary from disk/Postgres.
-        # The cast is that trust, made explicit exactly once, rather than implicitly via Any.
+        # store.load() returns an untyped Mapping; cast it to the manifest shape
+        # at this read boundary rather than threading Any through the reads below.
         d = cast(DatasetManifest, m)
         return cls(
             name=d["name"],
@@ -58,11 +57,9 @@ class Dataset:
 
 
 def leaks(train: list["Dataset"], evals: list["Dataset"]) -> list[str]:
-    """Structural (name-level) train/eval leak violations; empty list means clean.
+    """Name-level train/eval overlap violations; empty list means none found.
 
-    This proves nothing about content -- only that the declared contract is not
-    obviously violated. Content-level disjointness (id/hash overlap) is a
-    separate, heavier check owned by the executor at publish time.
+    Compares declared names only -- does not inspect dataset contents.
     """
     eval_names = {d.name for d in evals}
     problems = []

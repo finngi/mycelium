@@ -1,7 +1,6 @@
-"""Trial: one recipe x seed execution — Ray Tune's term, used deliberately.
-
-A trial is data (a manifest), not a log line: planned -> running -> done/failed,
-with metrics and artifact URIs attached along the way.
+"""Trial: one recipe x seed run as a mutable dataclass that round-trips to a
+manifest. status moves through STATUSES (planned -> running -> done/failed),
+with metrics and artifact URIs filled in as it goes.
 """
 
 import uuid
@@ -17,14 +16,12 @@ STATUSES = ("planned", "running", "done", "failed")
 
 
 class TrialArtifacts(TypedDict):
-    weights: NotRequired[str]  # adapter/checkpoint URI, local path or hf://<repo>
-    # URI under store.artifact_root()/<trial-id>/predictions.jsonl -- persisting raw
-    # predictions lets a trial be re-scored/replayed without re-running the model.
+    weights: NotRequired[str]  # adapter/checkpoint URI
+    # URI of persisted raw predictions, so a trial can be re-scored without re-running the model
     predictions: NotRequired[str]
 
 
-# Metrics alone don't say WHAT scored the trial or WHERE: an L4 metric and a
-# replayed metric are otherwise indistinguishable. This block records that provenance.
+# Metrics alone don't say what scored the trial or where; EvalInfo records that provenance.
 class EvalInfo(TypedDict, total=False):
     scorer: str  # task name / scorer id that produced the metrics
     scored_at: str
@@ -47,7 +44,7 @@ class TrialManifest(TypedDict):
     seed: int
     status: str
     created: str
-    metrics: dict  # task-specific; field-scored tasks land Task.aggregate's AggregateMetrics here
+    metrics: dict  # task-specific; field-scored tasks store AggregateMetrics here
     artifacts: TrialArtifacts
     spec: RecipeManifest
     execution: ExecutionInfo
@@ -63,9 +60,8 @@ class Trial:
     created: str = ""
     metrics: dict = field(default_factory=dict)
     artifacts: TrialArtifacts = field(default_factory=TrialArtifacts)
-    # RecipeManifest's fields are all required (a real recipe always has them); the empty default
-    # here only fires for a bare, unplanned Trial or a tolerant from_manifest() load of an old
-    # manifest missing "spec" -- neither is a real recipe.
+    # Empty default only fires for a bare Trial or a load of a manifest missing
+    # "spec"; a real recipe always fills every RecipeManifest field.
     spec: RecipeManifest = field(default_factory=dict)  # type: ignore[assignment]
     execution: ExecutionInfo = field(default_factory=ExecutionInfo)
     eval: EvalInfo = field(default_factory=dict)  # type: ignore[assignment]
@@ -86,13 +82,9 @@ class Trial:
 
     @classmethod
     def from_manifest(cls, m: Mapping[str, object]) -> "Trial":
-        # m is raw store.load() output, not yet trusted as TrialManifest-shaped -- unlike
-        # to_manifest() (a construction we control), this is a read boundary from disk/Postgres.
-        # Tolerant reader: ignore unknown keys so newer manifests load in older checkouts.
-        # A dict comprehension over Mapping.items() widens every value to `object` regardless
-        # of m's declared shape, so mypy can't verify the **kwargs unpacking below -- rewriting
-        # this field-by-field (like Dataset.from_manifest) would fix that, but at the cost of
-        # duplicating every dataclass field default here instead of delegating to Trial's own.
+        # Tolerant reader: drop unknown keys so a newer manifest still loads in an
+        # older checkout. The comprehension widens every value to object, so mypy
+        # can't check the **kwargs unpacking below -- hence the type: ignore.
         known = cls.__dataclass_fields__
         return cls(**{k: v for k, v in m.items() if k in known})  # type: ignore[arg-type]
 

@@ -1,15 +1,9 @@
-"""Task: the definition of a problem — f(x)=y, plus how to score and roll up.
+"""Task: a named problem's output contract -- decode a model output, score it
+against gold, and roll per-example scores into one dict.
 
-A Task is a function `X -> Y` with a scorer for `y_hat` vs `y` and an
-aggregator over per-example scores. Nothing about it is bound to extraction:
-pred/gold are `Any`, decode returns `Any`, aggregate returns a plain dict.
-reishi ships a tp/fp/fn field-extraction kit (`field_aggregate`) and a json
-codec as opt-in defaults, never a mandate -- a Task supplies its own `decoder`
-or `aggregator` to replace them.
-
-The scorer is the invariant that keeps trials comparable across trainers and
-accelerators: an L4 trial and a v5e trial of the same task land on the same
-board only because they were scored by the same function.
+score, decoder, and aggregator are all optional: decode() falls back to the
+codec named by `codec`, aggregate() falls back to field_aggregate. pred and
+gold are typed Any, so a Task is not tied to any particular output shape.
 """
 
 from collections.abc import Callable, Mapping
@@ -24,11 +18,8 @@ Aggregator = Callable[[list[Mapping[str, object]]], dict]
 
 
 class ScoreCounts(TypedDict):
-    """The extraction kit's per-example shape -- one option, not the contract.
-
-    A Task.score may return any Mapping. This is the shape field_aggregate()
-    understands: tasks whose scorer emits these counts get micro
-    precision/recall/f1 plus exact-match and invalid-output rates for free.
+    """Per-example score shape that field_aggregate() consumes. Task.score may
+    return any Mapping; this is only the shape the built-in aggregator reads.
     """
 
     tp: int
@@ -39,11 +30,7 @@ class ScoreCounts(TypedDict):
 
 
 class AggregateMetrics(TypedDict):
-    """The extraction kit's aggregate shape -- one option, not the contract.
-
-    What field_aggregate() returns; a custom aggregator returns whatever dict
-    its task needs.
-    """
+    """Shape field_aggregate() returns. A custom aggregator may return any dict."""
 
     n: int
     field_precision: NotRequired[float]
@@ -114,12 +101,9 @@ def all_tasks() -> list[Task]:
 
 
 def field_aggregate(scores: list[Mapping[str, object]]) -> AggregateMetrics:
-    """The extraction kit's roll-up: micro P/R/F1 over tp/fp/fn counts.
-
-    Opt-in default for a Task with no aggregator whose scorer emits ScoreCounts
-    ({tp, fp, fn, exact_match, invalid} per example). The field-level detail is
-    what varies per task, not how per-example counts roll up into a trial-level
-    number.
+    """Default aggregator: micro precision/recall/f1 over summed tp/fp/fn, plus
+    exact-match and invalid-output rates. Used when a Task sets no aggregator and
+    its scorer emits ScoreCounts.
     """
     n = len(scores)
     if n == 0:

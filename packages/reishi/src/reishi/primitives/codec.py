@@ -1,9 +1,7 @@
-"""Target serialization codecs, named by Task.codec.
-
-Ported from mycelium's JSON codec: base models occasionally emit a few stray
-tokens (garbled unicode, leaked pretraining text) before "snapping into" the
-fine-tuned completion, so decode tolerates leading junk before the first
-balanced {...} object rather than requiring a strict parse from character 0.
+"""Output codecs selected by Task.codec: encode a value to a string and decode
+a string back. The json codec encodes canonical JSON and its decode falls back
+to the first balanced {...} object when a strict parse fails; the text codec is
+identity in both directions.
 """
 
 import json

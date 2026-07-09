@@ -1,4 +1,6 @@
-"""Board: aggregation over trial manifests. Computed, never stored as truth."""
+"""Board: computes a per-recipe ranking over done trial manifests and returns
+the rows. Reads trials, persists nothing.
+"""
 
 from collections import defaultdict
 
@@ -24,9 +26,8 @@ def build(metric: str = "f1", task: str | None = None) -> list[dict]:
             "trials": len(group),
             "scored": len(values),
         }
-        # An all-unscored recipe is a real, visible state (e.g. enoki trials
-        # never scored), not an absence -- emit the row with null metrics
-        # rather than dropping it.
+        # A recipe whose trials were never scored is a visible state, not an
+        # absence -- emit the row with null metrics rather than dropping it.
         if values:
             row[metric] = sum(values) / len(values)
             row[f"{metric}_min"] = min(values)
