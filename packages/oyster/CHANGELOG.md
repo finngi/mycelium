@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.4.1](https://github.com/finngi/mycelium/compare/oyster-v0.4.0...oyster-v0.4.1) (2026-07-09)
+
+
+### Documentation
+
+* add NOTICE copyright + package authors ([60714a8](https://github.com/finngi/mycelium/commit/60714a8524504b5c2b374bac0fa2ddbca899ae46))
+* **oyster:** trim docstrings that narrated other modules' behavior ([12ac13c](https://github.com/finngi/mycelium/commit/12ac13c5cb5e21a8536ac05ed9818c786c28fd24))
+* set package authors to Finn Danger Cathersides ([c2a52a6](https://github.com/finngi/mycelium/commit/c2a52a6aa57c9e0b6204e3ca56d752986a88bc61))
+
 ## [0.4.0](https://github.com/finngi/mycelium/compare/oyster-v0.3.0...oyster-v0.4.0) (2026-07-09)
 
 
