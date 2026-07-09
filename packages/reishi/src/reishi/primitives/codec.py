@@ -8,37 +8,11 @@ import json
 from dataclasses import dataclass
 from typing import Any, Callable
 
+from reishi._json_salvage import extract_first_json_object
+
 
 def _encode_json(d: dict[str, object]) -> str:
     return json.dumps(d, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-
-
-def _extract_first_json_object(s: str) -> str | None:
-    start = s.find("{")
-    if start == -1:
-        return None
-    depth = 0
-    in_string = False
-    escape = False
-    for i in range(start, len(s)):
-        c = s[i]
-        if in_string:
-            if escape:
-                escape = False
-            elif c == "\\":
-                escape = True
-            elif c == '"':
-                in_string = False
-        else:
-            if c == '"':
-                in_string = True
-            elif c == "{":
-                depth += 1
-            elif c == "}":
-                depth -= 1
-                if depth == 0:
-                    return s[start : i + 1]
-    return None
 
 
 def _decode_json(s: str) -> dict[str, object]:
@@ -48,7 +22,7 @@ def _decode_json(s: str) -> dict[str, object]:
             return result
     except Exception:
         pass
-    obj_str = _extract_first_json_object(s)
+    obj_str = extract_first_json_object(s)
     if obj_str is None:
         return {}
     try:
