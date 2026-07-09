@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.3.0](https://github.com/finngi/mycelium/compare/physarum-v0.2.0...physarum-v0.3.0) (2026-07-09)
+
+
+### Features
+
+* initial import of physarum sweep adaptor ([6c0271b](https://github.com/finngi/mycelium/commit/6c0271b79ed1c3e6b7eec48ebef351a612d7cf40))
+
+
+### Documentation
+
+* add NOTICE copyright + package authors ([78da29f](https://github.com/finngi/mycelium/commit/78da29f169d64ae1100098b696b38d4a7daaff43))
+* **physarum:** drop stale reishi path from htmlmd sweep comment ([c3f6afc](https://github.com/finngi/mycelium/commit/c3f6afc0591dd97d7b2c4a6094157d0f073b64d0))
+* **physarum:** rewrite comments to actual scope ([96e20e5](https://github.com/finngi/mycelium/commit/96e20e5258ccb038b386056f0810c7dcaea6d131))
+* point cross-package links at the mycelium monorepo ([baea95c](https://github.com/finngi/mycelium/commit/baea95ca4fa34d9540d4b9aa595a9cb019bd0c82))
+* set package authors to Finn Danger Cathersides ([a70a2ca](https://github.com/finngi/mycelium/commit/a70a2cada573735a003e52aa89b9f82e5a0cbb6d))
+
 ## [0.2.0](https://github.com/finngi/mycelium/compare/physarum-v0.1.0...physarum-v0.2.0) (2026-07-09)
 
 

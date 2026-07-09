@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.3.0](https://github.com/finngi/mycelium/compare/enoki-v0.2.0...enoki-v0.3.0) (2026-07-09)
+
+
+### Features
+
+* default adapter output to MCM_ARTF_STORE ([#22](https://github.com/finngi/mycelium/issues/22)) ([56c4a14](https://github.com/finngi/mycelium/commit/56c4a14fbb06ba718cfe96857e35fd2d277d7a03))
+* **driver:** resolve tasks via reishi.load_tasks() in-cluster ([e8326eb](https://github.com/finngi/mycelium/commit/e8326eb046931ead29b5d3e2871782ccced982d8))
+
+
+### Bug Fixes
+
+* **ci:** grant contents:read alongside security-events:write in codeql ([4908222](https://github.com/finngi/mycelium/commit/49082224439ba4205b00886885e742d6dc55bfa8))
+* **ci:** lint with uvx, not uv run, to avoid syncing project deps ([1b6b657](https://github.com/finngi/mycelium/commit/1b6b65709b0429bc75839477d4c788c866a9ffc7))
+* **ci:** pass a token to the cross-repo mcm-reishi checkout ([159a9f6](https://github.com/finngi/mycelium/commit/159a9f6fdfc376010733efc4e1beb0cc438814ca))
+
+
+### Documentation
+
+* add NOTICE copyright + package authors ([78da29f](https://github.com/finngi/mycelium/commit/78da29f169d64ae1100098b696b38d4a7daaff43))
+* describe the oyster mesh as machine-agnostic, not Mac-specific ([#19](https://github.com/finngi/mycelium/issues/19)) ([a134253](https://github.com/finngi/mycelium/commit/a13425340ac0417438ee281cd64b4fc09b3b2dbd))
+* **enoki:** rewrite comments to actual scope ([8025ff8](https://github.com/finngi/mycelium/commit/8025ff805f040d9ff78778fa343dd5b0928100c5))
+* point cross-package links at the mycelium monorepo ([baea95c](https://github.com/finngi/mycelium/commit/baea95ca4fa34d9540d4b9aa595a9cb019bd0c82))
+* set package authors to Finn Danger Cathersides ([a70a2ca](https://github.com/finngi/mycelium/commit/a70a2cada573735a003e52aa89b9f82e5a0cbb6d))
+
 ## [0.2.0](https://github.com/finngi/mycelium/compare/enoki-v0.1.2...enoki-v0.2.0) (2026-07-09)
 
 
