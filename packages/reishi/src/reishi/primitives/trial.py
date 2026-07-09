@@ -12,7 +12,7 @@ from typing import NotRequired, TypedDict
 from reishi import store
 from reishi.primitives.recipe import Recipe, RecipeManifest
 
-STATUSES = ("planned", "running", "done", "failed")
+STATUSES = ("planned", "running", "done", "failed", "pruned")
 
 
 class TrialArtifacts(TypedDict):
@@ -27,6 +27,17 @@ class EvalInfo(TypedDict, total=False):
     scored_at: str
     placement: str  # cpu | accelerator | local -- where scoring ran
     source: str  # "live" | "replay"
+    # Measurement-key (K) pinning fields, see math-foundations.md section 0:
+    # K = (task, codec, scorer closure, aggregator, dataset version, split,
+    # n_eval). Two trials are comparable only if they share K; board.build
+    # warns when a recipe group mixes these.
+    task: str  # Task.name active at scoring time
+    codec: str  # Task.codec active at scoring time
+    scorer_version: str  # scorer closure id (e.g. oracle model/lib versions)
+    dataset: str  # Dataset.name -- the eval set's ref
+    dataset_revision: str  # Dataset.revision -- the pinned version within K
+    split: str  # eval split name (test | val | ood)
+    eval_n: int  # number of eval rows scored -- n_eval in K
 
 
 class ExecutionInfo(TypedDict):
@@ -45,10 +56,19 @@ class TrialManifest(TypedDict):
     status: str
     created: str
     metrics: dict  # task-specific; field-scored tasks store AggregateMetrics here
+    # Executor-written run-resource facts (wall_time_s, cost_usd, artifact_bytes,
+    # latency_ms_p50 -- unit-suffixed), disjoint from metrics: a scorer judges
+    # answers, only the executor can observe what the run itself cost.
+    # See math-foundations.md 3(iii).
+    observables: dict
     artifacts: TrialArtifacts
     spec: RecipeManifest
     execution: ExecutionInfo
     eval: NotRequired[EvalInfo]
+    # One EvalInfo per eval run (val, OOD, adversarial, ...). Additive
+    # alongside `eval`, which stays the primary/most-recent one -- see
+    # record_eval().
+    evals: NotRequired[list[EvalInfo]]
 
 
 @dataclass
@@ -59,12 +79,16 @@ class Trial:
     status: str = "planned"
     created: str = ""
     metrics: dict = field(default_factory=dict)
+    observables: dict = field(default_factory=dict)
     artifacts: TrialArtifacts = field(default_factory=TrialArtifacts)
     # Empty default only fires for a bare Trial or a load of a manifest missing
     # "spec"; a real recipe always fills every RecipeManifest field.
     spec: RecipeManifest = field(default_factory=dict)  # type: ignore[assignment]
     execution: ExecutionInfo = field(default_factory=ExecutionInfo)
+    # `eval` is the primary/most-recent eval; `evals` is the full multi-eval-set
+    # history (val + OOD + adversarial, ...) -- record_eval() keeps both in sync.
     eval: EvalInfo = field(default_factory=dict)  # type: ignore[assignment]
+    evals: list[EvalInfo] = field(default_factory=list)
     # Unknown top-level manifest keys, carried verbatim. Without this a newer
     # manifest loaded in an older checkout would lose its new fields on the next
     # save (oyster's heartbeat re-saves every 30s) -- the additivity guarantee
@@ -79,10 +103,12 @@ class Trial:
             "status": self.status,
             "created": self.created,
             "metrics": self.metrics,
+            "observables": self.observables,
             "artifacts": self.artifacts,
             "spec": self.spec,
             "execution": self.execution,
             "eval": self.eval,
+            "evals": self.evals,
         }
         # Known keys win, so a stale carried-over value never shadows the live one.
         return {**self.extra, **m}  # type: ignore[typeddict-item]
@@ -101,6 +127,24 @@ class Trial:
         for k, v in m.items():
             (fields if k in known else extra)[k] = v
         return cls(**fields, extra=extra)  # type: ignore[arg-type]
+
+
+def record_eval(trial: Trial, metrics: dict, info: EvalInfo) -> None:
+    """Record one eval run (val, OOD, adversarial, ...): dual-write, never a
+    relocate. Appends `info` to `trial.evals` and sets `trial.eval` to it (the
+    primary = most recent), then merges `metrics` into `trial.metrics` bare
+    (so existing board/objective/watch consumers stay sighted) and, when
+    `info` carries a split, again under a `'<split>/'` prefix. No split ->
+    bare write only. An existing metrics key is only ever overwritten with a
+    newer value for the same name, never deleted or renamed.
+    """
+    trial.evals.append(info)
+    trial.eval = info
+    split = info.get("split")
+    for key, value in metrics.items():
+        trial.metrics[key] = value
+        if split:
+            trial.metrics[f"{split}/{key}"] = value
 
 
 def plan(recipe: Recipe) -> list[Trial]:

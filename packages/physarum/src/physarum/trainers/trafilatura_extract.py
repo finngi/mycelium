@@ -82,12 +82,12 @@ def train(trial_manifest: TrialManifest) -> TrainerResult:
         except Exception:
             md = ""
         pred = {"markdown": md}
-        gold = {
+        ref = {
             "html": html,
             "markdown": row.get("markdown", ""),
             "converter": row.get("converter", ""),
         }
-        scores.append(task_obj.score(pred, gold))
+        scores.append(task_obj.score(pred, ref))
 
     metrics: dict[str, Any] = {
         **task_registry.aggregate(scores),

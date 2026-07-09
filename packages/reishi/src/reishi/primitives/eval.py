@@ -9,6 +9,8 @@ row or task type.
 from collections.abc import Iterable, Mapping
 from typing import Any, Callable, Literal, Protocol, runtime_checkable
 
+from reishi.primitives.trial import EvalInfo
+
 GenerateFn = Callable[[str], str]  # prompt -> raw text; injected by executor / replay
 Placement = Literal["cpu", "accelerator", "local"]
 
@@ -18,7 +20,7 @@ class Scorable(Protocol):
     """The subset of Task that run_eval actually calls."""
 
     def decode(self, raw: str) -> Any: ...
-    def score(self, pred: Any, gold: Any) -> Mapping[str, object]: ...
+    def score(self, pred: Any, ref: Any) -> Mapping[str, object]: ...
     def aggregate(self, scores: list[Mapping[str, object]]) -> dict: ...
 
 
@@ -38,12 +40,28 @@ def run_eval(
     generate: GenerateFn,
     prompt: str | None = None,
     sink: Callable[[Mapping], None] | None = None,
-) -> dict:
+    task_name: str | None = None,
+    codec: str | None = None,
+    scorer_version: str | None = None,
+    dataset_ref: str | None = None,
+    dataset_revision: str | None = None,
+    split: str | None = None,
+) -> tuple[dict, EvalInfo]:
+    """Run the eval loop; return (aggregate metrics, measurement-key info).
+
+    The K-pinning keyword-only args (task_name, codec, scorer_version,
+    dataset_ref, dataset_revision, split) are optional and caller-supplied:
+    run_eval only sees rows and a Scorable, so it can't know a Task's name or
+    a Dataset's ref itself -- a caller that has those objects passes the
+    values through; one it doesn't know is simply left absent. eval_n is the
+    one K field run_eval always knows, since it counts the rows it scores.
+    """
     if not callable(getattr(task, "score", None)):
         raise ValueError(
             "task has no scorer (Task.score is None) -- nothing to run_eval"
         )
     scores: list[Mapping[str, object]] = []
+    eval_n = 0
     for row in rows:
         raw = generate(_render(prompt, row["x"]))
         if sink:
@@ -51,7 +69,21 @@ def run_eval(
             # predictions artifact is directly replayable by rescore(), no adapter.
             sink({"key": row["key"], "x": row["x"], "y": row["y"], "raw": raw})
         scores.append(task.score(task.decode(raw), row["y"]))
-    return task.aggregate(scores)
+        eval_n += 1
+    info: EvalInfo = {"eval_n": eval_n}
+    if task_name is not None:
+        info["task"] = task_name
+    if codec is not None:
+        info["codec"] = codec
+    if scorer_version is not None:
+        info["scorer_version"] = scorer_version
+    if dataset_ref is not None:
+        info["dataset"] = dataset_ref
+    if dataset_revision is not None:
+        info["dataset_revision"] = dataset_revision
+    if split is not None:
+        info["split"] = split
+    return task.aggregate(scores), info
 
 
 def rescore(
@@ -59,7 +91,13 @@ def rescore(
     task: Scorable,
     rows_with_raw: Iterable[Mapping],
     prompt: str | None = None,
-) -> dict:
+    task_name: str | None = None,
+    codec: str | None = None,
+    scorer_version: str | None = None,
+    dataset_ref: str | None = None,
+    dataset_revision: str | None = None,
+    split: str | None = None,
+) -> tuple[dict, EvalInfo]:
     """Re-score persisted outputs without re-running inference.
 
     Each row already carries its model output under `raw`; replaying it lets a
@@ -73,4 +111,10 @@ def rescore(
         rows=rows,
         generate=lambda _prompt: next(replay),
         prompt=prompt,
+        task_name=task_name,
+        codec=codec,
+        scorer_version=scorer_version,
+        dataset_ref=dataset_ref,
+        dataset_revision=dataset_revision,
+        split=split,
     )

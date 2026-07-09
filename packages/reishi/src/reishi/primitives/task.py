@@ -1,9 +1,11 @@
 """Task: a named problem's output contract -- decode a model output, score it
-against gold, and roll per-example scores into one dict.
+against a reference, and roll per-example scores into one dict.
 
 score, decoder, and aggregator are all optional: decode() falls back to the
 codec named by `codec`, aggregate() falls back to field_aggregate. pred and
-gold are typed Any, so a Task is not tied to any particular output shape.
+ref are typed Any, so a Task is not tied to any particular output shape. ref
+is whatever the row carries -- not necessarily a gold label (a reference-free
+scorer may use it to hold the input instead; see math-foundations.md 3(ii)).
 """
 
 from collections.abc import Callable, Mapping

@@ -12,10 +12,10 @@ import json
 import os
 import sqlite3
 import sys
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
 from pathlib import Path
 
-from reishi.store.base import dump_doc, safe_kind, safe_name
+from reishi.store.base import dump_doc, safe_filter_key, safe_kind, safe_name
 
 
 def _db_path() -> Path:
@@ -71,6 +71,44 @@ class SqliteBackend:
             except json.JSONDecodeError:
                 if not tolerant:
                     raise
+                print(
+                    f"[WARN] skipping unreadable {kind} manifest '{name}' in {self._path}",
+                    file=sys.stderr,
+                )
+        return out
+
+    def stream(self, kind: str) -> Iterator[dict]:
+        # sqlite3's cursor fetches row-by-row from the C layer, so this never
+        # holds more than one manifest in memory, unlike load_all's list.
+        cur = self._db.execute(
+            "SELECT name, doc FROM manifests WHERE kind = ? ORDER BY name",
+            (safe_kind(kind),),
+        )
+        for name, doc in cur:
+            try:
+                yield json.loads(doc)
+            except json.JSONDecodeError:
+                print(
+                    f"[WARN] skipping unreadable {kind} manifest '{name}' in {self._path}",
+                    file=sys.stderr,
+                )
+
+    def query(self, kind: str, **filters: object) -> list[dict]:
+        # Filtered in SQL via the json1 extension (json_extract), so a
+        # large trial set is never pulled into Python just to be filtered
+        # back out -- only matching rows leave sqlite.
+        clauses = ["kind = ?"]
+        params: list[object] = [safe_kind(kind)]
+        for key, value in filters.items():
+            safe_filter_key(key)
+            clauses.append("json_extract(doc, '$.' || ?) IS ?")
+            params.extend([key, value])
+        sql = f"SELECT name, doc FROM manifests WHERE {' AND '.join(clauses)} ORDER BY name"
+        out = []
+        for name, doc in self._db.execute(sql, params):
+            try:
+                out.append(json.loads(doc))
+            except json.JSONDecodeError:
                 print(
                     f"[WARN] skipping unreadable {kind} manifest '{name}' in {self._path}",
                     file=sys.stderr,

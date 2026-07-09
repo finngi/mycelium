@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=https://storage.googleapis.com/coderabbit_public_assets/schema.v2.json
+# This file overrides CodeRabbit's UI settings; edit config here, not there.
+reviews:
+  auto_review:
+    # Bot-authored PRs (lockfile bumps, hook autofixes) don't need an AI
+    # review pass. Usernames are exact-match, listed with and without the
+    # [bot] suffix because GitHub reports app authors as 'name[bot]'.
+    ignore_usernames:
+      - dependabot
+      - "dependabot[bot]"
+      - pre-commit-ci
+      - "pre-commit-ci[bot]"
+      - github-actions
+      - "github-actions[bot]"
+    # release-please PRs are authored by the PAT owner (a human username),
+    # so they can't be caught by ignore_usernames -- filter on the title
+    # release-please always uses instead.
+    ignore_title_keywords:
+      - "chore: release"

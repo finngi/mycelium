@@ -5,7 +5,7 @@ These pin the additive contract: a trial can carry persisted raw predictions
 these keys -- or carrying unknown extra keys -- still load.
 """
 
-from reishi.primitives.trial import Trial
+from reishi.primitives.trial import Trial, record_eval
 
 
 def test_predictions_artifact_roundtrips():
@@ -41,6 +41,26 @@ def test_eval_block_roundtrips():
     assert back.eval == t.eval
 
 
+def test_eval_measurement_key_fields_roundtrip():
+    t = Trial(
+        id="t-11",
+        recipe="r",
+        seed=0,
+        eval={
+            "scorer": "extract",
+            "task": "extract",
+            "codec": "json",
+            "scorer_version": "trafilatura==1.2.0,spacy==3.7.0",
+            "dataset": "htmlmd-eval",
+            "dataset_revision": "2026-01-01",
+            "split": "test",
+            "eval_n": 500,
+        },
+    )
+    back = Trial.from_manifest(t.to_manifest())
+    assert back.eval == t.eval
+
+
 def test_old_manifest_without_eval_or_predictions_loads():
     old = {
         "id": "t-3",
@@ -56,7 +76,109 @@ def test_old_manifest_without_eval_or_predictions_loads():
     t = Trial.from_manifest(old)
     assert t.id == "t-3"
     assert t.eval == {}
+    assert t.observables == {}
     assert "predictions" not in t.artifacts
+
+
+def test_evals_list_roundtrips():
+    t = Trial(
+        id="t-10",
+        recipe="r",
+        seed=0,
+        evals=[
+            {"scorer": "extract", "split": "val", "eval_n": 100},
+            {"scorer": "extract", "split": "ood", "eval_n": 50},
+        ],
+    )
+    back = Trial.from_manifest(t.to_manifest())
+    assert back.evals == t.evals
+
+
+def test_old_manifest_without_evals_loads():
+    old = {
+        "id": "t-12",
+        "recipe": "r",
+        "seed": 0,
+        "status": "done",
+        "created": "2026-07-01T00:00:00+00:00",
+        "metrics": {"f1": 0.9},
+        "artifacts": {},
+        "spec": {},
+        "execution": {},
+    }
+    t = Trial.from_manifest(old)
+    assert t.evals == []
+
+
+def test_record_eval_dual_writes_bare_and_namespaced_metrics():
+    t = Trial(id="t-13", recipe="r", seed=0)
+    info = {"scorer": "extract", "split": "val", "eval_n": 100}
+    record_eval(t, {"field_f1": 0.8}, info)
+    assert t.metrics == {"field_f1": 0.8, "val/field_f1": 0.8}
+    assert t.eval == info
+    assert t.evals == [info]
+
+
+def test_record_eval_without_split_writes_bare_only():
+    t = Trial(id="t-14", recipe="r", seed=0)
+    record_eval(t, {"field_f1": 0.7}, {"scorer": "extract"})
+    assert t.metrics == {"field_f1": 0.7}
+
+
+def test_record_eval_second_split_appends_and_bare_reflects_latest():
+    t = Trial(id="t-15", recipe="r", seed=0)
+    val_info = {"scorer": "extract", "split": "val", "eval_n": 100}
+    ood_info = {"scorer": "extract", "split": "ood", "eval_n": 50}
+    record_eval(t, {"field_f1": 0.8}, val_info)
+    record_eval(t, {"field_f1": 0.5}, ood_info)
+
+    # both eval records survive -- the second call appends, it does not replace.
+    assert t.evals == [val_info, ood_info]
+    # primary `eval` tracks the most recent record.
+    assert t.eval == ood_info
+    # bare key reflects the latest write; the val-namespaced key is untouched,
+    # proving the dual-write never deletes or renames an existing metrics key.
+    assert t.metrics == {
+        "field_f1": 0.5,
+        "val/field_f1": 0.8,
+        "ood/field_f1": 0.5,
+    }
+
+
+def test_observables_roundtrips():
+    t = Trial(
+        id="t-7",
+        recipe="r",
+        seed=0,
+        observables={"wall_time_s": 42.0, "artifact_bytes": 1024},
+    )
+    back = Trial.from_manifest(t.to_manifest())
+    assert back.observables == t.observables
+
+
+def test_old_manifest_without_observables_loads():
+    old = {
+        "id": "t-8",
+        "recipe": "r",
+        "seed": 0,
+        "status": "done",
+        "created": "2026-07-01T00:00:00+00:00",
+        "metrics": {"f1": 0.9},
+        "artifacts": {},
+        "spec": {},
+        "execution": {},
+    }
+    t = Trial.from_manifest(old)
+    assert t.observables == {}
+
+
+def test_observables_not_shadowed_by_stale_extra():
+    # Same guarantee as test_known_key_not_shadowed_by_stale_extra, for the
+    # newly-added observables field.
+    t = Trial.from_manifest({"id": "t-9", "recipe": "r", "seed": 0})
+    t.extra["observables"] = {"wall_time_s": "STALE"}
+    t.observables = {"wall_time_s": 1.0}
+    assert t.to_manifest()["observables"] == {"wall_time_s": 1.0}
 
 
 def test_manifest_unknown_key_survives_round_trip():

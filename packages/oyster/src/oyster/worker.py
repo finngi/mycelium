@@ -47,7 +47,12 @@ def run(max_trials: int | None = None) -> int:
         try:
             trainer = trainers.get(t.spec["accelerator"])
             result = trainer(t.to_manifest())
-            queue.finish(t, result.get("metrics", {}), result.get("artifacts", {}))
+            queue.finish(
+                t,
+                result.get("metrics", {}),
+                result.get("artifacts", {}),
+                result.get("observables", {}),
+            )
             print(f"[OK] {t.id}", file=sys.stderr)
         except Exception as e:
             queue.fail(t, f"{e}\n{traceback.format_exc()}")

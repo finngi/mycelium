@@ -70,8 +70,14 @@ def heartbeat(t: Trial) -> None:
     gitstore.publish(f"heartbeat {t.id}")
 
 
-def finish(t: Trial, metrics: dict, artifacts: TrialArtifacts) -> None:
+def finish(
+    t: Trial,
+    metrics: dict,
+    artifacts: TrialArtifacts,
+    observables: dict | None = None,
+) -> None:
     t.status, t.metrics, t.artifacts = "done", metrics, artifacts
+    t.observables = observables or {}
     t.execution["finished_at"] = _now()
     trial_store.save(t)
     gitstore.publish(f"done {t.id}: {metrics}")

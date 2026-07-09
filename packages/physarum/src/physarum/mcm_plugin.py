@@ -175,15 +175,30 @@ def sweep_optimize(cmd: Command) -> int:
     completed = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
     if not completed:
         print(
-            f"[FAIL] sweep '{sweep.name}': all {len(study.trials)} trials failed",
+            f"[FAIL] sweep '{sweep.name}': no trial completed ({len(study.trials)} total)",
             file=sys.stderr,
         )
         return 1
 
     best = study.best_trial
     best_trial_id = best.user_attrs.get("mcm_trial_id")
-    failed = len(study.trials) - len(completed)
-    suffix = f" ({failed} of {len(study.trials)} trials failed)" if failed else ""
+    # study.best_trial/best_value only ever consider COMPLETE trials, so
+    # pruned ones are already excluded from "best" the same way failed ones are.
+    pruned = sum(1 for t in study.trials if t.state == optuna.trial.TrialState.PRUNED)
+    failed = len(study.trials) - len(completed) - pruned
+    parts = [f"{failed} failed"] if failed else []
+    if pruned:
+        parts.append(f"{pruned} pruned")
+    if sweep.constraints:
+        # mcm_feasible is only ever set by objective() when constraints are
+        # configured -- no point reporting a vacuous "N/N feasible" for an
+        # unconstrained sweep.
+        infeasible = sum(
+            1 for t in completed if t.user_attrs.get("mcm_feasible") is False
+        )
+        if infeasible:
+            parts.append(f"{infeasible}/{len(completed)} infeasible")
+    suffix = f" ({', '.join(parts)} of {len(study.trials)} trials)" if parts else ""
     print(
         f"[OK] sweep '{sweep.name}' done: best value {best.value} (mcm trial {best_trial_id}){suffix}",
         file=sys.stderr,

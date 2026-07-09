@@ -113,6 +113,7 @@ _PAGE = """<!doctype html>
   tr.best td { color: #7ee0c1; }
   tr.running td { color: #e0c57e; }
   tr.failed td { color: #e07e7e; }
+  tr.pruned td { color: #9d8fd1; }
   #empty { color: #7d8799; padding: 2rem 0; }
 </style>
 </head>
@@ -209,6 +210,7 @@ function renderTable(trials) {
     const v = metricValue(t.metrics);
     if (v !== null && v === bestVal) tr.className = "best";
     else if (t.status === "failed") tr.className = "failed";
+    else if (t.status === "pruned") tr.className = "pruned";
     else if (t.status === "running" || t.status === "planned") tr.className = "running";
     tr.innerHTML = `<td>${t.trial}</td><td>${t.status}</td><td>${v === null ? "-" : v.toFixed(4)}</td>` +
       `<td>${Object.entries(t.params).map(([k, val]) => `${k}=${val}`).join(" ")}</td>`;

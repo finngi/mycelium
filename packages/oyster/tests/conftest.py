@@ -10,14 +10,14 @@ validates, without coupling oyster to any real experiment's task.
 from reishi.primitives.task import ScoreCounts, Task, register
 
 
-def _fixture_score(pred: dict, gold: dict) -> ScoreCounts:
+def _fixture_score(pred: dict, ref: dict) -> ScoreCounts:
     cand = set((pred or {}).items())
-    ref = set((gold or {}).items())
+    truth = set((ref or {}).items())
     return {
-        "tp": len(cand & ref),
-        "fp": len(cand - ref),
-        "fn": len(ref - cand),
-        "exact_match": pred == gold,
+        "tp": len(cand & truth),
+        "fp": len(cand - truth),
+        "fn": len(truth - cand),
+        "exact_match": pred == ref,
         "invalid": not pred,
     }
 

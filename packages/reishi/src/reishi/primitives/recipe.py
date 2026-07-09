@@ -3,6 +3,7 @@ YAML (from_yaml), checked (validate), and serialized (to_manifest). It holds
 fields only; nothing here trains -- executors read the manifest and act on it.
 """
 
+import difflib
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TypedDict
@@ -10,6 +11,15 @@ from typing import TypedDict
 import yaml
 
 ACCELERATORS = ("local", "mlx", "l4", "h100", "v5e")
+
+
+def _describe_unknown(unknown: set[str], known: set[str]) -> str:
+    lines = []
+    for field_name in sorted(unknown):
+        match = difflib.get_close_matches(field_name, known, n=1)
+        suffix = f" -- did you mean '{match[0]}'?" if match else ""
+        lines.append(f"  '{field_name}'{suffix}")
+    return "\n".join(lines)
 
 
 class RecipeManifest(TypedDict):
@@ -38,6 +48,15 @@ class Recipe:
 
     @classmethod
     def from_yaml(cls, path: str | Path) -> "Recipe":
+        """Load and validate a Recipe from a YAML file.
+
+        Unknown fields are a hard error, not a warning: recipes are
+        human-authored, and a typo like `trainer_kwarg` for `trainer_kwargs`
+        would otherwise misconfigure a training run silently. Forward
+        compatibility only matters at authoring time -- once planned, the
+        spec rides as an opaque dict on `Trial.spec`, so tightening this
+        check doesn't affect round-tripping.
+        """
         raw = yaml.safe_load(Path(path).read_text())
         if not isinstance(raw, dict):
             raise ValueError(f"{path}: recipe yaml must be a mapping")
@@ -45,7 +64,7 @@ class Recipe:
         unknown = set(raw) - known
         if unknown:
             raise ValueError(
-                f"{path}: unknown recipe fields: {', '.join(sorted(unknown))}"
+                f"{path}: unknown recipe fields:\n" + _describe_unknown(unknown, known)
             )
         missing = {"name", "task", "dataset"} - set(raw)
         if missing:
