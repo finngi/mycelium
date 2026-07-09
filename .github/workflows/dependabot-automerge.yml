@@ -13,10 +13,9 @@ permissions:
 jobs:
   automerge:
     runs-on: ubuntu-latest
-    # zizmor: ignore[bot-conditions] -- fetch-metadata below requires a
-    # Dependabot-triggered run, so the actor gate is load-bearing, not a
-    # security boundary; the job only ever approves/merges Dependabot PRs.
-    if: ${{ github.actor == 'dependabot[bot]' }}
+    # Gate on the PR author from the event payload, not github.actor (which is
+    # mutable/spoofable): only Dependabot-authored PRs reach the merge step.
+    if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
     steps:
       - id: meta
         uses: dependabot/fetch-metadata@21025c705c08248db411dc16f3619e6b5f9ea21a # v2
