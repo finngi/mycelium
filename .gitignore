@@ -7,3 +7,9 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+.beads/proxieddb/
