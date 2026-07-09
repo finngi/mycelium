@@ -1,6 +1,6 @@
 {
   "packages/reishi": "0.5.1",
-  "packages/enoki": "0.1.2",
-  "packages/oyster": "0.4.0",
-  "packages/physarum": "0.1.0"
+  "packages/enoki": "0.2.0",
+  "packages/oyster": "0.4.1",
+  "packages/physarum": "0.2.0"
 }
