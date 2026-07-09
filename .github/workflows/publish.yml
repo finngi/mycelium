@@ -1,0 +1,40 @@
+name: publish
+
+# Publishing is downstream of the deliberate release gate: release-please's
+# workflow is manual-only, and merging its release PR publishes the GitHub
+# release, which triggers this. No workflow_dispatch: a manual run would build
+# whatever main points at (not necessarily the released tag) and skip the
+# release gate entirely -- a failed publish is retried by re-running this
+# run from the release event instead.
+on:
+  release:
+    types: [published]
+
+permissions: {}
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    # Trusted publishing (OIDC): PyPI's publisher for mcm-mycelium is scoped to
+    # this repo + this workflow file + this environment. No token secrets.
+    environment:
+      name: pypi
+      url: https://pypi.org/p/mcm-mycelium
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
+        with:
+          # A poisoned cache entry must never feed a build that ships to PyPI,
+          # and the build tool itself is pinned to the locally-tested version
+          # rather than floating to latest.
+          enable-cache: false
+          version: "0.9.7"
+      # --no-sources: build exactly what a PyPI consumer resolves, with the
+      # workspace's [tool.uv.sources] redirects ignored.
+      - run: uv build --no-sources
+      - run: uv publish --trusted-publishing always

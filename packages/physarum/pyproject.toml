@@ -14,7 +14,7 @@ dependencies = [
 
 [project.optional-dependencies]
 # Only needed to actually run a sweep whose template targets accelerator: mlx.
-mlx = ["oyster>=0.3,<0.4"]
+mlx = ["oyster"]
 # Only needed to actually run a sweep whose template targets accelerator: local.
 local = ["trafilatura>=2.1.0"]
 

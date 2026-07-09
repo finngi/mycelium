@@ -1,13 +1,22 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
-  "separate-pull-requests": false,
   "prerelease": true,
   "prerelease-type": "a",
   "versioning": "prerelease",
   "packages": {
-    "packages/reishi": { "release-type": "python", "package-name": "reishi" },
-    "packages/enoki": { "release-type": "python", "package-name": "enoki" },
-    "packages/oyster": { "release-type": "python", "package-name": "oyster" },
-    "packages/physarum": { "release-type": "python", "package-name": "physarum" }
+    ".": {
+      "release-type": "python",
+      "package-name": "mcm-mycelium",
+      "include-component-in-tag": false,
+      "extra-files": [
+        { "type": "toml", "path": "packages/reishi/pyproject.toml", "jsonpath": "$.project.version" },
+        { "type": "toml", "path": "packages/enoki/pyproject.toml", "jsonpath": "$.project.version" },
+        { "type": "toml", "path": "packages/oyster/pyproject.toml", "jsonpath": "$.project.version" },
+        { "type": "toml", "path": "packages/physarum/pyproject.toml", "jsonpath": "$.project.version" },
+        "packages/reishi/src/reishi/__init__.py",
+        "packages/enoki/src/enoki/__init__.py",
+        "packages/oyster/src/oyster/__init__.py"
+      ]
+    }
   }
 }
