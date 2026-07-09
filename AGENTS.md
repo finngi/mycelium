@@ -17,7 +17,7 @@ enoki, oyster, and physarum depend on reishi and extend its CLI via
 
 ## Working in this repo
 
-```
+```plaintext
 uv sync --all-extras
 uv run pytest packages/<package> -q
 uvx ruff check .
