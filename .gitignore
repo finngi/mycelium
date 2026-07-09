@@ -15,5 +15,9 @@ build/
 .beads-credential-key
 .beads/
 .agents/skills/beads/
-/AGENTS.md
 /CLAUDE.md
+
+# Tool-specific agent configs stay local; the general AGENTS.md is the
+# committed agent context
+.claude/
+.codex/
