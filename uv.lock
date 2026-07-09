@@ -515,7 +515,7 @@ wheels = [
 
 [[package]]
 name = "enoki"
-version = "0.1.2"
+version = "0.3.0"
 source = { editable = "packages/enoki" }
 dependencies = [
     { name = "pyyaml", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
@@ -547,7 +547,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 cluster = [
     { name = "accelerate", marker = "sys_platform == 'linux'", specifier = ">=0.34,<1" },
-    { name = "google-cloud-storage", marker = "sys_platform == 'linux'", specifier = ">=2.18" },
+    { name = "google-cloud-storage", marker = "sys_platform == 'linux'", specifier = ">=3.12.0" },
     { name = "peft", marker = "sys_platform == 'linux'", specifier = ">=0.13,<0.14" },
     { name = "psycopg", extras = ["binary"], marker = "sys_platform == 'linux'", specifier = ">=3.3.4" },
     { name = "ray", extras = ["default"], marker = "sys_platform == 'linux'", specifier = ">=2.9" },
@@ -1868,7 +1868,7 @@ wheels = [
 
 [[package]]
 name = "oyster"
-version = "0.3.0"
+version = "0.5.0"
 source = { editable = "packages/oyster" }
 dependencies = [
     { name = "huggingface-hub", version = "1.22.0", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine == 'arm64' and sys_platform == 'darwin'" },
@@ -1944,7 +1944,7 @@ wheels = [
 
 [[package]]
 name = "physarum"
-version = "0.1.0"
+version = "0.3.0"
 source = { editable = "packages/physarum" }
 dependencies = [
     { name = "optuna", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
@@ -1973,7 +1973,7 @@ requires-dist = [
     { name = "oyster", marker = "extra == 'mlx'", editable = "packages/oyster" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "reishi", editable = "packages/reishi" },
-    { name = "trafilatura", marker = "extra == 'local'", specifier = ">=2.0.0" },
+    { name = "trafilatura", marker = "extra == 'local'", specifier = ">=2.1.0" },
 ]
 provides-extras = ["mlx", "local"]
 
@@ -2556,7 +2556,7 @@ wheels = [
 
 [[package]]
 name = "reishi"
-version = "0.5.0"
+version = "0.6.0"
 source = { editable = "packages/reishi" }
 dependencies = [
     { name = "pyyaml", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },

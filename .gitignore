@@ -7,3 +7,17 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+
+# Beads / Dolt files (added by bd init) -- issue tracking is local-only,
+# nothing beads-related ships to the remote
+.dolt/
+*.db
+.beads-credential-key
+.beads/
+.agents/skills/beads/
+/CLAUDE.md
+
+# Tool-specific agent configs stay local; the general AGENTS.md is the
+# committed agent context
+.claude/
+.codex/

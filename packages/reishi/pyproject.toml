@@ -5,6 +5,7 @@ description = "reishi (mcm) — the experiment contract layer for small-model tr
 requires-python = ">=3.11"
 license = "Apache-2.0"
 authors = [{ name = "Finn Danger Cathersides" }]
+classifiers = ["Development Status :: 3 - Alpha"]
 dependencies = ["pyyaml>=6.0.3"]
 
 # `reishi-admin`, not `mcm`: reishi is the contract library, not the access

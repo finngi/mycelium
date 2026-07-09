@@ -2,9 +2,17 @@
 the rows. Reads trials, persists nothing.
 """
 
+import sys
 from collections import defaultdict
 
 from reishi.primitives import trial as trial_store
+
+
+def _is_scalar(v: object) -> bool:
+    # Only scalar leaves are coordinates the board can aggregate. bool is
+    # excluded: a bare True/False is more likely a stray flag than an intended
+    # 0/1 -- rate-style metrics come from an aggregator, not a raw bool leaf.
+    return isinstance(v, (int, float)) and not isinstance(v, bool)
 
 
 def build(metric: str = "f1", task: str | None = None) -> list[dict]:
@@ -17,8 +25,20 @@ def build(metric: str = "f1", task: str | None = None) -> list[dict]:
         by_recipe[t.recipe].append(t)
 
     rows = []
+    # Warn once per (recipe, metric), not per trial: a recipe whose task stores
+    # rich metrics on every trial would otherwise flood stderr and bury other
+    # warnings sharing the stream.
+    non_scalar: set[tuple[str, str]] = set()
     for recipe_name, group in by_recipe.items():
-        values = [t.metrics[metric] for t in group if metric in t.metrics]
+        values = []
+        for t in group:
+            if metric not in t.metrics:
+                continue
+            v = t.metrics[metric]
+            if not _is_scalar(v):
+                non_scalar.add((recipe_name, metric))
+                continue
+            values.append(v)
         row = {
             "recipe": recipe_name,
             "task": group[0].spec.get("task"),
@@ -37,6 +57,11 @@ def build(metric: str = "f1", task: str | None = None) -> list[dict]:
             row[f"{metric}_min"] = None
             row[f"{metric}_max"] = None
         rows.append(row)
+    for recipe_name, metric_name in sorted(non_scalar):
+        print(
+            f"[WARN] metric '{metric_name}' on recipe '{recipe_name}' has non-scalar values; skipped",
+            file=sys.stderr,
+        )
     return sorted(
         rows,
         key=lambda r: r[metric] if r[metric] is not None else float("-inf"),
