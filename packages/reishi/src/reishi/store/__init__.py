@@ -1,17 +1,10 @@
-"""Manifest store: a StorageBackend seam.
+"""Module-level facade over a pluggable manifest StorageBackend.
 
-Everything mcm knows about trials, datasets, and boards is a manifest reached
-through three calls -- save / load / load_all over a (kind, name) key. Backends
-plug in behind one Protocol so swapping the store never touches callers:
-
-  - SqliteBackend            default; a single ~/.mcm/store/store.db (MCM_STORE_BACKEND=sqlite)
-  - LocalFilesystemBackend   one JSON file per manifest (MCM_STORE_BACKEND=fs); oyster pins this
-  - PostgresBackend          the cloud store of record, contributed by an executor via mcm.plugins
-
-Manifests are small JSON truth records; the big blobs they reference by URI
-(adapters, checkpoints, datasets) live in the separate artifact store rooted at
-artifact_root() (MCM_ARTF_STORE). The CLI stays a view over manifests, never
-over live state.
+Manifests are small JSON records keyed by (kind, name), reached through
+save / load / load_all. The active backend is selected once from
+MCM_STORE_BACKEND ('sqlite' default, 'fs' for one JSON file per manifest)
+and can be replaced with use_backend(). Blobs referenced by manifest URIs
+live under artifact_root(), not here.
 """
 
 import os
@@ -22,7 +15,7 @@ from reishi.store.base import StorageBackend, StoreError, safe_name
 from reishi.store.filesystem import LocalFilesystemBackend
 from reishi.store.sqlite import SqliteBackend
 
-# Back-compat alias: some callers referenced the private name before the split.
+# Back-compat alias for the pre-split private name.
 _safe_name = safe_name
 
 __all__ = [
@@ -51,8 +44,8 @@ def _default_backend() -> StorageBackend:
 
 
 def _active() -> StorageBackend:
-    # Lazy: importing reishi.store must not create ~/.mcm/store/store.db as a side
-    # effect (keeps imports hermetic and tests that pin a backend clean).
+    # Lazy so importing reishi.store never creates ~/.mcm/store/store.db as a
+    # side effect.
     global _backend
     if _backend is None:
         _backend = _default_backend()
@@ -77,17 +70,15 @@ def load_all(kind: str, *, tolerant: bool = True) -> list[dict]:
 
 
 def root() -> Path:
-    # Location of the local store; only meaningful for the local backends
-    # (the CLI `info` view). Remote backends report a placeholder.
+    # Remote backends expose no local root, so fall back to a placeholder.
     getter = getattr(_active(), "root", None)
     return getter() if getter else Path("<remote>")
 
 
 def artifact_root() -> Path:
-    """Root for locally-staged artifacts (adapters, checkpoints, datasets).
+    """Root for locally-staged artifact blobs (adapters, checkpoints, datasets).
 
-    The blob counterpart to the manifest store: manifests hold URIs pointing
-    here (or at gs://, hf://). Executors write under artifact_root()/<trial-id>
-    and upload from there; the URI that wins is recorded back in the manifest.
+    Manifests reference these by URI; the blobs themselves live here (or at
+    gs://, hf://), separate from the manifest store.
     """
     return Path(os.environ.get("MCM_ARTF_STORE", Path.home() / ".mcm" / "artifacts"))

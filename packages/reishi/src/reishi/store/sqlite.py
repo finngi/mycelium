@@ -1,11 +1,9 @@
 """Default local manifest backend: one sqlite db, one table of JSON docs.
 
-Same (kind, name) -> JSON contract as the filesystem backend, so callers and
-manifests are byte-identical across the two. Chosen as the default because it
-gives transactional writes, a single portable file, and the same relational
-shape as the eventual Postgres store of record. The doc stays an opaque JSON
-blob (not shredded into columns) so tolerant readers keep ignoring unknown keys
-across versions -- the same forward/backward compatibility the JSON files had.
+Same (kind, name) -> JSON contract as the filesystem backend, byte-identical
+across the two; the default for transactional writes and a single portable
+file. The doc stays an opaque JSON blob (not shredded into columns) so tolerant
+readers keep ignoring unknown keys across versions.
 
 Not for oyster: a single binary db cannot be a git-as-queue (see filesystem.py).
 """
@@ -21,9 +19,8 @@ from reishi.store.base import dump_doc, safe_kind, safe_name
 
 
 def _db_path() -> Path:
-    # MCM_STORE always names a directory (its historical meaning, and what the
-    # filesystem backend and oyster use); the db lives inside it. No dir-vs-file
-    # ambiguity, so the resolved path never depends on what exists yet.
+    # MCM_STORE always names a directory (as the fs backend and oyster use it);
+    # the db lives inside it, so the resolved path never depends on what exists yet.
     root = Path(os.environ.get("MCM_STORE", Path.home() / ".mcm" / "store"))
     return root / "store.db"
 
@@ -42,10 +39,8 @@ class SqliteBackend:
         )
 
     def root(self) -> Path:
-        # The store directory, not the db file inside it: root() means "the
-        # local store location" across all backends (the fs backend returns
-        # MCM_STORE directly), and callers like oyster's gitstore run `git -C
-        # root()` against it -- a file path there fails silently.
+        # The store directory, not the db file inside it: callers like oyster's
+        # gitstore run `git -C root()`, which fails silently on a file path.
         return self._path.parent
 
     def save(self, kind: str, name: str, manifest: Mapping[str, object]) -> None:

@@ -6,9 +6,8 @@ _plugins_loaded = False
 
 
 def _load_plugins(handlers: dict) -> None:
-    """Executors unify into this CLI via `mcm.plugins` entry points: each
-    plugin module exposes DOMAINS, VERBS, and HANDLERS to merge. A broken
-    plugin degrades to a warning, never a dead CLI."""
+    """Load `mcm.plugins` entry points and merge each module's DOMAINS, VERBS,
+    and HANDLERS. A failed plugin warns on stderr rather than breaking the CLI."""
     global _plugins_loaded
     if _plugins_loaded:
         return
@@ -44,8 +43,8 @@ def main(argv: list[str] | None = None) -> int:
         print(render(commands.HANDLERS))
         return 0
 
-    # After the help short-circuit: load_tasks() fails loud on a broken task, and
-    # `--help` must render regardless of a deployment's task health.
+    # Ordered after the help short-circuit: load_tasks() fails loud on a broken
+    # task, but `--help` must render regardless.
     from reishi.tasks import load_tasks
 
     try:
@@ -63,8 +62,8 @@ def main(argv: list[str] | None = None) -> int:
     if cmd.domain is None and cmd.action is None:
         return commands.status(cmd)
 
-    # Canonical echo on stderr: users learn the full grammar from shorthand,
-    # agents get an unambiguous record, and -o json stdout stays clean.
+    # Echo on stderr, not stdout, so -o json output stays clean while the user
+    # still sees the resolved command.
     print(f"> {cmd.canonical()}", file=sys.stderr)
 
     handler = commands.HANDLERS.get((cmd.domain, cmd.action))

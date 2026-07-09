@@ -1,7 +1,6 @@
-"""Contract tests for the primitives: what a manifest must accept and reject.
-
-These pin the training-method-agnostic core: a recipe without base_model is a
-from-scratch run, and a dataset is not bound to any task (the recipe is).
+"""Contract tests for the primitives: what a manifest must accept and reject --
+a recipe without base_model is a from-scratch run, a dataset need not name a
+task, and unknown manifest keys are tolerated.
 """
 
 import pytest

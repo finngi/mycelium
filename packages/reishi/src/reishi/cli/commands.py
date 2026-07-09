@@ -133,10 +133,10 @@ def board_show(cmd: Command) -> int:
     return 0
 
 
-# `experiment submit` is canonical vocabulary (see grammar.py) but reishi ships
-# no handler for it: submitting a recipe to real hardware is an executor's job,
-# contributed via an `mcm.plugins` entry point (enoki -> RayJob). Absent any
-# executor, dispatch falls through to a clean "not implemented".
+# `experiment submit` is canonical vocabulary (see grammar.py) but ships no
+# handler here: submitting a recipe to real hardware is an executor's job,
+# contributed via an `mcm.plugins` entry point. Absent one, dispatch returns
+# a clean "not implemented".
 HANDLERS = {
     ("task", "list"): task_list,
     ("dataset", "list"): dataset_list,
