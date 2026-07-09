@@ -2,8 +2,8 @@
 
 One trial at a time: on a single unified-memory GPU two trainings fight for
 the same VRAM and compute, so serial is faster than parallel AND avoids the
-OOM. The drain check sits between trials, so `mcm drain` retracts a machine
-gracefully: current trial finishes, nothing more claimed.
+OOM. The drain check sits between trials, not mid-trial, so a drain lets the
+current trial finish.
 """
 
 import sys
