@@ -70,6 +70,20 @@ def test_recipe_rejects_unknown_fields(tmp_path):
         Recipe.from_yaml(_write_recipe(tmp_path, FINETUNE + "epochs: 3\n"))
 
 
+def test_recipe_rejects_all_unknown_fields_at_once(tmp_path):
+    with pytest.raises(ValueError) as exc_info:
+        Recipe.from_yaml(
+            _write_recipe(tmp_path, FINETUNE + "epochs: 3\ntrainer_kwarg: {}\n")
+        )
+    assert "epochs" in str(exc_info.value)
+    assert "trainer_kwarg" in str(exc_info.value)
+
+
+def test_recipe_unknown_field_suggests_close_match(tmp_path):
+    with pytest.raises(ValueError, match="did you mean 'trainer'"):
+        Recipe.from_yaml(_write_recipe(tmp_path, FINETUNE + "trainer_kwarg: {}\n"))
+
+
 def test_recipe_priority_defaults_and_flows_to_spec(tmp_path):
     r = Recipe.from_yaml(_write_recipe(tmp_path, FINETUNE))
     assert r.priority == 0
