@@ -82,6 +82,9 @@ def test_facade_query_and_stream_work_against_a_backend_with_neither():
     store.save("trials", "b", {"id": "b", "status": "planned"})
     assert sorted(m["id"] for m in store.stream("trials")) == ["a", "b"]
     assert [m["id"] for m in store.query("trials", status="done")] == ["a"]
+    # The fallback path must reject unsafe keys exactly like a native query().
+    with pytest.raises(store.StoreError):
+        store.query("trials", **{"status.nested": "done"})
     store.use_backend(store.LocalFilesystemBackend())
 
 

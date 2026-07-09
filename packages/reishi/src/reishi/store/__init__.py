@@ -11,7 +11,13 @@ import os
 from collections.abc import Iterator, Mapping
 from pathlib import Path
 
-from reishi.store.base import StorageBackend, StoreError, matches, safe_name
+from reishi.store.base import (
+    StorageBackend,
+    StoreError,
+    matches,
+    safe_filter_key,
+    safe_name,
+)
 from reishi.store.filesystem import LocalFilesystemBackend
 from reishi.store.sqlite import SqliteBackend
 
@@ -80,6 +86,10 @@ def query(kind: str, **filters: object) -> list[dict]:
     native = getattr(backend, "query", None)
     if native is not None:
         return native(kind, **filters)  # type: ignore[no-any-return]
+    # Same key validation the Protocol default applies, so an unsafe filter
+    # fails identically whether or not the backend has a native query().
+    for key in filters:
+        safe_filter_key(key)
     return [m for m in backend.load_all(kind) if matches(m, filters)]
 
 

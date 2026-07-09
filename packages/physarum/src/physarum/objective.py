@@ -179,7 +179,10 @@ def make_objective(sweep: Sweep, trainer_fn: Trainer) -> Callable[[Suggester], f
             # trial as statistically weak against the rest of the study, but
             # unlike real ASHA/Hyperband pruning it can never abort training
             # early to save compute.
-            ot.report(value, step=0)
+            # Report the same clamped score the study ranks on: a pruner fed
+            # the raw value would judge an infeasible trial by a number the
+            # sampler never sees.
+            ot.report(value if feasible else worst, step=0)
             if ot.should_prune():
                 t.metrics, t.observables, t.artifacts, t.status = (
                     result["metrics"],
