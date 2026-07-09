@@ -12,7 +12,7 @@ from typing import NotRequired, TypedDict
 from reishi import store
 from reishi.primitives.recipe import Recipe, RecipeManifest
 
-STATUSES = ("planned", "running", "done", "failed")
+STATUSES = ("planned", "running", "done", "failed", "pruned")
 
 
 class TrialArtifacts(TypedDict):

@@ -1,11 +1,15 @@
 """Turns one Sweep and one resolved Trainer into a search backend's objective.
 
-Nothing here is typed against Optuna: the objective takes only the
-scalar-suggestion surface a backend must offer (see Suggester), and Trainer
-is a structural callable, so this module's only import is reishi.
+The Suggester Protocol below is structural: the objective takes only the
+scalar-suggestion/report surface a backend must offer, and Trainer is a
+structural callable too. Optuna's own Trial satisfies Suggester without a
+wrapper, so the one unavoidable Optuna import here is optuna.TrialPruned --
+the only way to signal a pruned trial back to study.optimize().
 """
 
 from typing import Callable, Protocol, TypedDict
+
+import optuna
 
 from reishi.primitives import trial as trial_store
 from reishi.primitives.recipe import Recipe, RecipeManifest
@@ -24,7 +28,8 @@ Trainer = Callable[[TrialManifest], TrainerResult]
 
 class Suggester(Protocol):
     """The surface a search backend must offer to drive a Sweep. Optuna's
-    Trial satisfies it structurally, so nothing here imports optuna."""
+    Trial satisfies it structurally -- report/should_prune are Trial's own
+    method names and signatures, so no adapter is needed for those either."""
 
     number: int  # ordinal within the sweep; names the Trial it becomes
 
@@ -40,6 +45,8 @@ class Suggester(Protocol):
     def suggest_int(self, name: str, low: int, high: int, *, step: int = 1) -> int: ...
     def suggest_categorical(self, name: str, choices: list[object]) -> object: ...
     def set_user_attr(self, key: str, value: object) -> None: ...
+    def report(self, value: float, step: int) -> None: ...
+    def should_prune(self) -> bool: ...
 
 
 def suggest(ot: Suggester, search_space: dict[str, ParamSpec]) -> dict[str, object]:
@@ -104,12 +111,30 @@ def make_objective(sweep: Sweep, trainer_fn: Trainer) -> Callable[[Suggester], f
                 raise KeyError(
                     f"sweep objective metric '{metric}' not in trial metrics (available: {available})"
                 )
+            value = result["metrics"][metric]
+            # trainer_fn runs synchronously to completion -- there is no
+            # mid-training callback yet (see physarum AGENTS.md gap #1), so
+            # there's only ever one step to report. This can still flag a
+            # trial as statistically weak against the rest of the study, but
+            # unlike real ASHA/Hyperband pruning it can never abort training
+            # early to save compute.
+            ot.report(value, step=0)
+            if ot.should_prune():
+                t.metrics, t.artifacts, t.status = (
+                    result["metrics"],
+                    result["artifacts"],
+                    "pruned",
+                )
+                trial_store.save(t)
+                raise optuna.TrialPruned()
             t.metrics, t.artifacts, t.status = (
                 result["metrics"],
                 result["artifacts"],
                 "done",
             )
             trial_store.save(t)
+        except optuna.TrialPruned:
+            raise
         except Exception as e:
             # Mark failed before re-raising: the backend's per-trial handling
             # (Optuna's catch= at the study.optimize() call site) then records

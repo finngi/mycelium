@@ -62,6 +62,12 @@ class _FakeSuggester:
     def set_user_attr(self, key, value):
         pass
 
+    def report(self, value, step):
+        pass
+
+    def should_prune(self):
+        return False
+
 
 def test_suggest_accepts_any_backend_offering_the_suggester_surface():
     suggested = suggest(_FakeSuggester(), SEARCH_SPACE)
@@ -117,6 +123,39 @@ def test_make_objective_reports_unknown_metric_clearly():
 
     with pytest.raises(KeyError, match="field_f1.*available: f1"):
         make_objective(sweep, fake_trainer)(_FakeSuggester())
+
+
+def test_make_objective_marks_trial_pruned_and_excludes_it_from_best():
+    sweep = Sweep(
+        name="my-sweep",
+        template=TEMPLATE,
+        search_space=SEARCH_SPACE,
+        objective={"metric": "f1", "direction": "minimize"},
+    )
+    # ThresholdPruner prunes deterministically off a single reported value --
+    # no warmup/history needed like Median/Percentile pruners, so it pins the
+    # report(step=0)/should_prune() wiring without depending on sampler order.
+    study = optuna.create_study(
+        direction="minimize",
+        sampler=optuna.samplers.RandomSampler(seed=0),
+        pruner=optuna.pruners.ThresholdPruner(upper=0.5),
+    )
+    values = iter([0.9, 0.1])
+
+    def fake_trainer(manifest):
+        return {"metrics": {"f1": next(values)}, "artifacts": {}}
+
+    study.optimize(make_objective(sweep, fake_trainer), n_trials=2, catch=(Exception,))
+
+    assert [t.state for t in study.trials] == [
+        optuna.trial.TrialState.PRUNED,
+        optuna.trial.TrialState.COMPLETE,
+    ]
+
+    pruned_trial_id = study.trials[0].user_attrs["mcm_trial_id"]
+    assert trial_store.load(pruned_trial_id).status == "pruned"
+
+    assert study.best_value == 0.1  # the pruned trial's 0.9 never competes for best
 
 
 def test_make_objective_marks_trial_failed_and_reraises_on_trainer_crash():
