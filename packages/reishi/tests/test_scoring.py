@@ -194,3 +194,25 @@ def test_run_eval_raising_generate_is_the_live_path():
 
     with pytest.raises(AssertionError):
         run_eval(task=task, rows=_rows(), generate=_boom)
+
+
+def test_aggregator_identity_is_stable_for_callable_instances():
+    import functools
+
+    def agg_with_default(scores, top_k=None):
+        return {"n": len(scores)}
+
+    class InstanceTask(FakeTask):
+        pass
+
+    t = InstanceTask()
+    t.aggregator = functools.partial(agg_with_default, top_k=3)  # type: ignore[attr-defined]
+
+    _m, first = run_eval(task=t, rows=_rows(), generate=_echo)
+    _m, second = run_eval(task=t, rows=_rows(), generate=_echo)
+
+    # A partial has no __qualname__ and reprs with a memory address; the
+    # identity must come from its type so it's equal across runs/processes.
+    assert first["aggregator"] == second["aggregator"]
+    assert "0x" not in first["aggregator"]
+    assert first["aggregator"].endswith("functools.partial")

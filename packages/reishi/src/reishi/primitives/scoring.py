@@ -36,8 +36,16 @@ def _aggregator_identity(task: Scorable) -> str:
     if agg is None:
         agg = task.aggregate
     fn = getattr(agg, "__func__", agg)
+    qualname = getattr(fn, "__qualname__", None)
+    if qualname is None:
+        # Callable instances (partial, __call__ objects) have no __qualname__
+        # and their repr carries a memory address -- unstable across runs, so
+        # it would trip mixed-K warnings. Identify by the callable's type;
+        # differently-configured instances of one type collide, which is what
+        # the explicit `aggregator` override exists for.
+        fn = type(fn)
+        qualname = fn.__qualname__
     module = getattr(fn, "__module__", "")
-    qualname = getattr(fn, "__qualname__", repr(fn))
     return f"{module}.{qualname}" if module else qualname
 
 
