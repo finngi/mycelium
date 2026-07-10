@@ -1,35 +1,29 @@
-# AGENTS.md — mcm-reishi
+# AGENTS.md — reishi
 
-Guidance for AI coding agents (Claude Code, GitHub Copilot, Cursor, Codex,
-etc.) working in this repo. `CLAUDE.md` in this repo is just `@AGENTS.md` —
-this file is the canonical source, tool-specific files import it.
+reishi is the experiment contract layer for small-model training: it defines
+what a training run *means* — reproducible, scored identically, comparable
+on one board — independent of what executes it. It imports no accelerator
+or executor code (no Ray, no MLX); execution lives in sibling packages
+(`packages/enoki`, `packages/oyster`), which depend on reishi and extend its
+CLI via `mcm.plugins` entry points.
 
-## What this repo is
+## Package shape
 
-mcm (reishi) is the experiment contract layer for small-model training on
-KubeRay. It defines what a training run *means* — reproducible, scored
-identically, comparable on one board — regardless of what executes it.
-mcm itself never imports Ray, MLX, or any runtime-specific dependency;
-execution lives in sibling repos.
-
-## Repo shape
-
-Single package, `src/reishi/`, installed with `uv`. No path dependencies —
-this is the one repo in the mcm family with no dependency on the others.
-Sibling repos (`../mcm-enoki`, `../mcm-oyster`) depend on this one via a
-local path dependency and extend its CLI via `mcm.plugins` entry points.
+`src/reishi/` is the one workspace member with no dependency on the others
+(root `pyproject.toml`'s `[tool.uv.sources]`).
 
 | Primitive | What it is |
 |---|---|
 | `Task` | Output schema + codec + constrained decoder + scorer. |
 | `Dataset` | Versioned `gs://` prefix + card + leak contract (`dataset.leaks()`). |
-| `Recipe` | Declarative model x dataset x prompt x trainer spec. |
+| `Recipe` | model x dataset x prompt x `hparams`; `runtime` (`cpu`/`mlx`/`l4`/`h100`/`v5e`) selects the executor. |
 | `Trial` | One recipe x seed execution — a manifest, not a log line. |
 | `Board` | Aggregation over trial manifests; computed, never stored as truth. |
 
-`reishi.store` is a `StorageBackend` Protocol: `LocalFilesystemBackend` is
-the default, executors swap in their own (e.g. enoki's `PostgresBackend`)
-via `store.use_backend()` — reishi's primitives never know which one is
+`reishi.store` is a `StorageBackend` Protocol selected by `MCM_STORE_BACKEND`:
+`sqlite` (default) or `fs` (`LocalFilesystemBackend`, one JSON file per
+manifest). Executors swap in their own via `store.use_backend()` — e.g.
+enoki's `PostgresBackend` — so reishi's primitives never know which one is
 active.
 
 ## Conventions
@@ -49,23 +43,20 @@ active.
 5. **Comments: only when the *why* is non-obvious.** Never narrate *what*
    the code does.
 
-## Working in this repo
+## Working in this package
 
 ```
-uv venv && uv pip install -e . --group dev
-uv run pytest -q
-uv run reishi-admin tasks     # dev-only CLI; deployments expose this as `mcm`
-uvx ruff check .               # lint (required in CI)
+uv sync --all-extras           # from the repo root
+uv run pytest packages/reishi -q
+uv run reishi-admin tasks      # dev-only CLI; deployments expose this as `mcm`
+uvx ruff check .
 ```
 
 `MCM_STORE` overrides the manifest store root (default `~/.mcm/store`).
 
-## Sibling repos
+## Depended on by
 
-- [mcm-enoki](../mcm-enoki) — KubeRay (cloud) execution: `l4`, `h100`, `v5e`.
-- [mcm-oyster](../mcm-oyster) — self-hosted mesh execution (currently `mlx` on Apple Silicon).
-
-Both must be checked out as siblings on disk (`uv.sources` path
-dependency); neither is a git submodule of this repo.
+- [`packages/enoki`](../enoki/AGENTS.md) — KubeRay (cloud) execution: `l4`, `h100`, `v5e`.
+- [`packages/oyster`](../oyster/AGENTS.md) — self-hosted mesh execution (currently `mlx` on Apple Silicon).
 
 See `CONTRIBUTING.md` for commit conventions and the PR/CI gate.
