@@ -172,3 +172,21 @@ def test_retried_trial_log_carries_an_attempt_separator_per_run():
     content = Path(load(t.id).execution["log"]).read_text()
     assert "--- attempt 1 @ " in content
     assert "--- attempt 2 @ " in content
+
+
+def test_malformed_producer_result_fails_the_trial_not_the_batch():
+    # Entry-point producers have no schema validation; a result missing the
+    # required keys must land as a failed trial while the batch continues.
+    trials = [_trial("t-s0-bad0001"), _trial("t-s0-good001")]
+
+    def producer(manifest):
+        if manifest["id"].endswith("bad0001"):
+            return {"wrong": True}
+        return {"metrics": {"f1": 1.0}, "artifacts": {}}
+
+    rc = local.execute(trials, producer)
+
+    assert rc == 1
+    assert load("t-s0-bad0001").status == "failed"
+    assert "ProducerResult" in load("t-s0-bad0001").execution["last_error"]
+    assert load("t-s0-good001").status == "done"

@@ -92,6 +92,20 @@ def execute(trials: list[Trial], producer: Producer) -> int:
                         result = producer(t.to_manifest())
             else:
                 result = producer(t.to_manifest())
+            # Entry-point producers carry no runtime schema; a malformed
+            # result must fail THIS trial, not crash the batch below.
+            if not isinstance(result, dict) or not {"metrics", "artifacts"} <= set(
+                result
+            ):
+                got = (
+                    sorted(result)
+                    if isinstance(result, dict)
+                    else type(result).__name__
+                )
+                raise ValueError(
+                    f"producer returned an invalid ProducerResult (got: {got}; "
+                    "needs 'metrics' and 'artifacts')"
+                )
         except Exception as e:
             if log_path is not None:
                 with log_path.open("a") as log_file:
