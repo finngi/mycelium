@@ -1,6 +1,6 @@
 [project]
 name = "oyster"
-version = "0.0.0-a.131"
+version = "0.0.0-a.132"
 description = "oyster — self-hosted mesh execution layer for mcm (GH Actions transport, pull-based claims)"
 requires-python = ">=3.11"
 license = "Apache-2.0"
