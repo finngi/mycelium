@@ -37,7 +37,7 @@ invariant when adding a trainer or backend.
 
 ## Working in this package
 
-```
+```bash
 uv sync --all-extras           # from the repo root
 uv run pytest packages/enoki -q
 uvx ruff check .

@@ -71,7 +71,7 @@ Same as reishi's (this package inherits its grammar and its rules):
 
 ## Working in this package
 
-```
+```bash
 uv sync --all-extras           # from the repo root
 uv run pytest packages/physarum -q
 ```
