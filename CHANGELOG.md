@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.0-a.133](https://github.com/finngi/mycelium/compare/v0.0.0-a.132...v0.0.0-a.133) (2026-07-10)
+
+
+### Bug Fixes
+
+* land the missed Dataset.task -&gt; advisory_task rename ([#39](https://github.com/finngi/mycelium/issues/39)) ([8c7f1ae](https://github.com/finngi/mycelium/commit/8c7f1aeb56072ce85f620d51f0f8df20fc469a52))
+
 ## [0.0.0-a.132](https://github.com/finngi/mycelium/compare/v0.0.0-a.131...v0.0.0-a.132) (2026-07-10)
 
 
