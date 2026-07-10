@@ -43,7 +43,7 @@ def _register_dataset(tmp_path) -> Dataset:
     ds = Dataset(
         name="htmlmd-fixture",
         uri=str(data_path),
-        task="extract-fixture",
+        advisory_task="extract-fixture",
         eval_only=True,
     )
     dataset_registry.save(ds)

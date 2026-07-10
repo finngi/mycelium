@@ -103,7 +103,7 @@ def _load_split(dataset, split: str) -> list[dict]:
         rows = _try_load_gcs_jsonl(dataset.uri, split)
         if rows is not None:
             return rows
-    return _load_local_jsonl(dataset.task or "htmlmd", split)
+    return _load_local_jsonl(dataset.advisory_task or "htmlmd", split)
 
 
 def _upload_dir_to_gcs(local_dir: Path, dataset_uri: str, trial_id: str) -> str | None:

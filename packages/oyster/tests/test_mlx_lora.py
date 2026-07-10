@@ -35,7 +35,7 @@ def _register_dataset(tmp_path) -> Dataset:
         with open(data_dir / f"{split}.jsonl", "w") as f:
             for row in ROWS:
                 f.write(json.dumps(row) + "\n")
-    ds = Dataset(name="mlx-fixture", uri=str(data_dir), task="fixture")
+    ds = Dataset(name="mlx-fixture", uri=str(data_dir), advisory_task="fixture")
     dataset_registry.save(ds)
     return ds
 
