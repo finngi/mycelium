@@ -133,7 +133,9 @@ def test_recipe_validate_rejects_registered_eval_only_train_dataset(
     store.use_backend(store.LocalFilesystemBackend())
     try:
         dataset_registry.save(
-            Dataset(name="holdout", uri="x.jsonl", advisory_task="fixture", eval_only=True)
+            Dataset(
+                name="holdout", uri="x.jsonl", advisory_task="fixture", eval_only=True
+            )
         )
         r = Recipe(name="r", task="fixture", train_dataset="holdout")
         with pytest.raises(ValueError, match="eval_only"):
