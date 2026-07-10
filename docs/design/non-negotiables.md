@@ -108,4 +108,69 @@ Run before opening any PR:
 [ ] metrics / observables provenance separation respected.
 [ ] Commit types match the intended version bump.
 [ ] Output ASCII; comments why-only.
+[ ] Names match the glossary below; no rejected term reintroduced.
 ```
+
+## Glossary — ratified vocabulary
+
+Ratified 2026-07-10 from the antagonistic nomenclature review (all 17
+findings dispositioned). Canonical names below are binding for new code and
+docs; where the codebase still carries a pre-ratification name, the rename
+batch (tracked in beads) brings it in line. One-sentence definitions are the
+contract — argue with the definition, not the word.
+
+### Primitives and records
+
+| Term | Definition |
+|---|---|
+| `Task` | The scoring instrument: output schema + codec + scorer + aggregator. A component of the measurement key, held constant across an experiment. |
+| `Dataset` | Versioned data identity + card + leak contract. `advisory_task` (was `task`) hints but never binds. |
+| `Recipe` | One frozen configuration theta: model x dataset x prompt x hparams. |
+| `Trial` | One Recipe x seed execution manifest — one sample e_K(theta, omega). Kept over `Run` (rejected: collides with the CLI's `run` verb); Optuna's trial object is only ever `Suggester`/`ot` in code and never called a "trial" in prose. |
+| `Board` | The estimator over trial manifests — computed on demand, never stored. |
+| `Comparison` | Pairwise/relative measurement record beside Trial (anchored comparisons only). |
+| experiment | Not a primitive: the whole frame (Theta, e, K, preceq). |
+
+### Execution
+
+| Term | Definition |
+|---|---|
+| `Producer` | The callable contract `(TrialManifest) -> ProducerResult` — the formalism's T:(theta, omega) -> a; may or may not learn (identity producers are legal). Replaces "Trainer" as the contract name. |
+| trainer | Reserved for real gradient-descent Producer implementations (`mlx_lora`, `train_l4`) — never the contract, never the config dict. |
+| `hparams` | `Recipe.hparams` — the free-form hyperparameter dict (was `Recipe.trainer`). |
+| `runtime` | `Recipe.runtime` (was `accelerator`) — the named execution environment a trial requires: determines who claims it, which Producer implementation runs it, and what infrastructure is provisioned. Values today: `local`, `mlx`, `l4`, `h100`, `v5e`. |
+| accelerator | Reserved for actual silicon (`l4`/`h100`/`v5e`); no longer a field name. |
+| executor | The layer that drives Trials through `planned -> running -> done/failed` and writes `execution`, `observables`, artifacts. |
+| `runner` | The machine/process identity in `ExecutionInfo.runner`. |
+| artifact | The produced thing that induces f_a (weights, config, prompt). `TrialArtifacts.outputs` (was `predictions`) holds persisted raw model outputs — outputs are not artifacts. |
+
+### Measurement
+
+| Term | Definition |
+|---|---|
+| score | Per-example output of `Task.score(pred, ref)` — sufficient statistics, not a metric. (`ref`, ratified earlier over `gold` and `y`: whatever the row carries — reference, source, or context.) |
+| `metrics` | Aggregated quality numbers only, written by the scoring side. |
+| `observables` | Executor-measured run-resource facts, unit-suffixed (`wall_time_s`, `cost_usd`), disjoint from metrics. |
+| scoring | The act (module `scoring.py`, was `eval.py`); `ScoringInfo` (was `EvalInfo`) is its provenance record; manifest keys `scoring`/`scorings` (was `eval`/`evals`). |
+| eval set | The held-out data — a split of a versioned Dataset; `n_eval_rows` (was `eval_n`) is its row count. |
+| `scored_on` | Where scoring ran (was `Placement`/`placement`); values `cpu`/`gpu`/`tpu`. |
+| measurement key (K) | (task, codec, scorer closure, aggregator, dataset revision, split, n_eval_rows). Trials comparable iff K matches. |
+| `recipe_name` | `Trial.recipe_name` (was `Trial.recipe`) — the Recipe's name string. `Trial.spec` is unchanged: the embedded RecipeManifest. |
+| `n_seeds` | `Recipe.n_seeds` (was `seeds`) — how many seeds to plan. `Trial.seed` is the root seed from which named sub-streams derive. |
+| `train_dataset` / `eval_dataset` | Recipe's data fields (was single `dataset`); each optional, at least one required — gives the leak contract something to check. |
+
+### Search (physarum)
+
+| Term | Definition |
+|---|---|
+| `goal` | The sweep config block `{metric, direction, constraints}` (was `objective`). |
+| preference | The order (preceq) a goal induces — the math word, docs only. |
+| `trial_fn` | The internal callable handed to the Suggester loop (was the inner `objective`). |
+| sampler | The search algorithm string (`tpe`, ...). `Suggester` is the interface it satisfies. "Search backend" is banned from prose. |
+
+### Rejected (do not reintroduce)
+
+- `Run` for reishi's Trial — collides with the closed grammar's `run` verb.
+- `y` for the scorer's second argument — `ref` ratified (uex.13).
+- `comparison_key` — "measurement key / K" ratified (uex.9).
+- "two rings" / "frozen contract" — the tier vocabulary ratified (uex.3).
