@@ -60,8 +60,7 @@ them.
 6. **Provenance separation: `metrics` vs `observables`.** The scorer judges
    answers; only the executor can observe what the run cost. Quality numbers
    go in `metrics` (written by the scoring side, with `ScoringInfo`
-   provenance);
-   run-resource facts go in `observables` (written by the executor,
+   provenance); run-resource facts go in `observables` (written by the executor,
    unit-suffixed: `wall_time_s`, `cost_usd`). Mixing them corrupts K-pinning:
    a Board cannot tell a scored quantity from a measured one.
 
@@ -112,7 +111,8 @@ Run before opening any PR:
     in the PR description.
 [ ] Any protocol-tier change: additive? litmus test passed? round-trip
     test added? architecture.md updated?
-[ ] No new static import of accelerator or executor code inside reishi.
+[ ] No new static import of plugin code (or its third-party stack) inside
+    reishi.
 [ ] Grammar untouched, or extended via grammar.extend() with no collision.
 [ ] metrics / observables provenance separation respected.
 [ ] Commit types match the intended version bump.
