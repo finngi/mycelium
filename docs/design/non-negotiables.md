@@ -14,22 +14,27 @@ them.
 
 ## Hard boundaries
 
-1. **Dependency direction.** reishi imports no accelerator (no Ray, no MLX,
-   no torch) and never imports an executor module. Executors import reishi,
-   never the reverse — otherwise one broken accelerator stack takes down the
-   contract layer for everyone. Entry-point discovery (`importlib.metadata`)
-   is runtime name resolution, not a static import, and is the sanctioned way
-   for core to reach plugin code; a failing entry point degrades to a
-   `[WARN]`, never a dead CLI.
+1. **Dependency direction.** reishi's dependency closure is the contract
+   layer only: it never imports a plugin or any of a plugin's third-party
+   stack. Plugins import reishi, never the reverse — otherwise one broken
+   optional stack takes down the contract layer for everyone. Entry-point
+   discovery (`importlib.metadata`) is runtime name resolution, not a static
+   import, and is the sanctioned way for core to reach plugin code; a failing
+   entry point degrades to a `[WARN]`.
 
-2. **Protocol changes are additive.** Anything in the stable-protocols tier —
-   manifest TypedDicts, `StorageBackend`/`Scorable`/`Trainer` signatures, the
-   `(kind, name) -> opaque JSON` store rule — may gain optional fields but may
-   not rename, remove, retype, or change the meaning of existing ones. The
-   litmus test: could this change break a manifest already on disk, or a
-   sibling module's implementation you cannot see? If yes, it is a breaking
-   protocol change and must be called out as such in the PR (under 0.x it
-   rides a minor bump; post-1.0 it costs a major).
+2. **Protocol changes are never silent.** Anything in the stable-protocols
+   tier — manifest TypedDicts, `StorageBackend`/`Scorable`/`Producer`
+   signatures, the `(kind, name) -> opaque JSON` store rule — defaults to
+   additive: new optional fields are free. A breaking change (rename,
+   removal, retype, changed meaning) is permitted before 1.0 — the alpha
+   exists to get these shapes right — but only through the gate: validated
+   against every module that reads the shape (round-trip tests included),
+   declared as breaking in the PR, and carrying the right version
+   consequence (0.x: it rides the prerelease bump; post-1.0: a major). The
+   litmus test for "is this breaking": could it break a manifest already on
+   disk, or a sibling module's implementation you cannot see? The
+   non-negotiable is the process — an undeclared or unvalidated breaking
+   change is wrong even if it works.
 
 3. **The additivity round-trip.** Every load -> mutate -> save path must
    preserve manifest keys it does not recognise (`Trial.from_manifest` routes
@@ -40,11 +45,10 @@ them.
    backend ships with a round-trip test proving unknown keys survive.
 
 4. **The standard library never becomes a requirement.** `run_eval`,
-   `field_aggregate`, the codecs, the trainer registry, the local executor —
-   all bypassable. A producer only has to satisfy the protocol (a Trainer
-   only has to return a metrics dict). If a change makes a stdlib helper the
-   only way to satisfy a protocol, it has silently promoted convenience into
-   contract.
+   `field_aggregate`, the codecs, the producer registry, the local executor —
+   all bypassable. A Producer only has to satisfy the protocol (return a
+   metrics dict). If a change makes a stdlib helper the only way to satisfy
+   a protocol, it has silently promoted convenience into contract.
 
 5. **Grammar is closed and disjoint.** CLI domains and verbs are separate
    closed vocabularies; every verb has one home domain; an omitted action
@@ -55,7 +59,8 @@ them.
 
 6. **Provenance separation: `metrics` vs `observables`.** The scorer judges
    answers; only the executor can observe what the run cost. Quality numbers
-   go in `metrics` (written by the scoring side, with `EvalInfo` provenance);
+   go in `metrics` (written by the scoring side, with `ScoringInfo`
+   provenance);
    run-resource facts go in `observables` (written by the executor,
    unit-suffixed: `wall_time_s`, `cost_usd`). Mixing them corrupts K-pinning:
    a Board cannot tell a scored quantity from a measured one.
@@ -90,6 +95,10 @@ them.
   parseable.
 - **Comments carry the why, not the what.** A comment restating the line
   drifts into a lie on the next edit; reasoning outlives implementation.
+- **No rhetorical redundancy.** Stating a rule and then restating its
+  negation ("degrades to a `[WARN]`, never a dead CLI") says one thing
+  twice; write the rule once and stop. Applies to code comments and docs
+  alike — flair spends review attention without adding information.
 - **Docs have one canonical home.** `AGENTS.md` is canonical per package;
   `CLAUDE.md` is `@AGENTS.md`. Design rationale lives in `docs/design/`;
   don't fork it into READMEs.
@@ -140,7 +149,8 @@ contract — argue with the definition, not the word.
 | `hparams` | `Recipe.hparams` — the free-form hyperparameter dict (was `Recipe.trainer`). |
 | `runtime` | `Recipe.runtime` (was `accelerator`) — the named execution environment a trial requires: determines who claims it, which Producer implementation runs it, and what infrastructure is provisioned. Values: `cpu` (was `local` — dissolves the collision with the local-executor placement sense), `mlx`, `l4`, `h100`, `v5e`. |
 | accelerator | Reserved for actual silicon (`l4`/`h100`/`v5e`); no longer a field name. |
-| executor | The layer that drives Trials through `planned -> running -> done/failed` and writes `execution`, `observables`, artifacts. |
+| plugin | An opt-in module built on the reishi core: a construction of the core integrated with alternate packages for specific functionality or features. Contributes CLI domains via `mcm.plugins` and Producers via `mcm.producers`. enoki and oyster are execution plugins; physarum is a search plugin — not an executor. |
+| executor | The execution-flavoured plugin layer: drives Trials through `planned -> running -> done/failed` and writes `execution`, `observables`, artifacts. |
 | `runner` | The machine/process identity in `ExecutionInfo.runner`. |
 | artifact | The produced thing that induces f_a (weights, config, prompt). `TrialArtifacts.outputs` (was `predictions`) holds persisted raw model outputs — outputs are not artifacts. |
 
