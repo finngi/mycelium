@@ -149,7 +149,7 @@ contract — argue with the definition, not the word.
 | `hparams` | `Recipe.hparams` — the free-form hyperparameter dict (was `Recipe.trainer`). |
 | `runtime` | `Recipe.runtime` (was `accelerator`) — the named execution environment a trial requires: determines who claims it, which Producer implementation runs it, and what infrastructure is provisioned. Values: `cpu` (was `local` — dissolves the collision with the local-executor placement sense), `mlx`, `l4`, `h100`, `v5e`. |
 | accelerator | Reserved for actual silicon (`l4`/`h100`/`v5e`); no longer a field name. |
-| plugin | An opt-in module built on the reishi core: a construction of the core integrated with alternate packages for specific functionality or features. Contributes CLI domains via `mcm.plugins` and Producers via `mcm.producers`. enoki and oyster are execution plugins; physarum is a search plugin — not an executor. |
+| plugin | An opt-in module built on the reishi core: a construction of the core integrated with alternate packages for specific functionality or features. Contributes CLI domains via `mcm.plugins` and Producers via `mcm.producers`. enoki and oyster are execution plugins; physarum is a search plugin. |
 | executor | The execution-flavoured plugin layer: drives Trials through `planned -> running -> done/failed` and writes `execution`, `observables`, artifacts. |
 | `runner` | The machine/process identity in `ExecutionInfo.runner`. |
 | artifact | The produced thing that induces f_a (weights, config, prompt). `TrialArtifacts.outputs` (was `predictions`) holds persisted raw model outputs — outputs are not artifacts. |
