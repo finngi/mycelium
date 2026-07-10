@@ -7,8 +7,10 @@ planned and run through the exact same `Producer` contract oyster and enoki
 already implement. physarum defines no execution of its own — it is a
 scheduler over recipes that already work.
 
-v1 scope, deliberately: **in-process execution only, no pruning, no claim
-semantics.** `study.optimize()` runs in physarum's own process and calls a
+v1 scope, deliberately: **in-process execution only, no mid-producer
+pruning, no claim semantics.** (Post-hoc pruning works: Optuna can mark a
+completed trial `pruned` and exclude it from best -- what's out of scope is
+aborting a producer mid-run.) `study.optimize()` runs in physarum's own process and calls a
 resolved `Producer` directly and synchronously — no queue, no distributed
 study, no mid-training callback. Widening any of that is a real design
 decision, not a default to reach for; see the three gaps below before
@@ -36,7 +38,7 @@ covers `runtime: cpu` sweeps instead, physarum's own in-process producer.
 These were each the subject of an explicit design review before v1 shipped
 without them — read the reasoning before reopening any of them:
 
-1. **No pruning.** Needs a `Producer` contract change (`mlx_lm.lora.run()`
+1. **No mid-producer pruning.** Needs a `Producer` contract change (`mlx_lm.lora.run()`
    currently swallows its own `training_callback` argument — supporting
    this means calling `train_model()` directly, not a small addition) and,
    for distributed mode, a report/abort channel split across two separate
@@ -83,7 +85,7 @@ trafilatura for `cpu` too — no sibling checkout needed for either.
 - [`packages/oyster`](../oyster/AGENTS.md) — self-hosted mesh execution (currently `mlx` on Apple Silicon).
 - [`packages/enoki`](../enoki/AGENTS.md) — KubeRay (cloud) execution: `l4`, `h100`, `v5e`
   (not yet wired into `_resolve_producer` — `mlx` (via oyster) and `cpu`
-  (physarum's own in-process trafilatura trainer) are the only runtimes
+  (physarum's own in-process trafilatura producer) are the only runtimes
   physarum can actually dispatch to today).
 
 See `CONTRIBUTING.md` for commit conventions and the PR/CI gate.
