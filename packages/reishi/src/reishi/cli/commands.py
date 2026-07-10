@@ -48,7 +48,7 @@ def dataset_list(cmd: Command) -> int:
     emit(
         [d.to_manifest() for d in dataset.load_all()],
         cmd.flags,
-        columns=["name", "task", "uri", "eval_only"],
+        columns=["name", "advisory_task", "uri", "eval_only"],
     )
     return 0
 

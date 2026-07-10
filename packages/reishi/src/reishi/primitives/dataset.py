@@ -12,7 +12,7 @@ from reishi import store
 class DatasetManifest(TypedDict):
     name: str
     uri: str
-    task: NotRequired[str]
+    advisory_task: NotRequired[str]
     revision: NotRequired[str]
     card: NotRequired[str]
     eval_only: NotRequired[bool]
@@ -23,7 +23,7 @@ class DatasetManifest(TypedDict):
 class Dataset:
     name: str  # the key this dataset is saved and loaded under
     uri: str  # opaque location string; carried into the manifest, never read here
-    task: str = ""  # advisory only; not used here to bind task to dataset
+    advisory_task: str = ""  # hints the task; never binds it
     revision: str = ""  # opaque version id, carried in the manifest
     card: str = ""
     eval_only: bool = False
@@ -33,7 +33,7 @@ class Dataset:
         return {
             "name": self.name,
             "uri": self.uri,
-            "task": self.task,
+            "advisory_task": self.advisory_task,
             "revision": self.revision,
             "card": self.card,
             "eval_only": self.eval_only,
@@ -48,7 +48,7 @@ class Dataset:
         return cls(
             name=d["name"],
             uri=d["uri"],
-            task=d.get("task", ""),
+            advisory_task=d.get("advisory_task", ""),
             revision=d.get("revision", ""),
             card=d.get("card", ""),
             eval_only=d.get("eval_only", False),

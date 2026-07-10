@@ -110,16 +110,16 @@ def test_trial_manifest_tolerates_unknown_keys():
     assert loaded.to_manifest()["from_the_future"] is True
 
 
-def test_dataset_task_is_optional():
+def test_dataset_advisory_task_is_optional():
     ds = Dataset(name="pile-mini-040726", uri="gs://example-bucket/pile-mini")
     m = ds.to_manifest()
-    assert m["task"] == ""
+    assert m["advisory_task"] == ""
     assert Dataset.from_manifest(m) == ds
 
 
-def test_dataset_manifest_without_task_key_loads():
+def test_dataset_manifest_without_advisory_task_key_loads():
     ds = Dataset.from_manifest({"name": "d-1", "uri": "gs://x/d-1"})
-    assert ds.task == ""
+    assert ds.advisory_task == ""
 
 
 def test_recipe_validate_rejects_registered_eval_only_train_dataset(
@@ -133,7 +133,7 @@ def test_recipe_validate_rejects_registered_eval_only_train_dataset(
     store.use_backend(store.LocalFilesystemBackend())
     try:
         dataset_registry.save(
-            Dataset(name="holdout", uri="x.jsonl", task="fixture", eval_only=True)
+            Dataset(name="holdout", uri="x.jsonl", advisory_task="fixture", eval_only=True)
         )
         r = Recipe(name="r", task="fixture", train_dataset="holdout")
         with pytest.raises(ValueError, match="eval_only"):
