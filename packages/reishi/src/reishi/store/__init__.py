@@ -102,10 +102,16 @@ def stream(kind: str) -> Iterator[dict]:
     yield from backend.load_all(kind)
 
 
+# Sentinel root() returns when the active backend has no filesystem root.
+# Callers that would mkdir/write under root() must compare against this --
+# Path("<remote>") is happily accepted by mkdir as a literal relative dir.
+REMOTE_ROOT = Path("<remote>")
+
+
 def root() -> Path:
-    # Remote backends expose no local root, so fall back to a placeholder.
+    # Remote backends expose no local root, so fall back to the sentinel.
     getter = getattr(_active(), "root", None)
-    return getter() if getter else Path("<remote>")
+    return getter() if getter else REMOTE_ROOT
 
 
 def artifact_root() -> Path:

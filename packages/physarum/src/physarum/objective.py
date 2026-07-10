@@ -1,34 +1,24 @@
 """Turns one Sweep and one resolved Producer into a search backend's trial fn.
 
 The Suggester Protocol below is structural: the trial fn takes only the
-scalar-suggestion/report surface a backend must offer, and Producer is a
-structural callable too. Optuna's own Trial satisfies Suggester without a
-wrapper, so the one unavoidable Optuna import here is optuna.TrialPruned --
-the only way to signal a pruned trial back to study.optimize().
+scalar-suggestion/report surface a backend must offer. Optuna's own Trial
+satisfies Suggester without a wrapper, so the one unavoidable Optuna import
+here is optuna.TrialPruned -- the only way to signal a pruned trial back to
+study.optimize().
 """
 
 from collections.abc import Mapping
-from typing import Callable, NotRequired, Protocol, TypedDict
+from typing import Callable, Protocol
 
 import optuna
 
+from reishi.execution.contract import Producer, ProducerResult
 from reishi.primitives import trial as trial_store
 from reishi.primitives.recipe import Recipe, RecipeManifest
-from reishi.primitives.trial import TrialArtifacts, TrialManifest
 
 from physarum.primitives.sweep import ConstraintSpec, ParamSpec, Sweep
 
-
-class ProducerResult(TypedDict):
-    metrics: dict
-    # Executor-observed run facts (wall_time_s, cost_usd, ...), disjoint from
-    # metrics -- see reishi.primitives.trial.TrialManifest. NotRequired: the
-    # cpu trafilatura producer has none to report.
-    observables: NotRequired[dict]
-    artifacts: TrialArtifacts
-
-
-Producer = Callable[[TrialManifest], ProducerResult]
+__all__ = ["Producer", "ProducerResult"]
 
 
 class Suggester(Protocol):

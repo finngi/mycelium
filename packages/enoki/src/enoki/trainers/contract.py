@@ -1,18 +1,7 @@
-"""Producer-contract types.
-
-Duplicated in oyster's trainers/contract.py: the executors don't depend on each
-other, so each keeps its own copy of the contract that Trial's fields imply.
+"""Producer-contract types -- re-exported from reishi.execution.contract, the
+canonical home shared with oyster's copy of this same contract.
 """
 
-from collections.abc import Callable
-from typing import TypedDict
+from reishi.execution.contract import Producer, ProducerResult
 
-from reishi.primitives.trial import TrialArtifacts, TrialManifest
-
-
-class ProducerResult(TypedDict):
-    metrics: dict  # task-specific; field-scored tasks store AggregateMetrics here
-    artifacts: TrialArtifacts
-
-
-Producer = Callable[[TrialManifest], ProducerResult]
+__all__ = ["Producer", "ProducerResult"]

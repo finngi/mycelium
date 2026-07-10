@@ -71,25 +71,12 @@ def _resolve_sampler(
 
 
 def _resolve_producer(runtime: str) -> Producer:
-    if runtime == "mlx":
-        try:
-            from oyster.trainers import TRAINERS
-        except ImportError as e:
-            raise ValueError(
-                f"runtime 'mlx' needs oyster installed (uv pip install -e '.[mlx]'): {e}"
-            ) from e
-        return TRAINERS["mlx"]
-    if runtime == "cpu":
-        try:
-            from physarum.producers.trafilatura_extract import train as cpu_train
-        except ImportError as e:
-            raise ValueError(
-                f"runtime 'cpu' needs trafilatura installed (uv pip install -e '.[cpu]'): {e}"
-            ) from e
-        return cpu_train
-    raise ValueError(
-        f"no producer resolvable for runtime '{runtime}' yet (one of 'cpu', 'mlx' is wired up)"
-    )
+    from reishi.execution import registry
+
+    try:
+        return registry.get(runtime)
+    except KeyError as e:
+        raise ValueError(str(e)) from e
 
 
 def _flag_value(flags: list[str], name: str) -> str | None:
