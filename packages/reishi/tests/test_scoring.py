@@ -2,7 +2,7 @@ from typing import Any, Mapping
 
 import pytest
 
-from reishi.primitives.eval import _render, rescore, run_eval
+from reishi.primitives.scoring import _render, rescore, run_eval
 
 
 class FakeTask:
@@ -38,9 +38,9 @@ def test_run_eval_returns_aggregate_and_scores_once_per_row():
     result, info = run_eval(task=task, rows=_rows(), generate=_echo)
     assert result == {"n": 2, "scores": [{"ok": 1}, {"ok": 1}]}
     assert len(task.scored) == 2
-    # eval_n is always known (run_eval counts the rows it scores); every other
-    # K-pinning field is caller-supplied, so it's absent when not passed in.
-    assert info == {"eval_n": 2}
+    # n_eval_rows is always known (run_eval counts the rows it scores); every
+    # other K-pinning field is caller-supplied, so it's absent when not passed in.
+    assert info == {"n_eval_rows": 2}
 
 
 def test_run_eval_rejects_unscored_task():
@@ -102,7 +102,7 @@ def test_run_eval_populates_pinning_fields_when_caller_supplies_them():
         split="test",
     )
     assert info == {
-        "eval_n": 2,
+        "n_eval_rows": 2,
         "task": "htmlmd",
         "codec": "json",
         "scorer_version": "trafilatura==1.2.0,spacy==3.7.0",
@@ -112,7 +112,7 @@ def test_run_eval_populates_pinning_fields_when_caller_supplies_them():
     }
 
 
-def test_rescore_populates_eval_n_and_pinning_fields():
+def test_rescore_populates_n_eval_rows_and_pinning_fields():
     task = FakeTask()
     records: list[Mapping] = []
     run_eval(task=task, rows=_rows(), generate=_echo, sink=records.append)
@@ -123,7 +123,7 @@ def test_rescore_populates_eval_n_and_pinning_fields():
         task_name="htmlmd",
         split="test",
     )
-    assert info == {"eval_n": 2, "task": "htmlmd", "split": "test"}
+    assert info == {"n_eval_rows": 2, "task": "htmlmd", "split": "test"}
 
 
 def test_render_variants():

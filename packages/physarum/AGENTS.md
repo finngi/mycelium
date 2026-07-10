@@ -9,13 +9,13 @@ this file is the canonical source, tool-specific files import it.
 physarum is the Optuna hyperparameter-search adaptor for
 [reishi (mcm)](https://github.com/finngi/mycelium/tree/main/packages/reishi):
 one Optuna-suggested point in a search space becomes one ordinary `Recipe`,
-planned and run through the exact same `Trainer` contract oyster and enoki
+planned and run through the exact same `Producer` contract oyster and enoki
 already implement. physarum defines no execution of its own — it is a
 scheduler over recipes that already work.
 
 v1 scope, deliberately: **in-process execution only, no pruning, no claim
 semantics.** `study.optimize()` runs in physarum's own process and calls a
-resolved `Trainer` directly and synchronously — no queue, no distributed
+resolved `Producer` directly and synchronously — no queue, no distributed
 study, no mid-training callback. Widening any of that is a real design
 decision, not a default to reach for; see the three gaps below before
 touching any of it.
@@ -25,15 +25,15 @@ touching any of it.
 Single package, `src/physarum/`, installed with `uv`. Depends on
 `../mcm-reishi` (required path dependency, for `Task`/`Dataset`/`Recipe`/
 `Trial` and `reishi.store`) and optionally `../mcm-oyster` (only needed to
-actually run a sweep whose template targets `accelerator: mlx` — install
+actually run a sweep whose template targets `runtime: mlx` — install
 via the `mlx` extra).
 
 | Module | What it is |
 |---|---|
-| `primitives/sweep.py` | `Sweep`: a recipe template + search space + objective + sampler — physarum's own primitive, layered on reishi's `Recipe`. |
-| `objective.py` | Turns one `Sweep` + one already-resolved `Trainer` into an `optuna.Trial -> float` function. Optuna never sees a `Recipe`; this module is the only place that translates suggested scalars into one. |
-| `mcm_plugin.py` | The `sweep` domain: `mcm sweep optimize sweep.yaml`, `mcm sweep watch <name>`. Resolves which `Trainer` to call from `template.accelerator`. |
-| `trainers/trafilatura_extract.py` | The `local` accelerator's `Trainer`: scores an Optuna-suggested trafilatura extraction config against a recipe's dataset — no gradient step, no model. |
+| `primitives/sweep.py` | `Sweep`: a recipe template + search space + goal + sampler — physarum's own primitive, layered on reishi's `Recipe`. |
+| `objective.py` | Turns one `Sweep` + one already-resolved `Producer` into an `optuna.Trial -> float` function. Optuna never sees a `Recipe`; this module is the only place that translates suggested scalars into one. |
+| `mcm_plugin.py` | The `sweep` domain: `mcm sweep optimize sweep.yaml`, `mcm sweep watch <name>`. Resolves which `Producer` to call from `template.runtime`. |
+| `producers/trafilatura_extract.py` | The `cpu` runtime's `Producer`: scores an Optuna-suggested trafilatura extraction config against a recipe's dataset — no gradient step, no model. |
 | `watch.py` | `mcm sweep watch`: a read-only localhost HTTP server that polls `reishi.store` and graphs a sweep's trials live. |
 
 ## Three deliberate gaps (do not close without a real reason)
@@ -41,7 +41,7 @@ via the `mlx` extra).
 These were each the subject of an explicit design review before v1 shipped
 without them — read the reasoning before reopening any of them:
 
-1. **No pruning.** Needs a `Trainer` contract change (`mlx_lm.lora.run()`
+1. **No pruning.** Needs a `Producer` contract change (`mlx_lm.lora.run()`
    currently swallows its own `training_callback` argument — supporting
    this means calling `train_model()` directly, not a small addition) and,
    for distributed mode, a report/abort channel split across two separate
@@ -88,8 +88,8 @@ sweep rather than just testing the scheduling logic.
 - [mcm-reishi](../mcm-reishi) — the contract layer this depends on.
 - [mcm-oyster](../mcm-oyster) — self-hosted mesh execution (currently `mlx` on Apple Silicon).
 - [mcm-enoki](../mcm-enoki) — KubeRay (cloud) execution: `l4`, `h100`, `v5e`
-  (not yet wired into `_resolve_trainer` — `mlx` (via oyster) and `local`
-  (physarum's own in-process trafilatura trainer) are the only accelerators
+  (not yet wired into `_resolve_producer` — `mlx` (via oyster) and `cpu`
+  (physarum's own in-process trafilatura trainer) are the only runtimes
   physarum can actually dispatch to today).
 
 See `CONTRIBUTING.md` for commit conventions and the PR/CI gate.

@@ -44,10 +44,10 @@ def params_m(model_id: str | None) -> float:
 
 def estimate_gb(spec: RecipeManifest) -> float:
     """Peak unified-memory estimate (GB) for one trial, from its frozen spec."""
-    trainer = spec.get("trainer", {})
-    if spec.get("base_model") is None and "params_m" in trainer:
-        p = float(trainer["params_m"])  # from-scratch: arch declares its size
+    hparams = spec.get("hparams", {})
+    if spec.get("base_model") is None and "params_m" in hparams:
+        p = float(hparams["params_m"])  # from-scratch: arch declares its size
     else:
         p = params_m(spec.get("base_model"))
-    mult = _MULTIPLIER.get(trainer.get("backend", "mlx"), _MULTIPLIER["hf"])
+    mult = _MULTIPLIER.get(hparams.get("backend", "mlx"), _MULTIPLIER["hf"])
     return p * 1e6 * _BYTES_PER_PARAM_FP16 * mult / 1e9

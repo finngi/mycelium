@@ -17,7 +17,7 @@ def test_comparison_roundtrips():
         winner="a",
         judge="gpt-5",
         created="2026-07-01T00:00:00+00:00",
-        eval={"task": "extract", "dataset": "htmlmd-eval", "split": "test"},
+        scoring={"task": "extract", "dataset": "htmlmd-eval", "split": "test"},
     )
     back = Comparison.from_manifest(c.to_manifest())
     assert back == c
@@ -40,7 +40,7 @@ def test_comparison_literal_extra_key_preserved():
         "winner": "b",
         "judge": "human",
         "created": "",
-        "eval": {},
+        "scoring": {},
         "extra": "not-swallowed",
     }
     loaded = Comparison.from_manifest(m)

@@ -17,7 +17,7 @@ import yaml
 from reishi.cli.grammar import Command
 from reishi.primitives.recipe import Recipe
 
-# experiment_submit gates on membership here: an accelerator without a
+# experiment_submit gates on membership here: a runtime without a
 # node-selector/toleration entry fails rather than scheduling on guessed values.
 _GPU_NODE_SELECTORS = {
     "l4": {"cloud.google.com/compute-class": "gpu-l4", "kubernetes.io/arch": "amd64"},
@@ -91,10 +91,10 @@ def experiment_submit(cmd: Command) -> int:
     recipe = Recipe.from_yaml(recipe_path)
     recipe.validate()
 
-    if recipe.accelerator not in _GPU_NODE_SELECTORS:
+    if recipe.runtime not in _GPU_NODE_SELECTORS:
         return _fail(
-            f"'mcm experiment submit' only supports accelerator 'l4' for now "
-            f"(recipe '{name}' wants '{recipe.accelerator}') -- its node selector/tolerations "
+            f"'mcm experiment submit' only supports runtime 'l4' for now "
+            f"(recipe '{name}' wants '{recipe.runtime}') -- its node selector/tolerations "
             f"aren't verified against a live workload yet, so this fails instead of guessing"
         )
 
@@ -111,10 +111,10 @@ def experiment_submit(cmd: Command) -> int:
         or _DEFAULT_IMAGE
     )
     node_selector = yaml.safe_dump(
-        _GPU_NODE_SELECTORS[recipe.accelerator], default_flow_style=True, width=10**9
+        _GPU_NODE_SELECTORS[recipe.runtime], default_flow_style=True, width=10**9
     ).strip()
     tolerations = yaml.safe_dump(
-        _GPU_TOLERATIONS[recipe.accelerator], default_flow_style=True, width=10**9
+        _GPU_TOLERATIONS[recipe.runtime], default_flow_style=True, width=10**9
     ).strip()
 
     rendered = template_path.read_text()
@@ -127,7 +127,7 @@ def experiment_submit(cmd: Command) -> int:
         # Nothing mounts the recipe into the image, so the entrypoint recreates
         # it from this inline blob.
         "{{recipe_b64}}": base64.b64encode(recipe_path.read_bytes()).decode("ascii"),
-        "{{accelerator}}": recipe.accelerator,
+        "{{runtime}}": recipe.runtime,
         "{{gpu_node_selector}}": node_selector,
         "{{gpu_tolerations}}": tolerations,
     }

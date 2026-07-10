@@ -29,9 +29,9 @@ identically, comparable on one board — regardless of what executes it.
 
 | Primitive | What it is |
 |---|---|
-| **Task** | Output schema + codec + constrained decoder + scorer. The scorer is the cross-accelerator invariant. |
+| **Task** | Output schema + codec + constrained decoder + scorer. The scorer is the cross-runtime invariant. |
 | **Dataset** | Versioned `gs://` prefix + card + leak contract. |
-| **Recipe** | Declarative model x dataset x prompt x trainer spec; `accelerator` selects the trainer. |
+| **Recipe** | Declarative model x dataset x prompt x hparams spec; `runtime` selects the producer. |
 | **Trial** | One recipe x seed execution (Ray Tune's term) — a manifest, not a log line. |
 | **Board** | Aggregation over trial manifests; computed, never stored as truth. |
 
@@ -84,6 +84,6 @@ becomes a `gs://` prefix when the GCS store lands).
 The GCS store. `experiment submit` now
 templates enoki's `jobs/rayjob.yaml` (convention: `experiments/<name>/recipe.yaml`,
 image via `--image`/`MCM_TRAIN_IMAGE`) and applies it with `kubectl` --
-only the `l4` accelerator has a verified node selector/toleration, others
+only the `l4` runtime has a verified node selector/toleration, others
 fail cleanly. Everything Ray-shaped (driver, trainers, RayJob template,
 Dockerfile) stays in enoki.

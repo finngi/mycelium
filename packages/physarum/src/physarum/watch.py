@@ -37,12 +37,12 @@ def trials_for_sweep(
     prefix = f"{sweep_name}-t"
     rows: list[SweepTrialRow] = []
     for t in trial_store.load_all():
-        if not t.recipe.startswith(prefix):
+        if not t.recipe_name.startswith(prefix):
             continue
         if started_at is not None and t.created < started_at:
             continue
         try:
-            trial_number = int(t.recipe[len(prefix) :].split("-s", 1)[0])
+            trial_number = int(t.recipe_name[len(prefix) :].split("-s", 1)[0])
         except ValueError:
             continue
         rows.append(
@@ -50,7 +50,7 @@ def trials_for_sweep(
                 "trial": trial_number,
                 "status": t.status,
                 "metrics": t.metrics,
-                "params": dict(t.spec.get("trainer", {})),
+                "params": dict(t.spec.get("hparams", {})),
             }
         )
     rows.sort(key=lambda r: r["trial"])
@@ -218,9 +218,9 @@ function renderTable(trials) {
   });
 }
 
-// Which trainer keys are actually swept -- vs. fixed template config like
-// eval_n -- isn't known here (this page never reads the sweep yaml, only the
-// store), so infer it from the data itself: any key that takes more than one
+// Which hparams keys are actually swept -- vs. fixed template config like
+// n_eval_rows -- isn't known here (this page never reads the sweep yaml, only
+// the store), so infer it from the data itself: any key that takes more than one
 // distinct value across trials seen so far is worth a tile.
 function varyingParamKeys(trials) {
   const seen = {};
@@ -293,7 +293,7 @@ function renderParamTiles(trials) {
     keys.forEach((k, i) => {
       const tile = document.createElement("div");
       tile.className = "param-tile";
-      const label = k.replace(/^trainer\\./, "");
+      const label = k.replace(/^hparams\\./, "");
       tile.innerHTML = `<div class="plabel">${label}</div><canvas width="200" height="56"></canvas><div class="plead"></div>`;
       tile.dataset.key = k;
       (i % 2 === 0 ? left : right).appendChild(tile);

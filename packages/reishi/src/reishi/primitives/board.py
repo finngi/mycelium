@@ -15,7 +15,7 @@ def _is_scalar(v: object) -> bool:
     return isinstance(v, (int, float)) and not isinstance(v, bool)
 
 
-# Measurement-key (K) fields from EvalInfo, see math-foundations.md section 0.
+# Measurement-key (K) fields from ScoringInfo, see math-foundations.md section 0.
 # Two trials are only comparable if they agree on all of these.
 _K_FIELDS = (
     "task",
@@ -25,17 +25,17 @@ _K_FIELDS = (
     "dataset",
     "dataset_revision",
     "split",
-    "eval_n",
+    "n_eval_rows",
 )
 
 
 def _mismatched_key_fields(trials: list) -> list[str]:
-    # A trial with no eval info contributes nothing to any field's value set,
+    # A trial with no scoring info contributes nothing to any field's value set,
     # so it can't create a mismatch by itself; only fields two or more
     # trials actually pin, and pin to different values, count as mixed.
     mismatched = []
     for field in _K_FIELDS:
-        values = {t.eval[field] for t in trials if t.eval.get(field) is not None}
+        values = {t.scoring[field] for t in trials if t.scoring.get(field) is not None}
         if len(values) > 1:
             mismatched.append(field)
     return mismatched
@@ -48,7 +48,7 @@ def build(metric: str = "f1", task: str | None = None) -> list[dict]:
 
     by_recipe: dict[str, list] = defaultdict(list)
     for t in trials:
-        by_recipe[t.recipe].append(t)
+        by_recipe[t.recipe_name].append(t)
 
     rows = []
     # Warn once per (recipe, metric), not per trial: a recipe whose task stores

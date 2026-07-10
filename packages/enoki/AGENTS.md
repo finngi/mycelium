@@ -6,7 +6,7 @@ repo is just `@AGENTS.md` — this file is the canonical source.
 ## What this repo is
 
 enoki is mcm's KubeRay (cloud GPU/TPU) execution layer: `l4`, `h100`,
-`v5e` accelerators. `mcm experiment submit` templates `jobs/rayjob.yaml`
+`v5e` runtimes. `mcm experiment submit` templates `jobs/rayjob.yaml`
 and applies it with `kubectl` against the `train` namespace on GKE; the
 image built from `jobs/Dockerfile` runs `enoki.driver` as the RayJob
 entrypoint. Only `l4` has a verified node selector/toleration today.

@@ -21,7 +21,7 @@ def _cmp(trial_a: str, trial_b: str, winner: str, i: int) -> Comparison:
 
 
 def _trial(trial_id: str, recipe: str) -> Trial:
-    return Trial(id=trial_id, recipe=recipe, seed=0)
+    return Trial(id=trial_id, recipe_name=recipe, seed=0)
 
 
 def test_empty_input_returns_empty_list():

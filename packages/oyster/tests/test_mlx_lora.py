@@ -58,10 +58,10 @@ def _fake_generate(model, tokenizer, prompt, max_tokens, sampler):
     return json.dumps({"x": prompt})
 
 
-def _manifest(dataset_name: str, seed: int, trainer_cfg: dict) -> dict:
+def _manifest(dataset_name: str, seed: int, hparams_cfg: dict) -> dict:
     return {
         "id": "t1",
-        "recipe": "r1",
+        "recipe_name": "r1",
         "seed": seed,
         "status": "running",
         "created": "",
@@ -71,12 +71,12 @@ def _manifest(dataset_name: str, seed: int, trainer_cfg: dict) -> dict:
             "name": "r1",
             "task": "fixture",
             "base_model": "x/tiny-model",
-            "dataset": dataset_name,
-            "accelerator": "mlx",
+            "train_dataset": dataset_name,
+            "runtime": "mlx",
             "prompt": None,
-            "seeds": 1,
+            "n_seeds": 1,
             "priority": 0,
-            "trainer": trainer_cfg,
+            "hparams": hparams_cfg,
         },
         "execution": {},
     }
@@ -89,7 +89,7 @@ def test_train_writes_observables_not_metrics(tmp_path, monkeypatch):
     monkeypatch.setattr(mlx_lora, "generate", _fake_generate)
 
     result = mlx_lora.train(
-        _manifest(ds.name, seed=7, trainer_cfg={"iters": 5, "eval_n": 2})
+        _manifest(ds.name, seed=7, hparams_cfg={"iters": 5, "n_eval_rows": 2})
     )
 
     assert result["observables"]["iters"] == 5

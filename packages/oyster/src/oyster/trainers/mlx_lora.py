@@ -29,7 +29,7 @@ from reishi.primitives import task as task_registry
 from reishi.primitives.trial import Trial, TrialManifest
 
 from oyster import queue
-from oyster.trainers.contract import TrainerResult
+from oyster.trainers.contract import ProducerResult
 
 _HEARTBEAT_INTERVAL_S = 30.0
 
@@ -112,7 +112,7 @@ def _maybe_push_to_hf(adapter_dir: Path, trial_id: str) -> str | None:
         return None
 
 
-def train(trial_manifest: TrialManifest) -> TrainerResult:
+def train(trial_manifest: TrialManifest) -> ProducerResult:
     spec = trial_manifest["spec"]
     base_model = spec.get("base_model")
     if base_model is None:
@@ -125,16 +125,19 @@ def train(trial_manifest: TrialManifest) -> TrainerResult:
         raise ValueError(
             f"task '{task_obj.name}' has no scorer registered; mlx_lora can't eval it"
         )
-    ds = dataset_registry.load(spec["dataset"])
+    train_dataset = spec.get("train_dataset")
+    if train_dataset is None:
+        raise ValueError("mlx_lora trainer needs a recipe with 'train_dataset' set")
+    ds = dataset_registry.load(train_dataset)
     codec = codec_registry.get_codec(task_obj.codec)
     train_path, val_path = Path(ds.uri) / "train.jsonl", Path(ds.uri) / "val.jsonl"
 
-    trainer_cfg = spec.get("trainer", {})
-    method = trainer_cfg.get("method", "lora")
-    iters = trainer_cfg.get("iters", 1000)
+    hparams_cfg = spec.get("hparams", {})
+    method = hparams_cfg.get("method", "lora")
+    iters = hparams_cfg.get("iters", 1000)
     seed = trial_manifest.get("seed", 0)
     prompt = spec.get("prompt")
-    eval_n = trainer_cfg.get("eval_n", 50)
+    n_eval_rows = hparams_cfg.get("n_eval_rows", 50)
 
     out_dir = (
         Path(os.environ.get("OYSTER_ARTIFACT_ROOT", "/tmp/oyster-artifacts"))
@@ -164,7 +167,7 @@ def train(trial_manifest: TrialManifest) -> TrainerResult:
                 file=sys.stderr,
             )
 
-        mask_prompt = trainer_cfg.get("mask_prompt", False)
+        mask_prompt = hparams_cfg.get("mask_prompt", False)
         if mask_prompt and not use_chat_template:
             # mlx-lm only supports prompt masking on chat/completion-format data, not the
             # raw-text rows this path produces when a model has no chat template
@@ -184,9 +187,9 @@ def train(trial_manifest: TrialManifest) -> TrainerResult:
         lora_params = None
         if method != "full":
             lora_params = {
-                "rank": trainer_cfg.get("rank", 8),
-                "dropout": trainer_cfg.get("dropout", 0.0),
-                "scale": trainer_cfg.get("scale", 20.0),
+                "rank": hparams_cfg.get("rank", 8),
+                "dropout": hparams_cfg.get("dropout", 0.0),
+                "scale": hparams_cfg.get("scale", 20.0),
             }
 
         args = types.SimpleNamespace(
@@ -194,18 +197,18 @@ def train(trial_manifest: TrialManifest) -> TrainerResult:
             train=True,
             model=base_model,
             iters=iters,
-            batch_size=trainer_cfg.get("batch_size", 4),
-            learning_rate=trainer_cfg.get("lr", 1e-5),
-            max_seq_length=trainer_cfg.get("max_seq_length", 512),
+            batch_size=hparams_cfg.get("batch_size", 4),
+            learning_rate=hparams_cfg.get("lr", 1e-5),
+            max_seq_length=hparams_cfg.get("max_seq_length", 512),
             adapter_path=str(out_dir / "adapters"),
             steps_per_report=max(10, iters // 10),
             steps_per_eval=max(20, iters // 5),
-            val_batches=trainer_cfg.get("val_batches", 25),
+            val_batches=hparams_cfg.get("val_batches", 25),
             mask_prompt=mask_prompt,
-            grad_checkpoint=trainer_cfg.get("grad_checkpoint", False),
+            grad_checkpoint=hparams_cfg.get("grad_checkpoint", False),
             grad_accumulation_steps=1,
-            clear_cache_threshold=trainer_cfg.get("clear_cache_threshold", 100),
-            num_layers=trainer_cfg.get("layers", 16),
+            clear_cache_threshold=hparams_cfg.get("clear_cache_threshold", 100),
+            num_layers=hparams_cfg.get("layers", 16),
             fine_tune_type=method,
             optimizer="adamw",
             optimizer_config={
@@ -215,7 +218,7 @@ def train(trial_manifest: TrialManifest) -> TrainerResult:
                 "sgd": {},
                 "adafactor": {},
             },
-            save_every=trainer_cfg.get(
+            save_every=hparams_cfg.get(
                 "save_every", max(iters // 6, 50) if iters >= 50 else max(iters // 2, 1)
             ),
             seed=seed,
@@ -239,7 +242,7 @@ def train(trial_manifest: TrialManifest) -> TrainerResult:
         model, tokenizer = load(base_model, adapter_path=str(out_dir / "adapters"))  # type: ignore[misc]
 
         with open(val_path) as f:
-            val_rows = [json.loads(line) for line in f if line.strip()][:eval_n]
+            val_rows = [json.loads(line) for line in f if line.strip()][:n_eval_rows]
         if not val_rows:
             raise ValueError("mlx_lora eval requires at least one validation row")
 

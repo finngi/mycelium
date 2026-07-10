@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 from typing import NotRequired, TypedDict
 
 from reishi import store
-from reishi.primitives.trial import EvalInfo
+from reishi.primitives.trial import ScoringInfo
 
 WINNERS = ("a", "b", "tie")
 
@@ -28,7 +28,7 @@ class ComparisonManifest(TypedDict):
     trial_b: str
     winner: str  # one of WINNERS
     judge: str  # model name that judged, or "human"
-    eval: NotRequired[EvalInfo]
+    scoring: NotRequired[ScoringInfo]
 
 
 @dataclass
@@ -40,9 +40,9 @@ class Comparison:
     judge: str
     created: str = ""
     # Measurement-key pinning for the judgment itself (task/dataset/split --
-    # same K fields as Trial.eval), so a board can tell whether comparisons
+    # same K fields as Trial.scoring), so a board can tell whether comparisons
     # being rated together were judged under the same conditions.
-    eval: EvalInfo = field(default_factory=dict)  # type: ignore[assignment]
+    scoring: ScoringInfo = field(default_factory=dict)  # type: ignore[assignment]
     # Unknown top-level manifest keys, carried verbatim -- same losslessness
     # guarantee as Trial.extra (see trial.py).
     extra: dict = field(default_factory=dict)
@@ -55,7 +55,7 @@ class Comparison:
             "trial_b": self.trial_b,
             "winner": self.winner,
             "judge": self.judge,
-            "eval": self.eval,
+            "scoring": self.scoring,
         }
         # Known keys win, so a stale carried-over value never shadows the live one.
         return {**self.extra, **m}  # type: ignore[typeddict-item]
@@ -78,7 +78,7 @@ def record(
     trial_b: str,
     winner: str,
     judge: str,
-    eval: EvalInfo | None = None,
+    scoring: ScoringInfo | None = None,
 ) -> Comparison:
     if winner not in WINNERS:
         raise ValueError(f"winner must be one of {WINNERS}, got {winner!r}")
@@ -90,7 +90,7 @@ def record(
         winner=winner,
         judge=judge,
         created=now,
-        eval=eval or {},
+        scoring=scoring or {},
     )
 
 

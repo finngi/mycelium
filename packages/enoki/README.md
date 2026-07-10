@@ -35,10 +35,10 @@ The boundary, in both directions:
 
 | Path | What it is |
 |---|---|
-| `jobs/rayjob.yaml` | RayJob template, filled in by `mcm experiment submit` — worker group per accelerator (`l4`, `h100`, `v5e`) |
+| `jobs/rayjob.yaml` | RayJob template, filled in by `mcm experiment submit` — worker group per runtime (`l4`, `h100`, `v5e`) |
 | `jobs/Dockerfile` | Training image, pushed to the `training-images` Artifact Registry repo |
 | `src/enoki/driver.py` | In-cluster entrypoint: recipe manifest -> one trial per seed -> trainer -> trial manifests + artifacts |
-| `src/enoki/trainers/` | Trainers, selected by the recipe's `accelerator` field ("adapter" is reserved for the LoRA artifact) |
+| `src/enoki/trainers/` | Trainers, selected by the recipe's `runtime` field ("adapter" is reserved for the LoRA artifact) |
 
 ## Setup
 

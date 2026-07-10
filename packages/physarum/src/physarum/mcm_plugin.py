@@ -16,7 +16,7 @@ from reishi import store
 from reishi.cli.grammar import Command, Verb
 from reishi.cli.output import emit
 
-from physarum.objective import Trainer, make_objective
+from physarum.objective import Producer, make_trial_fn
 from physarum.primitives.sweep import ParamSpec, Sweep
 from physarum.watch import DEFAULT_PORT, serve as watch_serve
 
@@ -70,25 +70,25 @@ def _resolve_sampler(
     return _SAMPLERS[name]()
 
 
-def _resolve_trainer(accelerator: str) -> Trainer:
-    if accelerator == "mlx":
+def _resolve_producer(runtime: str) -> Producer:
+    if runtime == "mlx":
         try:
             from oyster.trainers import TRAINERS
         except ImportError as e:
             raise ValueError(
-                f"accelerator 'mlx' needs oyster installed (uv pip install -e '.[mlx]'): {e}"
+                f"runtime 'mlx' needs oyster installed (uv pip install -e '.[mlx]'): {e}"
             ) from e
         return TRAINERS["mlx"]
-    if accelerator == "local":
+    if runtime == "cpu":
         try:
-            from physarum.trainers.trafilatura_extract import train as local_train
+            from physarum.producers.trafilatura_extract import train as cpu_train
         except ImportError as e:
             raise ValueError(
-                f"accelerator 'local' needs trafilatura installed (uv pip install -e '.[local]'): {e}"
+                f"runtime 'cpu' needs trafilatura installed (uv pip install -e '.[cpu]'): {e}"
             ) from e
-        return local_train
+        return cpu_train
     raise ValueError(
-        f"no trainer resolvable for accelerator '{accelerator}' yet (one of 'local', 'mlx' is wired up)"
+        f"no producer resolvable for runtime '{runtime}' yet (one of 'cpu', 'mlx' is wired up)"
     )
 
 
@@ -142,10 +142,10 @@ def sweep_optimize(cmd: Command) -> int:
     sweep = Sweep.from_yaml(cmd.objects[0])
     sweep.validate()
 
-    trainer_fn = _resolve_trainer(sweep.template["accelerator"])
+    producer_fn = _resolve_producer(sweep.template["runtime"])
     study = optuna.create_study(
         study_name=sweep.name,
-        direction=sweep.objective["direction"],
+        direction=sweep.goal["direction"],
         sampler=_resolve_sampler(sweep.sampler, sweep.search_space),
     )
     # `sweep watch` takes only a name, so it can't learn n_trials from the yaml;
@@ -164,7 +164,7 @@ def sweep_optimize(cmd: Command) -> int:
         file=sys.stderr,
     )
     study.optimize(
-        make_objective(sweep, trainer_fn),
+        make_trial_fn(sweep, producer_fn),
         n_trials=sweep.n_trials,
         callbacks=[_make_progress_callback(sweep.n_trials)],
         # objective() marks a failing trial "failed" and re-raises; catch stops

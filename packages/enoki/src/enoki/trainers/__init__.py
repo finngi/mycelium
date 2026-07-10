@@ -1,6 +1,6 @@
-"""Trainers, keyed by the recipe's accelerator.
+"""Producers, keyed by the recipe's runtime.
 
-A trainer is a callable: (trial_manifest: TrialManifest) -> TrainerResult
+A producer is a callable: (trial_manifest: TrialManifest) -> ProducerResult
 (see trainers/contract.py). Named 'trainers' not 'adapters' -- in this
 domain an adapter is the LoRA artifact a trial produces.
 
@@ -21,7 +21,7 @@ from urllib.parse import urlparse
 from reishi import store
 from reishi.primitives.trial import TrialManifest
 
-from enoki.trainers.contract import Trainer, TrainerResult
+from enoki.trainers.contract import Producer, ProducerResult
 
 if TYPE_CHECKING:
     # Annotation-only: keeps torch out of the runtime import path (see module
@@ -49,8 +49,8 @@ class _CollatedBatch(TypedDict):
 # fine-tune on a single L4's 24GB.
 BASE_MODEL = "jinaai/ReaderLM-v2"
 
-# Smoke-scale defaults, all overridable per-recipe via `trainer:` (surfaces as
-# trial_manifest["spec"]["trainer"]) or the matching ENOKI_L4_* env var.
+# Smoke-scale defaults, all overridable per-recipe via `hparams:` (surfaces as
+# trial_manifest["spec"]["hparams"]) or the matching ENOKI_L4_* env var.
 # max_length 4096, not 2048: median htmlmd corpus length is ~2251 tokens, so
 # 2048 would truncate over half the corpus. Truncation no longer corrupts
 # supervision (see _build_example), but a larger default still drops less HTML.
@@ -207,7 +207,7 @@ def _collate(batch: list[_TokenizedExample], pad_token_id: int) -> _CollatedBatc
     }
 
 
-def train_l4(trial_manifest: TrialManifest) -> TrainerResult:
+def train_l4(trial_manifest: TrialManifest) -> ProducerResult:
     """Real, minimal LoRA fine-tune of ReaderLM-v2 -- plain transformers +
     peft, no TRL/Axolotl (simplest option, per instruction). Returns
     {"metrics": {...}, "artifacts": {"weights": <uri>}}, the same contract
@@ -220,13 +220,13 @@ def train_l4(trial_manifest: TrialManifest) -> TrainerResult:
     from reishi.primitives import dataset as dataset_registry
 
     spec = trial_manifest["spec"]
-    trainer_cfg = spec.get("trainer") or {}
+    hparams_cfg = spec.get("hparams") or {}
     base_model = spec.get("base_model") or BASE_MODEL
 
     def _cfg(key: str, env: str, default, cast):
         return (
-            cast(trainer_cfg[key])
-            if key in trainer_cfg
+            cast(hparams_cfg[key])
+            if key in hparams_cfg
             else cast(os.environ.get(env, default))
         )
 
@@ -238,7 +238,10 @@ def train_l4(trial_manifest: TrialManifest) -> TrainerResult:
     batch_size = _cfg("batch_size", "ENOKI_L4_BATCH_SIZE", DEFAULT_BATCH_SIZE, int)
     grad_accum = _cfg("grad_accum", "ENOKI_L4_GRAD_ACCUM", DEFAULT_GRAD_ACCUM, int)
 
-    ds = dataset_registry.load(spec["dataset"])
+    train_dataset = spec.get("train_dataset")
+    if train_dataset is None:
+        raise ValueError("train_l4 needs a recipe with 'train_dataset' set")
+    ds = dataset_registry.load(train_dataset)
     rows = _load_split(ds, "train")[:subset_size]
     if not rows:
         raise RuntimeError(f"dataset '{ds.name}' train split is empty")
@@ -265,7 +268,7 @@ def train_l4(trial_manifest: TrialManifest) -> TrainerResult:
     device = "cuda" if torch.cuda.is_available() else "cpu"
     if device != "cuda" and os.environ.get("ENOKI_ALLOW_CPU_TRAINING") != "1":
         raise RuntimeError(
-            "train_l4 requires a CUDA GPU (accelerator='l4') but torch.cuda.is_available() "
+            "train_l4 requires a CUDA GPU (runtime='l4') but torch.cuda.is_available() "
             "is False -- refusing to silently fall back to CPU training (this usually means "
             "the job landed on a non-GPU node). Set ENOKI_ALLOW_CPU_TRAINING=1 to override "
             "for a deliberate CPU smoke test."
@@ -293,7 +296,7 @@ def train_l4(trial_manifest: TrialManifest) -> TrainerResult:
     model = get_peft_model(model, lora_config)
 
     artifact_root = os.environ.get("ENOKI_ARTIFACT_ROOT") or str(store.artifact_root())
-    output_dir = trainer_cfg.get("output_dir") or os.path.join(
+    output_dir = hparams_cfg.get("output_dir") or os.path.join(
         artifact_root, trial_manifest["id"]
     )
     os.makedirs(output_dir, exist_ok=True)
@@ -344,7 +347,7 @@ def train_l4(trial_manifest: TrialManifest) -> TrainerResult:
     return {"metrics": metrics, "artifacts": {"weights": weights_uri}}
 
 
-TRAINERS: dict[str, Trainer] = {"l4": train_l4}
+TRAINERS: dict[str, Producer] = {"l4": train_l4}
 
 # GPUs each trainer's actual work needs, keyed the same as TRAINERS -- read
 # by enoki.driver to size the ray.remote() call that routes training onto a
@@ -352,8 +355,8 @@ TRAINERS: dict[str, Trainer] = {"l4": train_l4}
 TRAINER_GPUS: dict[str, int] = {"l4": 1}
 
 
-def get(accelerator: str) -> Trainer:
-    if accelerator not in TRAINERS:
+def get(runtime: str) -> Producer:
+    if runtime not in TRAINERS:
         known = ", ".join(sorted(TRAINERS)) or "none yet"
-        raise KeyError(f"no trainer for '{accelerator}' (installed: {known})")
-    return TRAINERS[accelerator]
+        raise KeyError(f"no trainer for '{runtime}' (installed: {known})")
+    return TRAINERS[runtime]

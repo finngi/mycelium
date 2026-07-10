@@ -1,7 +1,7 @@
-"""Turns one Sweep and one resolved Trainer into a search backend's objective.
+"""Turns one Sweep and one resolved Producer into a search backend's trial fn.
 
-The Suggester Protocol below is structural: the objective takes only the
-scalar-suggestion/report surface a backend must offer, and Trainer is a
+The Suggester Protocol below is structural: the trial fn takes only the
+scalar-suggestion/report surface a backend must offer, and Producer is a
 structural callable too. Optuna's own Trial satisfies Suggester without a
 wrapper, so the one unavoidable Optuna import here is optuna.TrialPruned --
 the only way to signal a pruned trial back to study.optimize().
@@ -19,16 +19,16 @@ from reishi.primitives.trial import TrialArtifacts, TrialManifest
 from physarum.primitives.sweep import ConstraintSpec, ParamSpec, Sweep
 
 
-class TrainerResult(TypedDict):
+class ProducerResult(TypedDict):
     metrics: dict
     # Executor-observed run facts (wall_time_s, cost_usd, ...), disjoint from
     # metrics -- see reishi.primitives.trial.TrialManifest. NotRequired: the
-    # local trafilatura trainer has none to report.
+    # cpu trafilatura producer has none to report.
     observables: NotRequired[dict]
     artifacts: TrialArtifacts
 
 
-Trainer = Callable[[TrialManifest], TrainerResult]
+Producer = Callable[[TrialManifest], ProducerResult]
 
 
 class Suggester(Protocol):
@@ -84,7 +84,7 @@ def resolve_metric(namespaces: Mapping[str, Mapping[str, object]], path: str) ->
 
     'metrics.<key>' and 'observables.<key>' address those namespaces
     explicitly. Everything else -- including a namespaced metric key like
-    'val/field_f1' (the '/' is record_eval's split-prefix convention, not a
+    'val/field_f1' (the '/' is record_scoring's split-prefix convention, not a
     path separator) -- is a plain key looked up in metrics: today's
     behaviour, unchanged.
     """
@@ -125,23 +125,24 @@ def build_recipe(
     sweep_name: str,
     trial_number: int,
 ) -> Recipe:
-    trainer_cfg = dict(template["trainer"])
+    hparams_cfg = dict(template["hparams"])
     for key, value in suggested.items():
-        trainer_cfg[key.removeprefix("trainer.")] = value
+        hparams_cfg[key.removeprefix("hparams.")] = value
     return Recipe(
         name=f"{sweep_name}-t{trial_number}",
         task=template["task"],
-        dataset=template["dataset"],
+        train_dataset=template.get("train_dataset"),
+        eval_dataset=template.get("eval_dataset"),
         base_model=template["base_model"],
-        accelerator=template["accelerator"],
+        runtime=template["runtime"],
         prompt=template["prompt"],
-        seeds=1,  # one suggestion -> exactly one Trial
-        trainer=trainer_cfg,
+        n_seeds=1,  # one suggestion -> exactly one Trial
+        hparams=hparams_cfg,
     )
 
 
-def make_objective(sweep: Sweep, trainer_fn: Trainer) -> Callable[[Suggester], float]:
-    metric = sweep.objective["metric"]
+def make_trial_fn(sweep: Sweep, producer_fn: Producer) -> Callable[[Suggester], float]:
+    metric = sweep.goal["metric"]
     constraints = sweep.constraints
     # Epsilon-constraint (math-foundations.md sections 1 and 5.1): an
     # infeasible trial's true value must never win. Optuna's own
@@ -152,11 +153,9 @@ def make_objective(sweep: Sweep, trainer_fn: Trainer) -> Callable[[Suggester], f
     # instead (section 5.1's "extend u by -inf on the infeasible set") is
     # sampler-agnostic and still lets the trial's real metrics reach the
     # store; only what Optuna sees for ranking is clamped.
-    worst = (
-        float("-inf") if sweep.objective["direction"] == "maximize" else float("inf")
-    )
+    worst = float("-inf") if sweep.goal["direction"] == "maximize" else float("inf")
 
-    def objective(ot: Suggester) -> float:
+    def trial_fn(ot: Suggester) -> float:
         suggested = suggest(ot, sweep.search_space)
         recipe = build_recipe(sweep.template, suggested, sweep.name, ot.number)
 
@@ -167,13 +166,13 @@ def make_objective(sweep: Sweep, trainer_fn: Trainer) -> Callable[[Suggester], f
         )  # the only link between the backend's state and reishi's
 
         try:
-            result = trainer_fn(t.to_manifest())
+            result = producer_fn(t.to_manifest())
             observables = result.get("observables", {})
             namespaces = {"metrics": result["metrics"], "observables": observables}
             value = resolve_metric(namespaces, metric)
             feasible = _is_feasible(namespaces, constraints)
             ot.set_user_attr("mcm_feasible", feasible)
-            # trainer_fn runs synchronously to completion -- there is no
+            # producer_fn runs synchronously to completion -- there is no
             # mid-training callback yet (see physarum AGENTS.md gap #1), so
             # there's only ever one step to report. This can still flag a
             # trial as statistically weak against the rest of the study, but
@@ -215,4 +214,4 @@ def make_objective(sweep: Sweep, trainer_fn: Trainer) -> Callable[[Suggester], f
         # trial can never become study.best_trial (math-foundations.md 5.1).
         return value if feasible else worst
 
-    return objective
+    return trial_fn

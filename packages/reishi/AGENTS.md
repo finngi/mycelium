@@ -9,7 +9,7 @@ this file is the canonical source, tool-specific files import it.
 mcm (reishi) is the experiment contract layer for small-model training on
 KubeRay. It defines what a training run *means* — reproducible, scored
 identically, comparable on one board — regardless of what executes it.
-mcm itself never imports Ray, MLX, or any accelerator-specific dependency;
+mcm itself never imports Ray, MLX, or any runtime-specific dependency;
 execution lives in sibling repos.
 
 ## Repo shape

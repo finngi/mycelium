@@ -59,16 +59,16 @@ def mesh_status(cmd: Command) -> int:
 
 def mesh_next(cmd: Command) -> int:
     gitstore.sync()
-    accelerators = trainers.supported()
-    if not accelerators:
-        # Claiming needs a trainer, but the dry run stays useful without one:
+    runtimes = trainers.supported()
+    if not runtimes:
+        # Claiming needs a producer, but the dry run stays useful without one:
         # show the mlx queue rather than hiding it behind an empty registry.
         print(
-            "[WARN] no trainer installed -> showing the mlx queue; nothing is actually claimable here",
+            "[WARN] no producer installed -> showing the mlx queue; nothing is actually claimable here",
             file=sys.stderr,
         )
-        accelerators = {"mlx"}
-    cands = queue.eligible(machine.mem_budget_gb(), accelerators)
+        runtimes = {"mlx"}
+    cands = queue.eligible(machine.mem_budget_gb(), runtimes)
     rows = [
         {
             "id": t.id,

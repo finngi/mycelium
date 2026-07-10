@@ -1,6 +1,6 @@
-"""Eval loop: render prompt -> generate -> decode -> score -> aggregate.
+"""Scoring loop: render prompt -> generate -> decode -> score -> aggregate.
 
-generate is injected as a callback, so this module imports no accelerator
+generate is injected as a callback, so this module imports no runtime
 libraries and runs no inference itself. Rows are read only as x/y/key and the
 task only through the Scorable protocol, so nothing here is bound to a concrete
 row or task type.
@@ -9,10 +9,10 @@ row or task type.
 from collections.abc import Iterable, Mapping
 from typing import Any, Callable, Literal, Protocol, runtime_checkable
 
-from reishi.primitives.trial import EvalInfo
+from reishi.primitives.trial import ScoringInfo
 
 GenerateFn = Callable[[str], str]  # prompt -> raw text; injected by executor / replay
-Placement = Literal["cpu", "accelerator", "local"]
+ScoredOn = Literal["cpu", "gpu", "tpu"]
 
 
 @runtime_checkable
@@ -46,31 +46,31 @@ def run_eval(
     dataset_ref: str | None = None,
     dataset_revision: str | None = None,
     split: str | None = None,
-) -> tuple[dict, EvalInfo]:
+) -> tuple[dict, ScoringInfo]:
     """Run the eval loop; return (aggregate metrics, measurement-key info).
 
     The K-pinning keyword-only args (task_name, codec, scorer_version,
     dataset_ref, dataset_revision, split) are optional and caller-supplied:
     run_eval only sees rows and a Scorable, so it can't know a Task's name or
     a Dataset's ref itself -- a caller that has those objects passes the
-    values through; one it doesn't know is simply left absent. eval_n is the
-    one K field run_eval always knows, since it counts the rows it scores.
+    values through; one it doesn't know is simply left absent. n_eval_rows is
+    the one K field run_eval always knows, since it counts the rows it scores.
     """
     if not callable(getattr(task, "score", None)):
         raise ValueError(
             "task has no scorer (Task.score is None) -- nothing to run_eval"
         )
     scores: list[Mapping[str, object]] = []
-    eval_n = 0
+    n_eval_rows = 0
     for row in rows:
         raw = generate(_render(prompt, row["x"]))
         if sink:
-            # Persist in the same schema run_eval consumes (key/x/y/raw) so a
-            # predictions artifact is directly replayable by rescore(), no adapter.
+            # Persist in the same schema run_eval consumes (key/x/y/raw) so an
+            # outputs artifact is directly replayable by rescore(), no adapter.
             sink({"key": row["key"], "x": row["x"], "y": row["y"], "raw": raw})
         scores.append(task.score(task.decode(raw), row["y"]))
-        eval_n += 1
-    info: EvalInfo = {"eval_n": eval_n}
+        n_eval_rows += 1
+    info: ScoringInfo = {"n_eval_rows": n_eval_rows}
     if task_name is not None:
         info["task"] = task_name
     if codec is not None:
@@ -97,7 +97,7 @@ def rescore(
     dataset_ref: str | None = None,
     dataset_revision: str | None = None,
     split: str | None = None,
-) -> tuple[dict, EvalInfo]:
+) -> tuple[dict, ScoringInfo]:
     """Re-score persisted outputs without re-running inference.
 
     Each row already carries its model output under `raw`; replaying it lets a
