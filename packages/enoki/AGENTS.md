@@ -1,9 +1,4 @@
-# AGENTS.md — mcm-enoki
-
-Guidance for AI coding agents working in this repo. `CLAUDE.md` in this
-repo is just `@AGENTS.md` — this file is the canonical source.
-
-## What this repo is
+# AGENTS.md — enoki
 
 enoki is mcm's KubeRay (cloud GPU/TPU) execution layer: `l4`, `h100`,
 `v5e` runtimes. `mcm experiment submit` templates `jobs/rayjob.yaml`
@@ -11,17 +6,18 @@ and applies it with `kubectl` against the `train` namespace on GKE; the
 image built from `jobs/Dockerfile` runs `enoki.driver` as the RayJob
 entrypoint. Only `l4` has a verified node selector/toleration today.
 
-## Repo shape
+## Package shape
 
-Depends on [mcm-reishi](https://github.com/finngi/mycelium/tree/main/packages/reishi)
-via a local path (`uv.sources`, `../mcm-reishi`) — check it out as a
-sibling directory. Two dependency groups:
+Depends on [`packages/reishi`](../reishi/AGENTS.md) as a workspace member
+(root `pyproject.toml`'s `[tool.uv.sources]`) — no sibling checkout needed.
+Two dependency groups, scoped to this package:
 
 - `dev` — base package + pytest. This is all CI installs.
-- `cluster` — torch/ray/transformers/peft/accelerate/google-cloud-storage,
+- `cluster` — torch/ray/psycopg/transformers/peft/accelerate/google-cloud-storage,
   pinned against the training image's CUDA 12.4 base. Only the training
-  image (`jobs/Dockerfile`) installs this; GitHub-hosted CI runners don't
-  have a GPU, so lint/test never pull it in.
+  image (`jobs/Dockerfile`) installs this; `uv sync --all-extras` (what CI
+  runs) never pulls in a dependency group, so lint/test never see it even
+  on a GPU-less runner.
 
 `enoki.trainers` and `enoki.store_backend` both import their heavy/
 optional deps lazily inside the function that needs them — importing the
@@ -35,23 +31,24 @@ invariant when adding a trainer or backend.
   failure mode it prevents, not just "pinned for stability").
 - No emojis in tool/CLI output. ASCII status indicators only.
 - `driver.run()` swaps in the Postgres store via `MCM_PG_DSN` when set;
-  with no DSN it falls back to mcm's local filesystem store, same as a
-  laptop run. Never assume one or the other in new code — check the env.
+  with no DSN it falls back to reishi's own default store backend (sqlite,
+  unless `MCM_STORE_BACKEND=fs`), same as a laptop run. Never assume one or
+  the other in new code — check the env.
 
-## Working in this repo
+## Working in this package
 
-```
-uv venv && uv pip install -e . --group dev
-uv run pytest -q
+```bash
+uv sync --all-extras           # from the repo root
+uv run pytest packages/enoki -q
 uvx ruff check .
 ```
 
-Add `--group cluster` to actually exercise a trainer locally (needs a
-GPU to be useful, but will install/import on CPU too).
+From `packages/enoki`, add `--group cluster` to actually exercise a trainer
+locally (needs a GPU to be useful, but will install/import on CPU too).
 
-## Sibling repos
+## Sibling packages
 
-- [mcm-reishi](https://github.com/finngi/mycelium/tree/main/packages/reishi) — the contract layer this repo executes against.
-- [mcm-oyster](https://github.com/finngi/mycelium/tree/main/packages/oyster) — the other executor (self-hosted mesh, currently `mlx` on Apple Silicon).
+- [`packages/reishi`](../reishi/AGENTS.md) — the contract layer this package executes against.
+- [`packages/oyster`](../oyster/AGENTS.md) — the other executor (self-hosted mesh, currently `mlx` on Apple Silicon).
 
 See `CONTRIBUTING.md` for commit conventions and the PR/CI gate.

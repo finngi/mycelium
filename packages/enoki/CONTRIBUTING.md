@@ -2,36 +2,43 @@
 
 ## Setup
 
-Requires `../mcm-reishi` checked out as a sibling directory (`uv.sources`
-path dependency).
+From the repo root — this package is one member of the `mycelium` uv
+workspace, no sibling checkout needed:
 
-```
-uv venv && uv pip install -e . --group dev
-uv run pytest -q
+```bash
+uv sync --all-extras           # or --group dev, for a lighter install
 ```
 
-The `cluster` dependency group (torch/ray/transformers/peft/accelerate/
-google-cloud-storage) is only needed to actually run a trainer — install
-it with `uv pip install -e . --group cluster` when working on
+The `cluster` dependency group (torch/ray/psycopg/transformers/peft/
+accelerate/google-cloud-storage) is only needed to actually run a
+trainer — from `packages/enoki`, `uv sync --group cluster` when working on
 `trainers.train_l4` or `store_backend.PostgresBackend` locally. CI never
-installs it: `enoki.trainers` and `enoki.store_backend` both import their
-heavy deps lazily, so lint/test stay meaningful without it.
+installs it: `uv sync --all-extras` (what CI runs) never pulls in a
+dependency group, and `enoki.trainers`/`enoki.store_backend` both import
+their heavy deps lazily, so lint/test stay meaningful without it.
 
 ## Before opening a PR
 
-```
+```bash
 uvx ruff check .
-uv run pytest -q
+uvx ruff format --check .
+uv run pytest packages/enoki -q
 ```
 
-Both run in CI (`.github/workflows/ci.yml`) and are required to merge.
+Scope pytest to `packages/enoki`, not a bare `uv run pytest -q` from the
+root — reishi's task registry and each plugin's conftest mutate shared
+global state, so a pooled session across the workspace cross-contaminates.
+All three commands run in CI (`.github/workflows/ci.yml`, one `lint` job
+plus a per-package `test` matrix) and are required to merge.
 
 ## Commit messages
 
 Use [Conventional Commits](https://www.conventionalcommits.org/) —
 `feat:`, `fix:`, `refactor:`, `test:`, `chore:`, etc. — since
 [release-please](https://github.com/googleapis/release-please) reads
-these to decide version bumps and generate `CHANGELOG.md`.
+these to decide the version bump. The whole workspace ships as one
+`mcm-mycelium` distribution on one prerelease counter (`0.0.0-a.N`) —
+there's no separate enoki release.
 
 ## Pull requests
 

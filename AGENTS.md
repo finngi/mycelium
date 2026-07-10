@@ -15,6 +15,12 @@ working inside that package.
 enoki, oyster, and physarum depend on reishi and extend its CLI via
 `mcm.plugins` entry points; reishi never imports them.
 
+Published to PyPI as one distribution, `mcm-mycelium`, whose wheel ships all
+four import packages inline. Extras are module-named (`enoki`, `oyster`,
+`physarum`, `all`); `enoki`'s extra is deliberately empty — its KubeRay/cluster
+stack is pinned against the training image's own CUDA base and installed
+there, not via a pip extra.
+
 ## Working in this repo
 
 ```plaintext
