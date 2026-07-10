@@ -79,7 +79,7 @@ def recipe_run(cmd: Command) -> int:
         return 0
 
     return _fail(
-        f"no trainer installed for accelerator '{recipe.accelerator}' yet "
+        f"no producer installed for runtime '{recipe.runtime}' yet "
         f"-> use --plan to record the {len(trials)} trial(s) without executing"
     )
 
@@ -88,7 +88,7 @@ def trial_list(cmd: Command) -> int:
     rows = [
         {
             "id": t.id,
-            "recipe": t.recipe,
+            "recipe_name": t.recipe_name,
             "seed": t.seed,
             "status": t.status,
             "created": t.created,
@@ -99,7 +99,7 @@ def trial_list(cmd: Command) -> int:
     emit(
         rows,
         cmd.flags,
-        columns=["id", "recipe", "seed", "status", "created", "metrics"],
+        columns=["id", "recipe_name", "seed", "status", "created", "metrics"],
     )
     return 0
 
@@ -118,7 +118,7 @@ def trial_logs(cmd: Command) -> int:
         return 1
     t = trial.resolve(ref)
     return _fail(
-        f"trial '{t.id}' has no logs yet (status: {t.status}; log streaming lands with the trainer)"
+        f"trial '{t.id}' has no logs yet (status: {t.status}; log streaming lands with the producer)"
     )
 
 

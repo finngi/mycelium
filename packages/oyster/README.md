@@ -26,7 +26,7 @@ availability. The mesh mechanism doesn't care what hardware a runner is;
 today's only wired-up trainer (`mlx`) just happens to need Apple Silicon.
 Like [enoki](https://github.com/finngi/mycelium/tree/main/packages/enoki) (the KubeRay layer), oyster consumes
 recipe manifests and writes trial manifests to the mcm store — it defines
-no shapes of its own. Recipes target the mesh with `accelerator: mlx`.
+no shapes of its own. Recipes target the mesh with `runtime: mlx`.
 
 ## Scheduling: pull, not push
 
@@ -67,7 +67,7 @@ already have them; renaming the files orphans the fleet.
 | `src/oyster/machine.py` | This machine: budget, identity, `ready`-label toggle, busy file |
 | `src/oyster/footprint.py` | Conservative unified-memory estimate per trial |
 | `src/oyster/gitstore.py` | Store-over-git: pull-rebase before deciding, push-with-retry after; lost race = clean abort |
-| `src/oyster/trainers/` | MLX trainers, keyed by accelerator ("adapter" is reserved for the LoRA artifact) |
+| `src/oyster/trainers/` | MLX Producer implementations (real gradient trainers), keyed by runtime ("adapter" is reserved for the LoRA artifact) |
 | `src/oyster/mcm_plugin.py` | Registers the `mesh` domain into the mcm CLI (entry point `mcm.plugins`) |
 | `store/` | The mcm manifest store, committed — the queue IS the repo |
 | `.github/workflows/worker.yml` | Generic worker on `[self-hosted, macOS, mlx, ready]` |

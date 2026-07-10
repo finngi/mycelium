@@ -20,16 +20,16 @@ FINETUNE = """
 name: fixture-ft
 task: fixture
 base_model: LiquidAI/LFM2.5-1.2B-Base
-dataset: sample-040726
-seeds: 2
+train_dataset: sample-040726
+n_seeds: 2
 """
 
 FROM_SCRATCH = """
 name: fixture-scratch
 task: fixture
-dataset: sample-040726
-accelerator: v5e
-trainer:
+train_dataset: sample-040726
+runtime: v5e
+hparams:
   arch: {layers: 12, d_model: 768, tokenizer: bpe-32k}
   iters: 100000
 """
@@ -46,7 +46,7 @@ def test_from_scratch_recipe_validates(tmp_path):
     r = Recipe.from_yaml(_write_recipe(tmp_path, FROM_SCRATCH))
     r.validate()
     assert r.base_model is None
-    assert r.trainer["arch"]["layers"] == 12
+    assert r.hparams["arch"]["layers"] == 12
 
 
 def test_from_scratch_recipe_plans_trials(tmp_path):
@@ -56,12 +56,22 @@ def test_from_scratch_recipe_plans_trials(tmp_path):
     assert trials[0].spec["base_model"] is None
 
 
-@pytest.mark.parametrize("field", ["name", "task", "dataset"])
+@pytest.mark.parametrize("field", ["name", "task"])
 def test_recipe_required_fields(tmp_path, field):
     body = "\n".join(
         line for line in FINETUNE.strip().splitlines() if not line.startswith(field)
     )
     with pytest.raises(ValueError, match=field):
+        Recipe.from_yaml(_write_recipe(tmp_path, body))
+
+
+def test_recipe_needs_at_least_one_dataset_field(tmp_path):
+    body = "\n".join(
+        line
+        for line in FINETUNE.strip().splitlines()
+        if not line.startswith("train_dataset")
+    )
+    with pytest.raises(ValueError, match="train_dataset.*eval_dataset"):
         Recipe.from_yaml(_write_recipe(tmp_path, body))
 
 
@@ -73,15 +83,15 @@ def test_recipe_rejects_unknown_fields(tmp_path):
 def test_recipe_rejects_all_unknown_fields_at_once(tmp_path):
     with pytest.raises(ValueError) as exc_info:
         Recipe.from_yaml(
-            _write_recipe(tmp_path, FINETUNE + "epochs: 3\ntrainer_kwarg: {}\n")
+            _write_recipe(tmp_path, FINETUNE + "epochs: 3\nhparams_kwarg: {}\n")
         )
     assert "epochs" in str(exc_info.value)
-    assert "trainer_kwarg" in str(exc_info.value)
+    assert "hparams_kwarg" in str(exc_info.value)
 
 
 def test_recipe_unknown_field_suggests_close_match(tmp_path):
-    with pytest.raises(ValueError, match="did you mean 'trainer'"):
-        Recipe.from_yaml(_write_recipe(tmp_path, FINETUNE + "trainer_kwarg: {}\n"))
+    with pytest.raises(ValueError, match="did you mean 'hparams'"):
+        Recipe.from_yaml(_write_recipe(tmp_path, FINETUNE + "hparam: {}\n"))
 
 
 def test_recipe_priority_defaults_and_flows_to_spec(tmp_path):
@@ -92,7 +102,7 @@ def test_recipe_priority_defaults_and_flows_to_spec(tmp_path):
 
 
 def test_trial_manifest_tolerates_unknown_keys():
-    t = trial.Trial(id="t-1", recipe="r", seed=0)
+    t = trial.Trial(id="t-1", recipe_name="r", seed=0)
     m = t.to_manifest() | {"from_the_future": True}
     loaded = trial.Trial.from_manifest(m)
     assert loaded.id == "t-1"
@@ -110,3 +120,26 @@ def test_dataset_task_is_optional():
 def test_dataset_manifest_without_task_key_loads():
     ds = Dataset.from_manifest({"name": "d-1", "uri": "gs://x/d-1"})
     assert ds.task == ""
+
+
+def test_recipe_validate_rejects_registered_eval_only_train_dataset(
+    tmp_path, monkeypatch
+):
+    from reishi import store
+    from reishi.primitives import dataset as dataset_registry
+    from reishi.primitives.dataset import Dataset
+
+    monkeypatch.setenv("MCM_STORE", str(tmp_path))
+    store.use_backend(store.LocalFilesystemBackend())
+    try:
+        dataset_registry.save(
+            Dataset(name="holdout", uri="x.jsonl", task="fixture", eval_only=True)
+        )
+        r = Recipe(name="r", task="fixture", train_dataset="holdout")
+        with pytest.raises(ValueError, match="eval_only"):
+            r.validate()
+        # Names resolve at run time: an unregistered train_dataset passes here
+        # (the training producers re-check on load).
+        Recipe(name="r2", task="fixture", train_dataset="not-registered").validate()
+    finally:
+        store.use_backend(store.LocalFilesystemBackend())

@@ -18,7 +18,7 @@ def test_json_codec_still_returns_dict():
 def _done(recipe: str, metrics: dict) -> Trial:
     return Trial(
         id=f"{recipe}-{len(metrics)}-{id(metrics)}",
-        recipe=recipe,
+        recipe_name=recipe,
         seed=0,
         status="done",
         metrics=metrics,

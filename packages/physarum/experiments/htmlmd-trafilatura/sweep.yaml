@@ -2,32 +2,32 @@
 #
 # Searches trafilatura's extraction-config space against the htmlmd task's
 # reference-free scorer (source HTML vs candidate markdown; the task is
-# deployment-provided, since reishi ships none). No model: accelerator "local"
-# runs physarum's trafilatura trainer in-process, one Optuna suggestion per
+# deployment-provided, since reishi ships none). No model: runtime "cpu"
+# runs physarum's trafilatura producer in-process, one Optuna suggestion per
 # trial. Every param below is a boolean toggle, so the search space is the
 # full cartesian product: 2**9 = 512 combinations -- small enough to grid
-# search exhaustively rather than bet on a sampled subset. eval_n=500 bounds
-# each trial to ~2s (measured ~4ms/row) so all 512 finishes in ~15-20 minutes
-# -- watch it converge live with:
+# search exhaustively rather than bet on a sampled subset. n_eval_rows=500
+# bounds each trial to ~2s (measured ~4ms/row) so all 512 finishes in
+# ~15-20 minutes -- watch it converge live with:
 #   mcm sweep watch htmlmd-trafilatura-sweep-1
 name: htmlmd-trafilatura-sweep-1
 template:
   name: htmlmd-trafilatura-sweep-1
   task: htmlmd
-  dataset: htmlmd-mycelium-val-060726
-  accelerator: local
-  trainer:
-    eval_n: 500
+  eval_dataset: htmlmd-mycelium-val-060726
+  runtime: cpu
+  hparams:
+    n_eval_rows: 500
 search_space:
-  trainer.favor_precision:  { type: categorical, choices: [true, false] }
-  trainer.favor_recall:     { type: categorical, choices: [true, false] }
-  trainer.include_comments: { type: categorical, choices: [true, false] }
-  trainer.include_tables:   { type: categorical, choices: [true, false] }
-  trainer.include_images:   { type: categorical, choices: [true, false] }
-  trainer.include_formatting: { type: categorical, choices: [true, false] }
-  trainer.include_links:    { type: categorical, choices: [true, false] }
-  trainer.deduplicate:      { type: categorical, choices: [true, false] }
-  trainer.fast:             { type: categorical, choices: [true, false] }
-objective: { metric: field_f1, direction: maximize }
+  hparams.favor_precision:  { type: categorical, choices: [true, false] }
+  hparams.favor_recall:     { type: categorical, choices: [true, false] }
+  hparams.include_comments: { type: categorical, choices: [true, false] }
+  hparams.include_tables:   { type: categorical, choices: [true, false] }
+  hparams.include_images:   { type: categorical, choices: [true, false] }
+  hparams.include_formatting: { type: categorical, choices: [true, false] }
+  hparams.include_links:    { type: categorical, choices: [true, false] }
+  hparams.deduplicate:      { type: categorical, choices: [true, false] }
+  hparams.fast:             { type: categorical, choices: [true, false] }
+goal: { metric: field_f1, direction: maximize }
 sampler: grid
 n_trials: 512

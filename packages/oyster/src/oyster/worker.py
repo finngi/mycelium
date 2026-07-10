@@ -45,8 +45,8 @@ def run(max_trials: int | None = None) -> int:
         spec_line = f"{t.id} ({t.spec.get('base_model') or 'from-scratch'}, prio {t.spec.get('priority', 0)})"
         print(f"[RUN] {spec_line}", file=sys.stderr)
         try:
-            trainer = trainers.get(t.spec["accelerator"])
-            result = trainer(t.to_manifest())
+            producer = trainers.get(t.spec["runtime"])
+            result = producer(t.to_manifest())
             queue.finish(
                 t,
                 result.get("metrics", {}),

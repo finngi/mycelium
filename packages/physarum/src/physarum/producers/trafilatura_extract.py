@@ -1,7 +1,7 @@
-"""'local' accelerator trainer: scores one trafilatura config against a
-recipe's dataset -- no gradient step, no model.
+"""'cpu' runtime producer: scores one trafilatura config against a
+recipe's eval dataset -- no gradient step, no model.
 
-Satisfies the Trainer contract (trial manifest in, metrics + artifacts out),
+Satisfies the Producer contract (trial manifest in, metrics + artifacts out),
 so "training" here is deterministic extraction-parameter search.
 """
 
@@ -16,10 +16,10 @@ from reishi.primitives import task as task_registry
 from reishi.primitives import dataset as dataset_registry
 from reishi.primitives.trial import TrialManifest
 
-from physarum.objective import TrainerResult
+from physarum.objective import ProducerResult
 
-# The boolean knobs trafilatura.extract() accepts; any other trainer key
-# (besides eval_n) is rejected below rather than silently ignored by extract().
+# The boolean knobs trafilatura.extract() accepts; any other hparams key
+# (besides n_eval_rows) is rejected below rather than silently ignored by extract().
 _EXTRACT_PARAMS = (
     "favor_precision",
     "favor_recall",
@@ -43,31 +43,37 @@ def _load_rows(uri: str) -> list[dict]:
     return rows
 
 
-def train(trial_manifest: TrialManifest) -> TrainerResult:
+def train(trial_manifest: TrialManifest) -> ProducerResult:
     spec = trial_manifest["spec"]
     task_obj = task_registry.get(spec["task"])
     if task_obj.score is None:
         raise ValueError(
-            f"task '{task_obj.name}' has no scorer registered; local trainer can't eval it"
+            f"task '{task_obj.name}' has no scorer registered; cpu producer can't eval it"
         )
 
-    trainer_cfg = dict(spec.get("trainer", {}))
-    eval_n = trainer_cfg.pop("eval_n", None)
+    hparams_cfg = dict(spec.get("hparams", {}))
+    n_eval_rows = hparams_cfg.pop("n_eval_rows", None)
     extract_kwargs = {
-        k: trainer_cfg.pop(k) for k in _EXTRACT_PARAMS if k in trainer_cfg
+        k: hparams_cfg.pop(k) for k in _EXTRACT_PARAMS if k in hparams_cfg
     }
-    if trainer_cfg:
+    if hparams_cfg:
         raise ValueError(
-            f"local trafilatura trainer: unknown trainer keys {sorted(trainer_cfg)}"
+            f"cpu trafilatura producer: unknown hparams keys {sorted(hparams_cfg)}"
         )
 
-    ds = dataset_registry.load(spec["dataset"])
+    eval_dataset = spec.get("eval_dataset")
+    if eval_dataset is None:
+        raise ValueError(
+            "cpu trafilatura producer needs a recipe with 'eval_dataset' set"
+        )
+    ds = dataset_registry.load(eval_dataset)
     rows = _load_rows(ds.uri)
-    if eval_n is not None:
-        rows = rows[:eval_n]
+    if n_eval_rows is not None:
+        rows = rows[:n_eval_rows]
     if not rows:
         raise ValueError(
-            f"local trafilatura trainer: eval set is empty (dataset '{spec['dataset']}', eval_n={eval_n})"
+            f"cpu trafilatura producer: eval set is empty (dataset '{eval_dataset}', "
+            f"n_eval_rows={n_eval_rows})"
         )
 
     t0 = time.time()
@@ -91,7 +97,7 @@ def train(trial_manifest: TrialManifest) -> TrainerResult:
 
     metrics: dict[str, Any] = {
         **task_registry.aggregate(scores),
-        "backend": "local",
+        "backend": "cpu",
         "extractor": "trafilatura",
         "params": extract_kwargs,
         "n_rows": len(rows),

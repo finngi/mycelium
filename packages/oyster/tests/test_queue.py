@@ -32,14 +32,14 @@ def plan_one(
     name: str,
     priority: int = 0,
     base_model: str = "x/tiny-0.5B",
-    accelerator: str = "mlx",
+    runtime: str = "mlx",
 ) -> trial_store.Trial:
     r = Recipe(
         name=name,
         task="fixture",
-        dataset="d-1",
+        train_dataset="d-1",
         base_model=base_model,
-        accelerator=accelerator,
+        runtime=runtime,
         priority=priority,
     )
     t = trial_store.plan(r)[0]
@@ -51,19 +51,19 @@ def test_priority_desc_then_fifo():
     plan_one("low-1")
     plan_one("hot", priority=5)
     plan_one("low-2")
-    order = [t.recipe for t in queue.eligible(40, {"mlx"})]
+    order = [t.recipe_name for t in queue.eligible(40, {"mlx"})]
     assert order == ["hot", "low-1", "low-2"]
 
 
 def test_footprint_gate_leaves_big_models():
     plan_one("small")
     plan_one("huge", base_model="x/chonk-9B")  # est 9000M*2B*3 = 54GB > 40GB
-    names = [t.recipe for t in queue.eligible(40, {"mlx"})]
+    names = [t.recipe_name for t in queue.eligible(40, {"mlx"})]
     assert names == ["small"]
 
 
-def test_accelerator_gate():
-    plan_one("cuda-only", accelerator="l4")
+def test_runtime_gate():
+    plan_one("cuda-only", runtime="l4")
     assert queue.eligible(40, {"mlx"}) == []
 
 
@@ -124,7 +124,7 @@ def test_worker_runs_queue_with_fake_trainer(monkeypatch):
     plan_one("b")
     worker.run()
     assert len(ran) == 2
-    statuses = {t.recipe: t.status for t in trial_store.load_all()}
+    statuses = {t.recipe_name: t.status for t in trial_store.load_all()}
     assert statuses == {"a": "done", "b": "done"}
     done = trial_store.load(ran[0])
     assert done.metrics["f1"] == 0.9 and done.execution["runner"] == machine.name()

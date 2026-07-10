@@ -13,10 +13,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Only needed to actually run a sweep whose template targets accelerator: mlx.
+# Only needed to actually run a sweep whose template targets runtime: mlx.
 mlx = ["oyster"]
-# Only needed to actually run a sweep whose template targets accelerator: local.
-local = ["trafilatura>=2.1.0"]
+# Only needed to actually run a sweep whose template targets runtime: cpu.
+cpu = ["trafilatura>=2.1.0"]
 
 [project.entry-points."mcm.plugins"]
 physarum = "physarum.mcm_plugin"

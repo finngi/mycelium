@@ -21,20 +21,20 @@ from reishi.cli.grammar import Command
 RECIPE = """
 name: fixture-smoke
 task: fixture
-dataset: fixture-fixture
+train_dataset: fixture-fixture
 base_model: jinaai/ReaderLM-v2
-accelerator: {accelerator}
-seeds: 1
-trainer:
+runtime: {runtime}
+n_seeds: 1
+hparams:
   method: lora
   rank: 16
 """
 
 
-def _write_recipe(tmp_path, name: str, accelerator: str = "l4"):
+def _write_recipe(tmp_path, name: str, runtime: str = "l4"):
     d = tmp_path / "experiments" / name
     d.mkdir(parents=True)
-    (d / "recipe.yaml").write_text(RECIPE.format(accelerator=accelerator))
+    (d / "recipe.yaml").write_text(RECIPE.format(runtime=runtime))
 
 
 @pytest.fixture(autouse=True)
@@ -58,7 +58,7 @@ def _fake_run_ok(calls):
 
 
 def test_submit_renders_every_placeholder_for_l4_recipe(tmp_path, monkeypatch, capsys):
-    _write_recipe(tmp_path, "fixture-smoke", accelerator="l4")
+    _write_recipe(tmp_path, "fixture-smoke", runtime="l4")
     calls = []
     monkeypatch.setattr(mcm_plugin.subprocess, "run", _fake_run_ok(calls))
 
@@ -81,7 +81,7 @@ def test_submit_renders_every_placeholder_for_l4_recipe(tmp_path, monkeypatch, c
         "python -m enoki.driver /recipes/fixture-smoke/recipe.yaml"
     )
     recipe_b64 = entrypoint.split("echo ", 1)[1].split(" | base64", 1)[0]
-    assert base64.b64decode(recipe_b64).decode() == RECIPE.format(accelerator="l4")
+    assert base64.b64decode(recipe_b64).decode() == RECIPE.format(runtime="l4")
 
     head_image = manifest["spec"]["rayClusterSpec"]["headGroupSpec"]["template"][
         "spec"
@@ -105,7 +105,7 @@ def test_submit_renders_every_placeholder_for_l4_recipe(tmp_path, monkeypatch, c
 
 
 def test_submit_honors_image_override_flag(tmp_path, monkeypatch):
-    _write_recipe(tmp_path, "fixture-smoke", accelerator="l4")
+    _write_recipe(tmp_path, "fixture-smoke", runtime="l4")
     calls = []
     monkeypatch.setattr(mcm_plugin.subprocess, "run", _fake_run_ok(calls))
 
@@ -126,10 +126,10 @@ def test_submit_honors_image_override_flag(tmp_path, monkeypatch):
     assert head_image == "example.com/custom:tag"
 
 
-def test_submit_rejects_unsupported_accelerator_without_calling_kubectl(
+def test_submit_rejects_unsupported_runtime_without_calling_kubectl(
     tmp_path, monkeypatch, capsys
 ):
-    _write_recipe(tmp_path, "h100-run", accelerator="h100")
+    _write_recipe(tmp_path, "h100-run", runtime="h100")
     calls = []
     monkeypatch.setattr(mcm_plugin.subprocess, "run", _fake_run_ok(calls))
 
@@ -139,7 +139,7 @@ def test_submit_rejects_unsupported_accelerator_without_calling_kubectl(
 
     assert rc == 1
     assert calls == []
-    assert "only supports accelerator 'l4'" in capsys.readouterr().err
+    assert "only supports runtime 'l4'" in capsys.readouterr().err
 
 
 def test_submit_fails_cleanly_when_recipe_missing(monkeypatch):
@@ -155,7 +155,7 @@ def test_submit_fails_cleanly_when_recipe_missing(monkeypatch):
 
 
 def test_submit_reports_kubectl_failure(tmp_path, monkeypatch, capsys):
-    _write_recipe(tmp_path, "fixture-smoke", accelerator="l4")
+    _write_recipe(tmp_path, "fixture-smoke", runtime="l4")
 
     def _run_fail(args, capture_output, text):
         return SimpleNamespace(
@@ -179,7 +179,7 @@ def _rendered_manifest_leftovers() -> list[str]:
 def test_submit_cleans_up_the_rendered_manifest_tempfile_on_success(
     tmp_path, monkeypatch
 ):
-    _write_recipe(tmp_path, "fixture-smoke", accelerator="l4")
+    _write_recipe(tmp_path, "fixture-smoke", runtime="l4")
     monkeypatch.setattr(mcm_plugin.subprocess, "run", _fake_run_ok([]))
 
     before = _rendered_manifest_leftovers()
@@ -195,7 +195,7 @@ def test_submit_cleans_up_the_rendered_manifest_tempfile_on_success(
 def test_submit_cleans_up_the_rendered_manifest_tempfile_on_kubectl_failure(
     tmp_path, monkeypatch
 ):
-    _write_recipe(tmp_path, "fixture-smoke", accelerator="l4")
+    _write_recipe(tmp_path, "fixture-smoke", runtime="l4")
 
     def _run_fail(args, capture_output, text):
         return SimpleNamespace(returncode=1, stdout="", stderr="boom")

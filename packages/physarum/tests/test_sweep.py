@@ -9,15 +9,15 @@ name: extract-lora-sweep-1
 template:
   name: extract-lora-sweep-1
   task: extract-fixture
-  dataset: extract-v3
+  train_dataset: extract-v3
   base_model: mlx-community/Qwen2.5-7B-Instruct-4bit
-  accelerator: mlx
+  runtime: mlx
   prompt: prompts/extract_v2.txt
 search_space:
-  trainer.lr:    {{ type: loguniform, low: 1e-6, high: 1e-4 }}
-  trainer.rank:  {{ type: categorical, choices: [4, 8, 16, 32] }}
-  trainer.iters: {{ type: int, low: 200, high: 2000, step: 200 }}
-objective: {{ metric: f1, direction: maximize }}
+  hparams.lr:    {{ type: loguniform, low: 1e-6, high: 1e-4 }}
+  hparams.rank:  {{ type: categorical, choices: [4, 8, 16, 32] }}
+  hparams.iters: {{ type: int, low: 200, high: 2000, step: 200 }}
+goal: {{ metric: f1, direction: maximize }}
 sampler: {sampler}
 n_trials: {n_trials}
 """
@@ -35,15 +35,15 @@ def test_sweep_roundtrip(tmp_path):
     )
     sw.validate()
     assert sw.n_trials == 40
-    assert sw.template["accelerator"] == "mlx"
-    assert sw.to_manifest()["search_space"]["trainer.rank"]["choices"] == [4, 8, 16, 32]
+    assert sw.template["runtime"] == "mlx"
+    assert sw.to_manifest()["search_space"]["hparams.rank"]["choices"] == [4, 8, 16, 32]
 
 
-def test_unknown_accelerator_rejected(tmp_path):
+def test_unknown_runtime_rejected(tmp_path):
     body = SWEEP_YAML.format(sampler="tpe", n_trials=1).replace(
-        "accelerator: mlx", "accelerator: quantum"
+        "runtime: mlx", "runtime: quantum"
     )
-    with pytest.raises(ValueError, match="accelerator"):
+    with pytest.raises(ValueError, match="runtime"):
         Sweep.from_yaml(_write(tmp_path, body)).validate()
 
 
@@ -54,11 +54,11 @@ def test_n_trials_must_be_positive(tmp_path):
         ).validate()
 
 
-def test_search_space_keys_must_target_trainer(tmp_path):
+def test_search_space_keys_must_target_hparams(tmp_path):
     body = SWEEP_YAML.format(sampler="tpe", n_trials=1).replace(
-        "trainer.lr:", "top_level_lr:"
+        "hparams.lr:", "top_level_lr:"
     )
-    with pytest.raises(ValueError, match="trainer\\."):
+    with pytest.raises(ValueError, match="hparams\\."):
         Sweep.from_yaml(_write(tmp_path, body)).validate()
 
 
@@ -97,3 +97,13 @@ def test_constraint_rejects_both_max_and_min(tmp_path):
     )
     with pytest.raises(ValueError, match="exactly one of 'max' or 'min'"):
         Sweep.from_yaml(_write(tmp_path, body)).validate()
+
+
+def test_sweep_validate_requires_goal_metric(tmp_path):
+    body = SWEEP_YAML.format(sampler="tpe", n_trials=5).replace(
+        "goal: { metric: f1, direction: maximize }",
+        "goal: { direction: maximize }",
+    )
+    sw = Sweep.from_yaml(_write(tmp_path, body))
+    with pytest.raises(ValueError, match="metric"):
+        sw.validate()

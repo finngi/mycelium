@@ -40,7 +40,7 @@ def ratings(
 
     if trials is None:
         trials = load_all_trials()
-    recipe_by_trial = {t.id: t.recipe for t in trials}
+    recipe_by_trial = {t.id: t.recipe_name for t in trials}
 
     wins: dict[str, int] = defaultdict(int)
     losses: dict[str, int] = defaultdict(int)

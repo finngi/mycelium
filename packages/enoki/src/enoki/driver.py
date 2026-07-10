@@ -14,7 +14,7 @@ from reishi.primitives.trial import TrialManifest
 from reishi.tasks import load_tasks
 
 from enoki import trainers
-from enoki.trainers.contract import Trainer, TrainerResult
+from enoki.trainers.contract import Producer, ProducerResult
 
 
 def _use_cluster_store() -> None:
@@ -27,7 +27,7 @@ def _use_cluster_store() -> None:
     store.use_backend(PostgresBackend(dsn))
 
 
-def _make_trainer_call(trainer_fn: Trainer, accelerator: str) -> Trainer:
+def _make_trainer_call(trainer_fn: Producer, runtime: str) -> Producer:
     """Route the training call onto a GPU-holding Ray worker rather than the
     CPU-only head node. Falls back to calling trainer_fn directly when Ray
     isn't installed (a laptop, or tests that monkeypatch TRAINERS)."""
@@ -39,10 +39,10 @@ def _make_trainer_call(trainer_fn: Trainer, accelerator: str) -> Trainer:
     if not ray.is_initialized():
         ray.init()
 
-    num_gpus = trainers.TRAINER_GPUS.get(accelerator, 0)
+    num_gpus = trainers.TRAINER_GPUS.get(runtime, 0)
     remote_fn = ray.remote(num_gpus=num_gpus)(trainer_fn)
 
-    def _call(manifest: TrialManifest) -> TrainerResult:
+    def _call(manifest: TrialManifest) -> ProducerResult:
         return ray.get(remote_fn.remote(manifest))
 
     return _call
@@ -59,12 +59,12 @@ def run(recipe_path: str) -> int:
     # this entrypoint, and trial.plan mints fresh ids each time, so saving
     # first would leave orphaned `planned` trials accumulating per attempt.
     try:
-        trainer_fn = trainers.get(recipe.accelerator)
+        trainer_fn = trainers.get(recipe.runtime)
     except KeyError as e:
         print(f"[FAIL] {e}", file=sys.stderr)
         return 1
 
-    call_trainer = _make_trainer_call(trainer_fn, recipe.accelerator)
+    call_trainer = _make_trainer_call(trainer_fn, recipe.runtime)
 
     trials = trial.plan(recipe)
     for t in trials:

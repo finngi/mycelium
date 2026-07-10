@@ -15,9 +15,9 @@ from enoki.trainers import TRAINERS
 RECIPE = """
 name: htmlmd-smoke
 task: fixture
-dataset: htmlmd-fixture
-accelerator: l4
-seeds: 2
+train_dataset: htmlmd-fixture
+runtime: l4
+n_seeds: 2
 """
 
 
@@ -71,9 +71,9 @@ def test_run_failure_marks_trial_failed_and_records_last_error(tmp_path, monkeyp
     assert all(t.execution["last_error"] == "boom" for t in trials)
 
 
-def test_run_unknown_accelerator_fails_before_planning_any_trial(tmp_path):
+def test_run_unknown_runtime_fails_before_planning_any_trial(tmp_path):
     recipe_path = _write_recipe(
-        tmp_path, RECIPE.replace("accelerator: l4", "accelerator: h100")
+        tmp_path, RECIPE.replace("runtime: l4", "runtime: h100")
     )
 
     rc = driver.run(str(recipe_path))

@@ -1,5 +1,5 @@
 # RayJob template — filled in by `mcm experiment submit`.
-# {{name}}, {{image}}, {{recipe}}, {{recipe_b64}}, {{accelerator}},
+# {{name}}, {{image}}, {{recipe}}, {{recipe_b64}}, {{runtime}},
 # {{gpu_node_selector}} and {{gpu_tolerations}} are substituted; everything
 # else is fixed policy for the `train` namespace.
 apiVersion: ray.io/v1
@@ -32,13 +32,13 @@ spec:
                 requests: {cpu: "2", memory: 8Gi}
                 limits: {cpu: "2", memory: 8Gi}
     workerGroupSpecs:
-      # One group per submit, chosen by the recipe's accelerator. Node
+      # One group per submit, chosen by the recipe's runtime. Node
       # selectors/tolerations must be verified against a real, currently
       # running workload before being added here, never assumed from docs
       # -- GKE compute-class values and their taints drift across releases
       # and node pools. mcm's _GPU_NODE_SELECTORS gates on exactly which
-      # accelerators have a verified entry, so an unverified row here is
-      # inert, not silently wrong. Each accelerator's compute-class differs
+      # runtimes have a verified entry, so an unverified row here is
+      # inert, not silently wrong. Each runtime's compute-class differs
       # ('gpu-l4' vs plain 'gpu'), so don't copy one row for another without
       # re-verifying:
       #   l4      -> compute-class: gpu-l4 + nvidia.com/gpu, on spot (NAP
@@ -50,7 +50,7 @@ spec:
       #   v5e     -> gke-tpu-accelerator: tpu-v5-lite-podslice, NOT on spot
       #              (no TPU trainer exists yet to prove checkpoint/resume
       #              survives a preemption; stay off spot until one does)
-      - groupName: {{accelerator}}
+      - groupName: {{runtime}}
         replicas: 1
         minReplicas: 1
         maxReplicas: 1

@@ -21,14 +21,14 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
-def fits(t: Trial, budget_gb: float, accelerators: set[str]) -> tuple[bool, str]:
+def fits(t: Trial, budget_gb: float, runtimes: set[str]) -> tuple[bool, str]:
     """Can THIS machine run this trial? Returns (ok, reason-if-not)."""
     if t.status != "planned":
         return False, f"status is {t.status}"
-    if t.spec.get("accelerator") not in accelerators:
+    if t.spec.get("runtime") not in runtimes:
         return (
             False,
-            f"needs {t.spec.get('accelerator')}, this machine runs {sorted(accelerators) or 'nothing'}",
+            f"needs {t.spec.get('runtime')}, this machine runs {sorted(runtimes) or 'nothing'}",
         )
     if t.execution.get("attempt", 0) >= MAX_ATTEMPTS:
         return False, f"exhausted {MAX_ATTEMPTS} attempts"
@@ -38,9 +38,9 @@ def fits(t: Trial, budget_gb: float, accelerators: set[str]) -> tuple[bool, str]
     return True, ""
 
 
-def eligible(budget_gb: float, accelerators: set[str]) -> list[Trial]:
+def eligible(budget_gb: float, runtimes: set[str]) -> list[Trial]:
     """Claimable trials for this machine, best-first."""
-    ts = [t for t in trial_store.load_all() if fits(t, budget_gb, accelerators)[0]]
+    ts = [t for t in trial_store.load_all() if fits(t, budget_gb, runtimes)[0]]
     return sorted(ts, key=lambda t: (-t.spec.get("priority", 0), t.created, t.id))
 
 

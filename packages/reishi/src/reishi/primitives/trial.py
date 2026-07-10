@@ -17,15 +17,15 @@ STATUSES = ("planned", "running", "done", "failed", "pruned")
 
 class TrialArtifacts(TypedDict):
     weights: NotRequired[str]  # adapter/checkpoint URI
-    # URI of persisted raw predictions, so a trial can be re-scored without re-running the model
-    predictions: NotRequired[str]
+    # URI of persisted raw outputs, so a trial can be re-scored without re-running the model
+    outputs: NotRequired[str]
 
 
-# Metrics alone don't say what scored the trial or where; EvalInfo records that provenance.
-class EvalInfo(TypedDict, total=False):
+# Metrics alone don't say what scored the trial or where; ScoringInfo records that provenance.
+class ScoringInfo(TypedDict, total=False):
     scorer: str  # task name / scorer id that produced the metrics
     scored_at: str
-    placement: str  # cpu | accelerator | local -- where scoring ran
+    scored_on: str  # cpu | gpu | tpu -- where scoring ran
     source: str  # "live" | "replay"
     # Measurement-key (K) pinning fields, see math-foundations.md section 0:
     # K = (task, codec, scorer closure, aggregator, dataset version, split,
@@ -37,7 +37,7 @@ class EvalInfo(TypedDict, total=False):
     dataset: str  # Dataset.name -- the eval set's ref
     dataset_revision: str  # Dataset.revision -- the pinned version within K
     split: str  # eval split name (test | val | ood)
-    eval_n: int  # number of eval rows scored -- n_eval in K
+    n_eval_rows: int  # number of eval rows scored -- n_eval in K
 
 
 class ExecutionInfo(TypedDict):
@@ -51,7 +51,7 @@ class ExecutionInfo(TypedDict):
 
 class TrialManifest(TypedDict):
     id: str
-    recipe: str
+    recipe_name: str
     seed: int
     status: str
     created: str
@@ -64,17 +64,17 @@ class TrialManifest(TypedDict):
     artifacts: TrialArtifacts
     spec: RecipeManifest
     execution: ExecutionInfo
-    eval: NotRequired[EvalInfo]
-    # One EvalInfo per eval run (val, OOD, adversarial, ...). Additive
-    # alongside `eval`, which stays the primary/most-recent one -- see
-    # record_eval().
-    evals: NotRequired[list[EvalInfo]]
+    scoring: NotRequired[ScoringInfo]
+    # One ScoringInfo per eval run (val, OOD, adversarial, ...). Additive
+    # alongside `scoring`, which stays the primary/most-recent one -- see
+    # record_scoring().
+    scorings: NotRequired[list[ScoringInfo]]
 
 
 @dataclass
 class Trial:
     id: str
-    recipe: str
+    recipe_name: str
     seed: int
     status: str = "planned"
     created: str = ""
@@ -85,10 +85,10 @@ class Trial:
     # "spec"; a real recipe always fills every RecipeManifest field.
     spec: RecipeManifest = field(default_factory=dict)  # type: ignore[assignment]
     execution: ExecutionInfo = field(default_factory=ExecutionInfo)
-    # `eval` is the primary/most-recent eval; `evals` is the full multi-eval-set
-    # history (val + OOD + adversarial, ...) -- record_eval() keeps both in sync.
-    eval: EvalInfo = field(default_factory=dict)  # type: ignore[assignment]
-    evals: list[EvalInfo] = field(default_factory=list)
+    # `scoring` is the primary/most-recent eval; `scorings` is the full multi-eval-set
+    # history (val + OOD + adversarial, ...) -- record_scoring() keeps both in sync.
+    scoring: ScoringInfo = field(default_factory=dict)  # type: ignore[assignment]
+    scorings: list[ScoringInfo] = field(default_factory=list)
     # Unknown top-level manifest keys, carried verbatim. Without this a newer
     # manifest loaded in an older checkout would lose its new fields on the next
     # save (oyster's heartbeat re-saves every 30s) -- the additivity guarantee
@@ -98,7 +98,7 @@ class Trial:
     def to_manifest(self) -> TrialManifest:
         m = {
             "id": self.id,
-            "recipe": self.recipe,
+            "recipe_name": self.recipe_name,
             "seed": self.seed,
             "status": self.status,
             "created": self.created,
@@ -107,8 +107,8 @@ class Trial:
             "artifacts": self.artifacts,
             "spec": self.spec,
             "execution": self.execution,
-            "eval": self.eval,
-            "evals": self.evals,
+            "scoring": self.scoring,
+            "scorings": self.scorings,
         }
         # Known keys win, so a stale carried-over value never shadows the live one.
         return {**self.extra, **m}  # type: ignore[typeddict-item]
@@ -129,17 +129,17 @@ class Trial:
         return cls(**fields, extra=extra)  # type: ignore[arg-type]
 
 
-def record_eval(trial: Trial, metrics: dict, info: EvalInfo) -> None:
+def record_scoring(trial: Trial, metrics: dict, info: ScoringInfo) -> None:
     """Record one eval run (val, OOD, adversarial, ...): dual-write, never a
-    relocate. Appends `info` to `trial.evals` and sets `trial.eval` to it (the
-    primary = most recent), then merges `metrics` into `trial.metrics` bare
+    relocate. Appends `info` to `trial.scorings` and sets `trial.scoring` to it
+    (the primary = most recent), then merges `metrics` into `trial.metrics` bare
     (so existing board/objective/watch consumers stay sighted) and, when
     `info` carries a split, again under a `'<split>/'` prefix. No split ->
     bare write only. An existing metrics key is only ever overwritten with a
     newer value for the same name, never deleted or renamed.
     """
-    trial.evals.append(info)
-    trial.eval = info
+    trial.scorings.append(info)
+    trial.scoring = info
     split = info.get("split")
     for key, value in metrics.items():
         trial.metrics[key] = value
@@ -153,12 +153,12 @@ def plan(recipe: Recipe) -> list[Trial]:
     return [
         Trial(
             id=f"{recipe.name}-s{seed}-{uuid.uuid4().hex[:6]}",
-            recipe=recipe.name,
+            recipe_name=recipe.name,
             seed=seed,
             created=now,
             spec=recipe.to_manifest(),
         )
-        for seed in range(recipe.seeds)
+        for seed in range(recipe.n_seeds)
     ]
 
 

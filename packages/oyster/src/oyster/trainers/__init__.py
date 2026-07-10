@@ -1,16 +1,18 @@
-"""Trainers, keyed by accelerator ('trainers' not 'adapters' -- an adapter
-is the LoRA artifact a trial produces).
+"""Producers, keyed by the recipe's runtime ('trainers' not 'adapters' -- an
+adapter is the LoRA artifact a trial produces).
 
-A trainer is a callable: (trial_manifest: TrialManifest) -> TrainerResult.
-It must call oyster.queue.heartbeat(trial) periodically or the reaper will
-requeue the trial mid-run.
+A producer is a callable: (trial_manifest: TrialManifest) -> ProducerResult.
+oyster's own worker calls oyster.queue.heartbeat(trial) periodically while a
+producer runs, or the reaper will requeue the trial mid-run -- that
+heartbeating is oyster's queue requirement, not part of the Producer contract
+itself.
 """
 
 import sys
 
-from oyster.trainers.contract import Trainer
+from oyster.trainers.contract import Producer
 
-TRAINERS: dict[str, Trainer] = {}
+TRAINERS: dict[str, Producer] = {}
 
 try:
     from oyster.trainers.mlx_lora import train as _mlx_train
@@ -32,8 +34,8 @@ def supported() -> set[str]:
     return set(TRAINERS)
 
 
-def get(accelerator: str) -> Trainer:
-    if accelerator not in TRAINERS:
+def get(runtime: str) -> Producer:
+    if runtime not in TRAINERS:
         known = ", ".join(sorted(TRAINERS)) or "none yet"
-        raise KeyError(f"no trainer for '{accelerator}' (installed: {known})")
-    return TRAINERS[accelerator]
+        raise KeyError(f"no trainer for '{runtime}' (installed: {known})")
+    return TRAINERS[runtime]

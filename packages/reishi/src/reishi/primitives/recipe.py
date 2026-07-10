@@ -1,4 +1,4 @@
-"""Recipe: a frozen spec of model x dataset x prompt x trainer, loaded from
+"""Recipe: a frozen spec of model x dataset x prompt x hparams, loaded from
 YAML (from_yaml), checked (validate), and serialized (to_manifest). It holds
 fields only; nothing here trains -- executors read the manifest and act on it.
 """
@@ -10,7 +10,7 @@ from typing import TypedDict
 
 import yaml
 
-ACCELERATORS = ("local", "mlx", "l4", "h100", "v5e")
+RUNTIMES = ("cpu", "mlx", "l4", "h100", "v5e")
 
 
 def _describe_unknown(unknown: set[str], known: set[str]) -> str:
@@ -26,32 +26,34 @@ class RecipeManifest(TypedDict):
     name: str
     task: str
     base_model: str | None
-    dataset: str
-    accelerator: str
+    train_dataset: str | None
+    eval_dataset: str | None
+    runtime: str
     prompt: str | None
-    seeds: int
+    n_seeds: int
     priority: int
-    trainer: dict  # free-form hyperparameters; shape not validated here
+    hparams: dict  # free-form hyperparameters; shape not validated here
 
 
 @dataclass(frozen=True)
 class Recipe:
     name: str
     task: str
-    dataset: str
+    train_dataset: str | None = None
+    eval_dataset: str | None = None
     base_model: str | None = None
-    accelerator: str = "l4"
+    runtime: str = "l4"
     prompt: str | None = None
-    seeds: int = 1
+    n_seeds: int = 1
     priority: int = 0
-    trainer: dict = field(default_factory=dict)
+    hparams: dict = field(default_factory=dict)
 
     @classmethod
     def from_yaml(cls, path: str | Path) -> "Recipe":
         """Load and validate a Recipe from a YAML file.
 
         Unknown fields are a hard error, not a warning: recipes are
-        human-authored, and a typo like `trainer_kwarg` for `trainer_kwargs`
+        human-authored, and a typo like `hparam` for `hparams`
         would otherwise misconfigure a training run silently. Forward
         compatibility only matters at authoring time -- once planned, the
         spec rides as an opaque dict on `Trial.spec`, so tightening this
@@ -66,10 +68,14 @@ class Recipe:
             raise ValueError(
                 f"{path}: unknown recipe fields:\n" + _describe_unknown(unknown, known)
             )
-        missing = {"name", "task", "dataset"} - set(raw)
+        missing = {"name", "task"} - set(raw)
         if missing:
             raise ValueError(
                 f"{path}: missing required fields: {', '.join(sorted(missing))}"
+            )
+        if not raw.get("train_dataset") and not raw.get("eval_dataset"):
+            raise ValueError(
+                f"{path}: recipe needs at least one of 'train_dataset' or 'eval_dataset'"
             )
         return cls(**raw)
 
@@ -77,22 +83,42 @@ class Recipe:
         from reishi.primitives import task as task_registry
 
         task_registry.get(self.task)
-        if self.accelerator not in ACCELERATORS:
+        if self.runtime not in RUNTIMES:
             raise ValueError(
-                f"unknown accelerator '{self.accelerator}' (one of {', '.join(ACCELERATORS)})"
+                f"unknown runtime '{self.runtime}' (one of {', '.join(RUNTIMES)})"
             )
-        if self.seeds < 1:
-            raise ValueError("seeds must be >= 1")
+        if self.n_seeds < 1:
+            raise ValueError("n_seeds must be >= 1")
+        if not self.train_dataset and not self.eval_dataset:
+            raise ValueError(
+                "recipe needs at least one of 'train_dataset' or 'eval_dataset'"
+            )
+        if self.train_dataset:
+            # Best-effort leak guard: dataset names resolve at run time, so an
+            # unregistered name passes here (the producers re-check on load) --
+            # but a registered eval_only set must never be a training input.
+            from reishi.primitives import dataset as dataset_registry
+
+            try:
+                ds = dataset_registry.load(self.train_dataset)
+            except Exception:
+                ds = None
+            if ds is not None and ds.eval_only:
+                raise ValueError(
+                    f"dataset '{self.train_dataset}' is eval_only -- "
+                    "refusing to use it as train_dataset"
+                )
 
     def to_manifest(self) -> RecipeManifest:
         return {
             "name": self.name,
             "task": self.task,
             "base_model": self.base_model,
-            "dataset": self.dataset,
-            "accelerator": self.accelerator,
+            "train_dataset": self.train_dataset,
+            "eval_dataset": self.eval_dataset,
+            "runtime": self.runtime,
             "prompt": self.prompt,
-            "seeds": self.seeds,
+            "n_seeds": self.n_seeds,
             "priority": self.priority,
-            "trainer": dict(self.trainer),
+            "hparams": dict(self.hparams),
         }

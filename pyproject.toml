@@ -66,7 +66,7 @@ explicit = true
 # The members appear here, not in [project.dependencies]: the dev venv needs
 # them editable, but the published mcm-mycelium wheel carries their code
 # inline and must not depend on PyPI names that don't exist. trafilatura is
-# physarum's test/local-trainer dep (kept out of the published extras, which
+# physarum's test/cpu-runtime dep (kept out of the published extras, which
 # stay strictly module-named).
 dev = [
     "reishi",

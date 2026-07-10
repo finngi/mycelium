@@ -21,20 +21,20 @@ def _save(
     recipe_name: str,
     status: str,
     metrics: dict,
-    trainer: dict,
+    hparams: dict,
     seed: int = 0,
     created: str = "",
 ) -> None:
     # recipe_name must be the bare '<sweep>-t<N>' shape build_recipe actually
     # produces -- the '-s<seed>-<uuid>' suffix lives only on Trial.id (trial.py
-    # plan()), never on Trial.recipe itself.
+    # plan()), never on Trial.recipe_name itself.
     t = Trial(
         id=f"{recipe_name}-s{seed}-abc123",
-        recipe=recipe_name,
+        recipe_name=recipe_name,
         seed=seed,
         status=status,
         metrics=metrics,
-        spec={"trainer": trainer},
+        spec={"hparams": hparams},
         created=created,
     )
     trial_store.save(t)
@@ -68,14 +68,15 @@ def test_build_recipe_naming_matches_trials_for_sweep_parsing(tmp_path):
         "name": "tpl",
         "task": "extract-fixture",
         "base_model": None,
-        "dataset": "d",
-        "accelerator": "local",
+        "train_dataset": None,
+        "eval_dataset": "d",
+        "runtime": "cpu",
         "prompt": None,
-        "seeds": 1,
+        "n_seeds": 1,
         "priority": 0,
-        "trainer": {},
+        "hparams": {},
     }
-    recipe = build_recipe(template, {"trainer.include_tables": True}, "my-sweep", 3)
+    recipe = build_recipe(template, {"hparams.include_tables": True}, "my-sweep", 3)
     [t] = trial_store.plan(recipe)
     t.status, t.metrics = "done", {"field_f1": 0.42}
     trial_store.save(t)

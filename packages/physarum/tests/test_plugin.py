@@ -38,9 +38,9 @@ def test_every_verb_has_a_handler():
         assert ("sweep", v.name) in mcm_plugin.HANDLERS
 
 
-def test_resolve_trainer_rejects_unwired_accelerator():
+def test_resolve_producer_rejects_unwired_runtime():
     with pytest.raises(ValueError, match="l4"):
-        mcm_plugin._resolve_trainer("l4")
+        mcm_plugin._resolve_producer("l4")
 
 
 def test_resolve_sampler_rejects_unknown_backend():
@@ -52,35 +52,35 @@ def test_resolve_sampler_grid_covers_every_categorical_combination():
     import optuna
 
     search_space = {
-        "trainer.a": {"type": "categorical", "choices": [True, False]},
-        "trainer.b": {"type": "categorical", "choices": [True, False]},
+        "hparams.a": {"type": "categorical", "choices": [True, False]},
+        "hparams.b": {"type": "categorical", "choices": [True, False]},
     }
     sampler = mcm_plugin._resolve_sampler("grid", search_space)
     assert isinstance(sampler, optuna.samplers.GridSampler)
 
     def objective(t):
-        t.suggest_categorical("trainer.a", [True, False])
-        t.suggest_categorical("trainer.b", [True, False])
+        t.suggest_categorical("hparams.a", [True, False])
+        t.suggest_categorical("hparams.b", [True, False])
         return 0.0
 
     study = optuna.create_study(sampler=sampler)
     study.optimize(objective, n_trials=10)
-    seen = {(t.params["trainer.a"], t.params["trainer.b"]) for t in study.trials}
+    seen = {(t.params["hparams.a"], t.params["hparams.b"]) for t in study.trials}
     assert seen == {(True, True), (True, False), (False, True), (False, False)}
 
 
 def test_grid_search_space_rejects_unbounded_float_param():
     with pytest.raises(ValueError, match="learning_rate"):
         mcm_plugin._grid_search_space(
-            {"trainer.learning_rate": {"type": "float", "low": 0.0, "high": 1.0}}
+            {"hparams.learning_rate": {"type": "float", "low": 0.0, "high": 1.0}}
         )
 
 
 def test_grid_search_space_enumerates_stepped_int_param():
     grid = mcm_plugin._grid_search_space(
-        {"trainer.n": {"type": "int", "low": 1, "high": 5, "step": 2}}
+        {"hparams.n": {"type": "int", "low": 1, "high": 5, "step": 2}}
     )
-    assert grid == {"trainer.n": [1, 3, 5]}
+    assert grid == {"hparams.n": [1, 3, 5]}
 
 
 def test_flag_value_accepts_space_and_equals_forms():

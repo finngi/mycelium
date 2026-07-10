@@ -1,4 +1,4 @@
-"""Sweep: a recipe template plus a search space over its trainer hyperparameters.
+"""Sweep: a recipe template plus a search space over its hparams.
 
 Each suggested point becomes an ordinary reishi Recipe; a Sweep never trains
 anything itself.
@@ -10,7 +10,7 @@ from typing import NotRequired, TypedDict
 
 import yaml
 
-from reishi.primitives.recipe import ACCELERATORS, Recipe, RecipeManifest
+from reishi.primitives.recipe import RUNTIMES, Recipe, RecipeManifest
 
 
 class ParamSpec(TypedDict):
@@ -22,7 +22,7 @@ class ParamSpec(TypedDict):
 
 
 class ObjectiveSpec(TypedDict):
-    # Plain key (looked up in TrainerResult["metrics"], e.g. "f1") or a
+    # Plain key (looked up in ProducerResult["metrics"], e.g. "f1") or a
     # dotted path into a trial manifest namespace ("metrics.field_f1",
     # "observables.wall_time_s") -- see physarum.objective.resolve_metric.
     metric: str
@@ -43,7 +43,7 @@ class SweepManifest(TypedDict):
     name: str
     template: RecipeManifest
     search_space: dict[str, ParamSpec]
-    objective: ObjectiveSpec
+    goal: ObjectiveSpec
     constraints: list[ConstraintSpec]
     sampler: str
     n_trials: int
@@ -56,10 +56,14 @@ def _recipe_from_dict(d: dict) -> Recipe:
         raise ValueError(
             f"sweep template: unknown recipe fields: {', '.join(sorted(unknown))}"
         )
-    missing = {"name", "task", "dataset"} - set(d)
+    missing = {"name", "task"} - set(d)
     if missing:
         raise ValueError(
             f"sweep template: missing required fields: {', '.join(sorted(missing))}"
+        )
+    if not d.get("train_dataset") and not d.get("eval_dataset"):
+        raise ValueError(
+            "sweep template: needs at least one of 'train_dataset' or 'eval_dataset'"
         )
     return Recipe(**d)
 
@@ -69,7 +73,7 @@ class Sweep:
     name: str
     template: RecipeManifest
     search_space: dict[str, ParamSpec]
-    objective: ObjectiveSpec
+    goal: ObjectiveSpec
     constraints: list[ConstraintSpec] = field(default_factory=list)
     sampler: str = "tpe"  # validated by the resolved backend, not here
     n_trials: int = 20
@@ -85,7 +89,7 @@ class Sweep:
             raise ValueError(
                 f"{path}: unknown sweep fields: {', '.join(sorted(unknown))}"
             )
-        missing = {"name", "template", "search_space", "objective"} - set(raw)
+        missing = {"name", "template", "search_space", "goal"} - set(raw)
         if missing:
             raise ValueError(
                 f"{path}: missing required fields: {', '.join(sorted(missing))}"
@@ -99,10 +103,12 @@ class Sweep:
         from reishi.primitives import task as task_registry
 
         task_registry.get(self.template["task"])
-        if self.template["accelerator"] not in ACCELERATORS:
-            raise ValueError(f"unknown accelerator '{self.template['accelerator']}'")
-        if self.objective["direction"] not in ("maximize", "minimize"):
-            raise ValueError("objective.direction must be 'maximize' or 'minimize'")
+        if self.template["runtime"] not in RUNTIMES:
+            raise ValueError(f"unknown runtime '{self.template['runtime']}'")
+        if "metric" not in self.goal:
+            raise ValueError("goal needs a 'metric'")
+        if self.goal.get("direction") not in ("maximize", "minimize"):
+            raise ValueError("goal.direction must be 'maximize' or 'minimize'")
         for c in self.constraints:
             if "metric" not in c:
                 raise ValueError(f"constraint missing 'metric': {c}")
@@ -115,9 +121,9 @@ class Sweep:
         if not self.search_space:
             raise ValueError("search_space must have at least one parameter")
         for key in self.search_space:
-            if not key.startswith("trainer."):
+            if not key.startswith("hparams."):
                 raise ValueError(
-                    f"search_space key '{key}' must start with 'trainer.' (only trainer hyperparameters are swept)"
+                    f"search_space key '{key}' must start with 'hparams.' (only hparams are swept)"
                 )
 
     def to_manifest(self) -> SweepManifest:
@@ -125,7 +131,7 @@ class Sweep:
             "name": self.name,
             "template": self.template,
             "search_space": dict(self.search_space),
-            "objective": dict(self.objective),
+            "goal": dict(self.goal),
             "constraints": [dict(c) for c in self.constraints],
             "sampler": self.sampler,
             "n_trials": self.n_trials,

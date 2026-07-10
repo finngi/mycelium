@@ -1,5 +1,5 @@
-"""Contract tests for the 'local' accelerator's trafilatura trainer: it must
-satisfy the same Trainer shape as oyster's mlx_lora without a model, a
+"""Contract tests for the 'cpu' runtime's trafilatura producer: it must
+satisfy the same Producer shape as oyster's mlx_lora without a model, a
 dataset URI, or a search backend in the loop."""
 
 import json
@@ -10,7 +10,7 @@ from reishi.primitives import dataset as dataset_registry
 from reishi.primitives.dataset import Dataset
 
 from physarum import mcm_plugin
-from physarum.trainers.trafilatura_extract import train
+from physarum.producers.trafilatura_extract import train
 
 HTML_ROWS = [
     {
@@ -50,10 +50,10 @@ def _register_dataset(tmp_path) -> Dataset:
     return ds
 
 
-def _manifest(dataset_name: str, trainer_cfg: dict) -> dict:
+def _manifest(dataset_name: str, hparams_cfg: dict) -> dict:
     return {
         "id": "t1",
-        "recipe": "r1",
+        "recipe_name": "r1",
         "seed": 0,
         "status": "running",
         "created": "",
@@ -63,12 +63,12 @@ def _manifest(dataset_name: str, trainer_cfg: dict) -> dict:
             "name": "r1",
             "task": "extract-fixture",
             "base_model": None,
-            "dataset": dataset_name,
-            "accelerator": "local",
+            "eval_dataset": dataset_name,
+            "runtime": "cpu",
             "prompt": None,
-            "seeds": 1,
+            "n_seeds": 1,
             "priority": 0,
-            "trainer": trainer_cfg,
+            "hparams": hparams_cfg,
         },
         "execution": {},
     }
@@ -79,31 +79,31 @@ def test_train_returns_metrics_and_no_artifacts(tmp_path):
     result = train(_manifest(ds.name, {"include_tables": True}))
     assert result["artifacts"] == {}
     assert result["metrics"]["n"] == 2
-    assert result["metrics"]["backend"] == "local"
+    assert result["metrics"]["backend"] == "cpu"
     assert result["metrics"]["extractor"] == "trafilatura"
     assert result["metrics"]["params"] == {"include_tables": True}
     assert 0.0 <= result["metrics"]["field_f1"] <= 1.0
 
 
-def test_eval_n_bounds_rows_scored(tmp_path):
+def test_n_eval_rows_bounds_rows_scored(tmp_path):
     ds = _register_dataset(tmp_path)
-    result = train(_manifest(ds.name, {"eval_n": 1}))
+    result = train(_manifest(ds.name, {"n_eval_rows": 1}))
     assert result["metrics"]["n_rows"] == 1
     assert result["metrics"]["n"] == 1
 
 
-def test_unknown_trainer_key_rejected(tmp_path):
+def test_unknown_hparams_key_rejected(tmp_path):
     ds = _register_dataset(tmp_path)
-    with pytest.raises(ValueError, match="unknown trainer keys"):
+    with pytest.raises(ValueError, match="unknown hparams keys"):
         train(_manifest(ds.name, {"not_a_real_param": True}))
 
 
-def test_resolve_trainer_wires_local_accelerator():
-    trainer_fn = mcm_plugin._resolve_trainer("local")
-    assert trainer_fn is train
+def test_resolve_producer_wires_cpu_runtime():
+    producer_fn = mcm_plugin._resolve_producer("cpu")
+    assert producer_fn is train
 
 
 def test_empty_eval_set_raises_clearly_instead_of_a_bare_keyerror(tmp_path):
     ds = _register_dataset(tmp_path)
     with pytest.raises(ValueError, match="eval set is empty"):
-        train(_manifest(ds.name, {"eval_n": 0}))
+        train(_manifest(ds.name, {"n_eval_rows": 0}))
