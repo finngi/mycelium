@@ -138,7 +138,7 @@ contract — argue with the definition, not the word.
 | `Producer` | The callable contract `(TrialManifest) -> ProducerResult` — the formalism's T:(theta, omega) -> a; may or may not learn (identity producers are legal). Replaces "Trainer" as the contract name. |
 | trainer | Reserved for real gradient-descent Producer implementations (`mlx_lora`, `train_l4`) — never the contract, never the config dict. |
 | `hparams` | `Recipe.hparams` — the free-form hyperparameter dict (was `Recipe.trainer`). |
-| `runtime` | `Recipe.runtime` (was `accelerator`) — the named execution environment a trial requires: determines who claims it, which Producer implementation runs it, and what infrastructure is provisioned. Values today: `local`, `mlx`, `l4`, `h100`, `v5e`. |
+| `runtime` | `Recipe.runtime` (was `accelerator`) — the named execution environment a trial requires: determines who claims it, which Producer implementation runs it, and what infrastructure is provisioned. Values: `cpu` (was `local` — dissolves the collision with the local-executor placement sense), `mlx`, `l4`, `h100`, `v5e`. |
 | accelerator | Reserved for actual silicon (`l4`/`h100`/`v5e`); no longer a field name. |
 | executor | The layer that drives Trials through `planned -> running -> done/failed` and writes `execution`, `observables`, artifacts. |
 | `runner` | The machine/process identity in `ExecutionInfo.runner`. |
