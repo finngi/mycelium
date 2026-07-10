@@ -45,6 +45,20 @@ def test_board_warns_with_every_mismatched_field_listed(monkeypatch, capsys):
     assert "n_eval_rows" in err
 
 
+def test_board_warns_when_group_mixes_aggregator(monkeypatch, capsys):
+    trials = [
+        _done("r", {"f1": 0.8}, {"aggregator": "task.field_aggregate"}, seed=0),
+        _done("r", {"f1": 0.6}, {"aggregator": "custom.pooled_counts"}, seed=1),
+    ]
+    monkeypatch.setattr(board.trial_store, "load_all", lambda: trials)
+
+    board.build(metric="f1")
+
+    err = capsys.readouterr().err
+    assert err.count("[WARN]") == 1
+    assert "aggregator" in err
+
+
 def test_board_silent_when_keys_match(monkeypatch, capsys):
     key = {"dataset_revision": "v1", "split": "test", "n_eval_rows": 100}
     trials = [
