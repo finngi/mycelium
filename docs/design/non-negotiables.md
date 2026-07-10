@@ -98,7 +98,7 @@ them.
 
 Run before opening any PR:
 
-```
+```text
 [ ] Named the tier(s) touched (core / stable protocols / standard library)
     in the PR description.
 [ ] Any protocol-tier change: additive? litmus test passed? round-trip
