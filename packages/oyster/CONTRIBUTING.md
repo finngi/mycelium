@@ -5,13 +5,13 @@
 From the repo root — this package is one member of the `mycelium` uv
 workspace, no sibling checkout needed:
 
-```
+```bash
 uv sync --all-extras           # or --group dev, for a lighter install
 ```
 
 ## Before opening a PR
 
-```
+```bash
 uvx ruff check .
 uvx ruff format --check .
 uv run pytest packages/oyster -q

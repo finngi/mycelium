@@ -5,7 +5,7 @@
 From the repo root — this package is one member of the `mycelium` uv
 workspace, no sibling checkout needed:
 
-```
+```bash
 uv sync --all-extras           # or --group dev, for a lighter install
 ```
 
@@ -19,7 +19,7 @@ oyster's own mlx/mlx-lm deps are platform-gated, not extras-gated.
 
 ## Before opening a PR
 
-```
+```bash
 uvx ruff check .
 uvx ruff format --check .
 uv run pytest packages/physarum -q

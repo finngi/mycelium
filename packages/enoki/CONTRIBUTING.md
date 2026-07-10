@@ -5,7 +5,7 @@
 From the repo root — this package is one member of the `mycelium` uv
 workspace, no sibling checkout needed:
 
-```
+```bash
 uv sync --all-extras           # or --group dev, for a lighter install
 ```
 
@@ -19,7 +19,7 @@ their heavy deps lazily, so lint/test stay meaningful without it.
 
 ## Before opening a PR
 
-```
+```bash
 uvx ruff check .
 uvx ruff format --check .
 uv run pytest packages/enoki -q
