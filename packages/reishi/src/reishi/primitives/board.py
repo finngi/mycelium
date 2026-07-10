@@ -22,6 +22,7 @@ _K_FIELDS = (
     "codec",
     "scorer",
     "scorer_version",
+    "aggregator",
     "dataset",
     "dataset_revision",
     "split",

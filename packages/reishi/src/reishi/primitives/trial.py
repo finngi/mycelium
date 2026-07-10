@@ -34,6 +34,7 @@ class ScoringInfo(TypedDict, total=False):
     task: str  # Task.name active at scoring time
     codec: str  # Task.codec active at scoring time
     scorer_version: str  # scorer closure id (e.g. oracle model/lib versions)
+    aggregator: str  # aggregator identity (module.qualname) -- the roll-up in K
     dataset: str  # Dataset.name -- the eval set's ref
     dataset_revision: str  # Dataset.revision -- the pinned version within K
     split: str  # eval split name (test | val | ood)
