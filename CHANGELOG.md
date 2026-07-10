@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.0-a.132](https://github.com/finngi/mycelium/compare/v0.0.0-a.131...v0.0.0-a.132) (2026-07-10)
+
+
+### Bug Fixes
+
+* persist aggregator identity in ScoringInfo (re-open vs main) ([#36](https://github.com/finngi/mycelium/issues/36)) ([0f2d0f8](https://github.com/finngi/mycelium/commit/0f2d0f8dbfb18eb49e87177f444e685943893494))
+
+
+### Documentation
+
+* refresh AGENTS.md files for the monorepo/PyPI world (re-open vs main) ([#35](https://github.com/finngi/mycelium/issues/35)) ([0f69cb7](https://github.com/finngi/mycelium/commit/0f69cb704ca8421fd5b12299485b0036e8465894))
+
 ## [0.0.0-a.131](https://github.com/finngi/mycelium/compare/v0.0.0-a.130...v0.0.0-a.131) (2026-07-10)
 
 

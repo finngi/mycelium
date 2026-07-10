@@ -1,6 +1,6 @@
 [project]
 name = "reishi"
-version = "0.0.0-a.131"
+version = "0.0.0-a.132"
 description = "reishi (mcm) — the experiment contract layer for small-model training"
 requires-python = ">=3.11"
 license = "Apache-2.0"
