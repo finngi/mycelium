@@ -45,7 +45,7 @@ active.
 
 ## Working in this package
 
-```
+```bash
 uv sync --all-extras           # from the repo root
 uv run pytest packages/reishi -q
 uv run reishi-admin tasks      # dev-only CLI; deployments expose this as `mcm`

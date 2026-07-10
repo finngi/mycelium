@@ -50,7 +50,7 @@ orchestration files above even once they're moved back to the root.
 
 ## Working in this package
 
-```
+```bash
 uv sync --all-extras           # from the repo root
 uv run pytest packages/oyster -q
 uvx ruff check .
