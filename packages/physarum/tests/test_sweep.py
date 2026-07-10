@@ -97,3 +97,13 @@ def test_constraint_rejects_both_max_and_min(tmp_path):
     )
     with pytest.raises(ValueError, match="exactly one of 'max' or 'min'"):
         Sweep.from_yaml(_write(tmp_path, body)).validate()
+
+
+def test_sweep_validate_requires_goal_metric(tmp_path):
+    body = SWEEP_YAML.format(sampler="tpe", n_trials=5).replace(
+        "goal: { metric: f1, direction: maximize }",
+        "goal: { direction: maximize }",
+    )
+    sw = Sweep.from_yaml(_write(tmp_path, body))
+    with pytest.raises(ValueError, match="metric"):
+        sw.validate()

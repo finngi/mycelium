@@ -53,7 +53,7 @@ class Recipe:
         """Load and validate a Recipe from a YAML file.
 
         Unknown fields are a hard error, not a warning: recipes are
-        human-authored, and a typo like `hparams_kwarg` for `hparams_kwargs`
+        human-authored, and a typo like `hparam` for `hparams`
         would otherwise misconfigure a training run silently. Forward
         compatibility only matters at authoring time -- once planned, the
         spec rides as an opaque dict on `Trial.spec`, so tightening this
@@ -93,6 +93,21 @@ class Recipe:
             raise ValueError(
                 "recipe needs at least one of 'train_dataset' or 'eval_dataset'"
             )
+        if self.train_dataset:
+            # Best-effort leak guard: dataset names resolve at run time, so an
+            # unregistered name passes here (the producers re-check on load) --
+            # but a registered eval_only set must never be a training input.
+            from reishi.primitives import dataset as dataset_registry
+
+            try:
+                ds = dataset_registry.load(self.train_dataset)
+            except Exception:
+                ds = None
+            if ds is not None and ds.eval_only:
+                raise ValueError(
+                    f"dataset '{self.train_dataset}' is eval_only -- "
+                    "refusing to use it as train_dataset"
+                )
 
     def to_manifest(self) -> RecipeManifest:
         return {

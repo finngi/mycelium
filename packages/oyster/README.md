@@ -67,7 +67,7 @@ already have them; renaming the files orphans the fleet.
 | `src/oyster/machine.py` | This machine: budget, identity, `ready`-label toggle, busy file |
 | `src/oyster/footprint.py` | Conservative unified-memory estimate per trial |
 | `src/oyster/gitstore.py` | Store-over-git: pull-rebase before deciding, push-with-retry after; lost race = clean abort |
-| `src/oyster/trainers/` | MLX trainers, keyed by runtime ("adapter" is reserved for the LoRA artifact) |
+| `src/oyster/trainers/` | MLX Producer implementations (real gradient trainers), keyed by runtime ("adapter" is reserved for the LoRA artifact) |
 | `src/oyster/mcm_plugin.py` | Registers the `mesh` domain into the mcm CLI (entry point `mcm.plugins`) |
 | `store/` | The mcm manifest store, committed — the queue IS the repo |
 | `.github/workflows/worker.yml` | Generic worker on `[self-hosted, macOS, mlx, ready]` |

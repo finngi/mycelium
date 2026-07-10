@@ -129,6 +129,8 @@ def train(trial_manifest: TrialManifest) -> ProducerResult:
     if train_dataset is None:
         raise ValueError("mlx_lora trainer needs a recipe with 'train_dataset' set")
     ds = dataset_registry.load(train_dataset)
+    if ds.eval_only:
+        raise ValueError(f"dataset '{ds.name}' is eval_only -- refusing to train on it")
     codec = codec_registry.get_codec(task_obj.codec)
     train_path, val_path = Path(ds.uri) / "train.jsonl", Path(ds.uri) / "val.jsonl"
 

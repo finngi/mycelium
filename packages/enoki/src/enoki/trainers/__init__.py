@@ -242,6 +242,8 @@ def train_l4(trial_manifest: TrialManifest) -> ProducerResult:
     if train_dataset is None:
         raise ValueError("train_l4 needs a recipe with 'train_dataset' set")
     ds = dataset_registry.load(train_dataset)
+    if ds.eval_only:
+        raise ValueError(f"dataset '{ds.name}' is eval_only -- refusing to train on it")
     rows = _load_split(ds, "train")[:subset_size]
     if not rows:
         raise RuntimeError(f"dataset '{ds.name}' train split is empty")

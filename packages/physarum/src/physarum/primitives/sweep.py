@@ -105,7 +105,9 @@ class Sweep:
         task_registry.get(self.template["task"])
         if self.template["runtime"] not in RUNTIMES:
             raise ValueError(f"unknown runtime '{self.template['runtime']}'")
-        if self.goal["direction"] not in ("maximize", "minimize"):
+        if "metric" not in self.goal:
+            raise ValueError("goal needs a 'metric'")
+        if self.goal.get("direction") not in ("maximize", "minimize"):
             raise ValueError("goal.direction must be 'maximize' or 'minimize'")
         for c in self.constraints:
             if "metric" not in c:

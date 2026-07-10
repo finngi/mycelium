@@ -120,3 +120,26 @@ def test_dataset_task_is_optional():
 def test_dataset_manifest_without_task_key_loads():
     ds = Dataset.from_manifest({"name": "d-1", "uri": "gs://x/d-1"})
     assert ds.task == ""
+
+
+def test_recipe_validate_rejects_registered_eval_only_train_dataset(
+    tmp_path, monkeypatch
+):
+    from reishi import store
+    from reishi.primitives import dataset as dataset_registry
+    from reishi.primitives.dataset import Dataset
+
+    monkeypatch.setenv("MCM_STORE", str(tmp_path))
+    store.use_backend(store.LocalFilesystemBackend())
+    try:
+        dataset_registry.save(
+            Dataset(name="holdout", uri="x.jsonl", task="fixture", eval_only=True)
+        )
+        r = Recipe(name="r", task="fixture", train_dataset="holdout")
+        with pytest.raises(ValueError, match="eval_only"):
+            r.validate()
+        # Names resolve at run time: an unregistered train_dataset passes here
+        # (the training producers re-check on load).
+        Recipe(name="r2", task="fixture", train_dataset="not-registered").validate()
+    finally:
+        store.use_backend(store.LocalFilesystemBackend())
