@@ -33,7 +33,9 @@ jobs:
       # Alpha-only: queue the release PR to merge itself when checks pass.
       # Merging it cuts the tag + GitHub Release, which triggers publish.yml.
       - name: Enable auto-merge on the release PR (alpha flow)
-        if: ${{ steps.rp.outputs.prs_created == 'true' }}
+        # outputs.pr is set whenever a release PR exists, including runs
+        # that left it unchanged -- prs_created alone misses the re-arm case.
+        if: ${{ steps.rp.outputs.pr }}
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
           PR_JSON: ${{ steps.rp.outputs.pr }}
