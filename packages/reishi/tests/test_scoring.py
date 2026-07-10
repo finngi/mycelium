@@ -33,14 +33,19 @@ def _rows() -> list[dict]:
     ]
 
 
+# The identity run_eval derives for a duck-typed Scorable: its own aggregate.
+_FAKE_AGG = f"{FakeTask.aggregate.__module__}.{FakeTask.aggregate.__qualname__}"
+
+
 def test_run_eval_returns_aggregate_and_scores_once_per_row():
     task = FakeTask()
     result, info = run_eval(task=task, rows=_rows(), generate=_echo)
     assert result == {"n": 2, "scores": [{"ok": 1}, {"ok": 1}]}
     assert len(task.scored) == 2
-    # n_eval_rows is always known (run_eval counts the rows it scores); every
-    # other K-pinning field is caller-supplied, so it's absent when not passed in.
-    assert info == {"n_eval_rows": 2}
+    # n_eval_rows and the aggregator identity are always known (run_eval counts
+    # the rows and holds the aggregate callable); every other K-pinning field
+    # is caller-supplied, so it's absent when not passed in.
+    assert info == {"n_eval_rows": 2, "aggregator": _FAKE_AGG}
 
 
 def test_run_eval_rejects_unscored_task():
@@ -103,6 +108,7 @@ def test_run_eval_populates_pinning_fields_when_caller_supplies_them():
     )
     assert info == {
         "n_eval_rows": 2,
+        "aggregator": _FAKE_AGG,
         "task": "htmlmd",
         "codec": "json",
         "scorer_version": "trafilatura==1.2.0,spacy==3.7.0",
@@ -123,7 +129,40 @@ def test_rescore_populates_n_eval_rows_and_pinning_fields():
         task_name="htmlmd",
         split="test",
     )
-    assert info == {"n_eval_rows": 2, "task": "htmlmd", "split": "test"}
+    assert info == {
+        "n_eval_rows": 2,
+        "aggregator": _FAKE_AGG,
+        "task": "htmlmd",
+        "split": "test",
+    }
+
+
+def test_aggregator_identity_distinguishes_custom_aggregator():
+    from reishi.primitives.task import Task
+
+    def counts_only(scores: list[Mapping[str, object]]) -> dict:
+        return {"n": len(scores)}
+
+    scorer = lambda pred, ref: {"ok": 1}  # noqa: E731
+    default = Task(name="t", description="", score=scorer)
+    custom = Task(name="t", description="", score=scorer, aggregator=counts_only)
+
+    _m, default_info = run_eval(task=default, rows=_rows(), generate=_echo)
+    _m, custom_info = run_eval(task=custom, rows=_rows(), generate=_echo)
+
+    # A default Task's fallback is deterministic (field_aggregate inside
+    # Task.aggregate), so the generic identity is stable and comparable; a
+    # custom aggregator must be distinguishable from it.
+    assert default_info["aggregator"].endswith("Task.aggregate")
+    assert custom_info["aggregator"].endswith("counts_only")
+    assert default_info["aggregator"] != custom_info["aggregator"]
+
+
+def test_aggregator_override_wins_over_derived_identity():
+    _m, info = run_eval(
+        task=FakeTask(), rows=_rows(), generate=_echo, aggregator="field_agg==2.0"
+    )
+    assert info["aggregator"] == "field_agg==2.0"
 
 
 def test_render_variants():
