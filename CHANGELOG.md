@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.0.0-a.131](https://github.com/finngi/mycelium/compare/v0.0.0-a.130...v0.0.0-a.131) (2026-07-10)
+
+
+### Features
+
+* land the ratified vocabulary renames as one batch ([#28](https://github.com/finngi/mycelium/issues/28)) ([cdf5373](https://github.com/finngi/mycelium/commit/cdf537334da7667ef6f5d9e1c4369a7a85db1d35))
+* **reishi:** local executor + mcm.producers entry-point registry ([#31](https://github.com/finngi/mycelium/issues/31)) ([8d8711d](https://github.com/finngi/mycelium/commit/8d8711d8b09daca19ed325e7365bb828bde6bdc0))
+
+
+### Documentation
+
+* add the implementation-rules gate (non-negotiables) ([#27](https://github.com/finngi/mycelium/issues/27)) ([6916c10](https://github.com/finngi/mycelium/commit/6916c109077a2f98e95f8e315e158c1b3b88012a))
+
 ## [0.0.0-a.130](https://github.com/finngi/mycelium/compare/v0.0.0-a.129...v0.0.0-a.130) (2026-07-09)
 
 
