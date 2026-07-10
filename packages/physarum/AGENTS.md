@@ -1,14 +1,8 @@
-# AGENTS.md — mcm-physarum
-
-Guidance for AI coding agents (Claude Code, GitHub Copilot, Cursor, Codex,
-etc.) working in this repo. `CLAUDE.md` in this repo is just `@AGENTS.md` —
-this file is the canonical source, tool-specific files import it.
-
-## What this repo is
+# AGENTS.md — physarum
 
 physarum is the Optuna hyperparameter-search adaptor for
-[reishi (mcm)](https://github.com/finngi/mycelium/tree/main/packages/reishi):
-one Optuna-suggested point in a search space becomes one ordinary `Recipe`,
+[reishi](../reishi/AGENTS.md): one Optuna-suggested point in a search space
+becomes one ordinary `Recipe`,
 planned and run through the exact same `Producer` contract oyster and enoki
 already implement. physarum defines no execution of its own — it is a
 scheduler over recipes that already work.
@@ -20,13 +14,14 @@ study, no mid-training callback. Widening any of that is a real design
 decision, not a default to reach for; see the three gaps below before
 touching any of it.
 
-## Repo shape
+## Package shape
 
-Single package, `src/physarum/`, installed with `uv`. Depends on
-`../mcm-reishi` (required path dependency, for `Task`/`Dataset`/`Recipe`/
-`Trial` and `reishi.store`) and optionally `../mcm-oyster` (only needed to
-actually run a sweep whose template targets `runtime: mlx` — install
-via the `mlx` extra).
+`src/physarum/`. Depends on [`packages/reishi`](../reishi/AGENTS.md) as a
+required workspace member (for `Task`/`Dataset`/`Recipe`/`Trial` and
+`reishi.store`) and optionally [`packages/oyster`](../oyster/AGENTS.md),
+installed via this package's own `mlx` extra, only needed to actually run a
+sweep whose template targets `runtime: mlx`. A `cpu` extra (trafilatura)
+covers `runtime: cpu` sweeps instead, physarum's own in-process producer.
 
 | Module | What it is |
 |---|---|
@@ -63,8 +58,8 @@ without them — read the reasoning before reopening any of them:
 
 ## Conventions
 
-Same as reishi's (this repo inherits its grammar and its rules):
-1. **Grammar is closed and disjoint.** This repo adds two verbs, `optimize`
+Same as reishi's (this package inherits its grammar and its rules):
+1. **Grammar is closed and disjoint.** This package adds two verbs, `optimize`
    and `watch`, both homed under `sweep` — not `run` (already home to
    `recipe`).
 2. **`-o json` everywhere.** Canonical-form echo goes to stderr.
@@ -72,22 +67,21 @@ Same as reishi's (this repo inherits its grammar and its rules):
    `[FAIL]`, `[WARN]`, `[INFO]`, `->`).
 4. **Comments: only when the *why* is non-obvious.**
 
-## Working in this repo
+## Working in this package
 
 ```
-uv venv && uv pip install -e . --group dev
-uv run pytest -q
+uv sync --all-extras           # from the repo root
+uv run pytest packages/physarum -q
 ```
 
-Requires `../mcm-reishi` checked out as a sibling directory (`uv.sources`
-path dependency); `../mcm-oyster` too if you're actually running an `mlx`
-sweep rather than just testing the scheduling logic.
+`uv sync --all-extras` at the repo root installs oyster's `mlx` stack and
+trafilatura for `cpu` too — no sibling checkout needed for either.
 
-## Sibling repos
+## Sibling packages
 
-- [mcm-reishi](../mcm-reishi) — the contract layer this depends on.
-- [mcm-oyster](../mcm-oyster) — self-hosted mesh execution (currently `mlx` on Apple Silicon).
-- [mcm-enoki](../mcm-enoki) — KubeRay (cloud) execution: `l4`, `h100`, `v5e`
+- [`packages/reishi`](../reishi/AGENTS.md) — the contract layer this depends on.
+- [`packages/oyster`](../oyster/AGENTS.md) — self-hosted mesh execution (currently `mlx` on Apple Silicon).
+- [`packages/enoki`](../enoki/AGENTS.md) — KubeRay (cloud) execution: `l4`, `h100`, `v5e`
   (not yet wired into `_resolve_producer` — `mlx` (via oyster) and `cpu`
   (physarum's own in-process trafilatura trainer) are the only runtimes
   physarum can actually dispatch to today).
