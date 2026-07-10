@@ -1,9 +1,13 @@
 name: release-please
 
-# Manual-only: cutting (or refreshing) the release PR is a deliberate act,
-# not a side effect of every merge to main. Run it from the Actions tab when
-# you want a release proposed.
+# Runs on every merge to main so the release PR always reflects what has
+# landed. While the project is in alpha, the release PR auto-merges once
+# green -- the prerelease counter then tracks merges instead of waiting on a
+# manual dispatch. Leaving alpha: delete the auto-merge step and the release
+# PR becomes the deliberate per-release gate again.
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -21,10 +25,19 @@ jobs:
     environment: main
     steps:
       - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5
+        id: rp
         with:
           token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
-      # No auto-merge: the release PR is the deliberate "ship it" gate. Review
-      # and merge it by hand (as admin) when you want to cut -- especially once
-      # a PyPI publish workflow makes merging it publish.
+      # Alpha-only: queue the release PR to merge itself when checks pass.
+      # Merging it cuts the tag + GitHub Release, which triggers publish.yml.
+      - name: Enable auto-merge on the release PR (alpha flow)
+        if: ${{ steps.rp.outputs.prs_created == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          PR_JSON: ${{ steps.rp.outputs.pr }}
+          REPO: ${{ github.repository }}
+        run: |
+          pr_number=$(printf '%s' "$PR_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin)["number"])')
+          gh pr merge --repo "$REPO" --auto --squash "$pr_number"
