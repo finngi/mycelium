@@ -1,8 +1,10 @@
 import sys
+from pathlib import Path
 
 from reishi import store
 from reishi.cli.grammar import Command
 from reishi.cli.output import emit
+from reishi.execution import local, registry
 from reishi.primitives import board, dataset, task, trial
 from reishi.primitives.recipe import Recipe
 
@@ -26,6 +28,7 @@ def status(cmd: Command) -> int:
             "tasks": [t.name for t in task.all_tasks()],
             "datasets": len(dataset.load_all()),
             "trials": len(trial.load_all()),
+            "producers": sorted(registry.supported()),
         },
         cmd.flags,
     )
@@ -78,10 +81,18 @@ def recipe_run(cmd: Command) -> int:
         )
         return 0
 
-    return _fail(
-        f"no producer installed for runtime '{recipe.runtime}' yet "
-        f"-> use --plan to record the {len(trials)} trial(s) without executing"
-    )
+    try:
+        producer = registry.get(recipe.runtime)
+    except KeyError:
+        known = ", ".join(sorted(registry.supported())) or "none"
+        return _fail(
+            f"no producer installed for runtime '{recipe.runtime}' (installed: {known}) "
+            "-> use --plan to record trials without executing"
+        )
+
+    for t in trials:
+        trial.save(t)
+    return local.execute(trials, producer)
 
 
 def trial_list(cmd: Command) -> int:
@@ -117,6 +128,10 @@ def trial_logs(cmd: Command) -> int:
     if ref is None:
         return 1
     t = trial.resolve(ref)
+    log = t.execution.get("log")
+    if log and Path(log).is_file():
+        print(Path(log).read_text(), end="")
+        return 0
     return _fail(
         f"trial '{t.id}' has no logs yet (status: {t.status}; log streaming lands with the producer)"
     )

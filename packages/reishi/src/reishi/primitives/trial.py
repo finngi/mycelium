@@ -47,6 +47,7 @@ class ExecutionInfo(TypedDict):
     attempt: NotRequired[int]
     finished_at: NotRequired[str]
     last_error: NotRequired[str]
+    log: NotRequired[str]  # captured stdout/stderr path/URI, executor-written
 
 
 class TrialManifest(TypedDict):

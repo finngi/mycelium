@@ -36,6 +36,14 @@ reishi-admin = "reishi.cli:main"
 enoki = "enoki.mcm_plugin"
 physarum = "physarum.mcm_plugin"
 
+# Declared here AND in each owning member's pyproject: the dev workspace
+# reads member metadata, the published wheel is built from this file alone.
+# In the dev venv both copies register (registry dedupes by name) -- keep
+# them pointing at identical targets or resolution depends on iteration order.
+[project.entry-points."mcm.producers"]
+cpu = "physarum.producers.trafilatura_extract:train"
+mlx = "oyster.trainers.mlx_lora:train"
+
 [tool.uv.workspace]
 members = ["packages/*"]
 
