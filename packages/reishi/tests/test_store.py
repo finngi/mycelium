@@ -9,7 +9,6 @@ the real ~/.mcm store is never touched.
 import json
 
 import pytest
-
 from reishi import store
 
 

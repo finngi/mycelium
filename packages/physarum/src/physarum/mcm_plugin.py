@@ -6,11 +6,10 @@ mcm sweep watch my-sweep        # localhost page graphing its trials live
 
 import sys
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import cast
 
 import optuna
-
 import reishi.tasks  # noqa: F401  (populate the task registry)
 from reishi import store
 from reishi.cli.grammar import Command, Verb
@@ -18,7 +17,8 @@ from reishi.cli.output import emit
 
 from physarum.objective import Producer, make_trial_fn
 from physarum.primitives.sweep import ParamSpec, Sweep
-from physarum.watch import DEFAULT_PORT, serve as watch_serve
+from physarum.watch import DEFAULT_PORT
+from physarum.watch import serve as watch_serve
 
 DOMAINS = ("sweep",)
 VERBS = (
@@ -139,7 +139,7 @@ def sweep_optimize(cmd: Command) -> int:
     # this sidecar carries it. started_at lets watch hide trials from an earlier
     # run of a same-named sweep, since reishi's store never deletes old manifests
     # (see watch.trials_for_sweep's started_at filter).
-    started_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    started_at = datetime.now(UTC).isoformat(timespec="seconds")
     store.save(
         "sweeps",
         sweep.name,

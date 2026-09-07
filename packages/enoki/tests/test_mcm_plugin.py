@@ -14,7 +14,6 @@ from types import SimpleNamespace
 
 import pytest
 import yaml
-
 from enoki import mcm_plugin
 from reishi.cli.grammar import Command
 

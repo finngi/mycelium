@@ -5,7 +5,6 @@ executor-clock-wins wall_time_s contract, log capture, and batch semantics."""
 from pathlib import Path
 
 import pytest
-
 from reishi import store
 from reishi.execution import local
 from reishi.primitives.trial import Trial, load
@@ -165,7 +164,7 @@ def test_remote_backend_degrades_log_capture_with_a_warning(
 
 def test_retried_trial_log_carries_an_attempt_separator_per_run():
     t = _trial("t-s0-retry01")
-    producer = lambda m: {"metrics": {}, "artifacts": {}}  # noqa: E731
+    producer = lambda m: {"metrics": {}, "artifacts": {}}
     local.execute([t], producer)
     local.execute([load(t.id)], producer)
 
