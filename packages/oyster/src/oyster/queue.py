@@ -6,11 +6,11 @@ asc, id) -- priority jumps the queue, ties are FIFO.
 """
 
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import reishi.tasks  # noqa: F401  (populate the task registry)
-from reishi.primitives.trial import Trial, TrialArtifacts
 from reishi.primitives import trial as trial_store
+from reishi.primitives.trial import Trial, TrialArtifacts
 
 from oyster import footprint, gitstore
 
@@ -18,7 +18,7 @@ MAX_ATTEMPTS = 3
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 def fits(t: Trial, budget_gb: float, runtimes: set[str]) -> tuple[bool, str]:
@@ -107,7 +107,7 @@ def requeue_stale(timeout_min: float) -> list[str]:
     """Reaper: a running trial whose heartbeat went stale is a dead runner
     (closed lid, killed service). Requeue while attempts remain, else fail."""
     gitstore.sync()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     actions = []
     for t in trial_store.load_all():
         if t.status != "running":
