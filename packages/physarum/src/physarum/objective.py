@@ -7,11 +7,10 @@ here is optuna.TrialPruned -- the only way to signal a pruned trial back to
 study.optimize().
 """
 
-from collections.abc import Mapping
-from typing import Callable, Protocol
+from collections.abc import Callable, Mapping
+from typing import Protocol
 
 import optuna
-
 from reishi.execution.contract import Producer, ProducerResult
 from reishi.primitives import trial as trial_store
 from reishi.primitives.recipe import Recipe, RecipeManifest

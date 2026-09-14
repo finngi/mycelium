@@ -5,12 +5,10 @@ dataset URI, or a search backend in the loop."""
 import json
 
 import pytest
-
-from reishi.primitives import dataset as dataset_registry
-from reishi.primitives.dataset import Dataset
-
 from physarum import mcm_plugin
 from physarum.producers.trafilatura_extract import train
+from reishi.primitives import dataset as dataset_registry
+from reishi.primitives.dataset import Dataset
 
 HTML_ROWS = [
     {
@@ -38,8 +36,7 @@ def store(tmp_path, monkeypatch):
 def _register_dataset(tmp_path) -> Dataset:
     data_path = tmp_path / "rows.jsonl"
     with open(data_path, "w") as f:
-        for row in HTML_ROWS:
-            f.write(json.dumps(row) + "\n")
+        f.writelines(json.dumps(row) + "\n" for row in HTML_ROWS)
     ds = Dataset(
         name="htmlmd-fixture",
         uri=str(data_path),
