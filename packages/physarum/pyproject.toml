@@ -8,7 +8,7 @@ authors = [{ name = "Finn Danger Cathersides" }]
 classifiers = ["Development Status :: 3 - Alpha"]
 dependencies = [
     "reishi",
-    "optuna>=4.9.0",
+    "optuna>=5.0.0",
     "pyyaml>=6.0.3",
 ]
 
