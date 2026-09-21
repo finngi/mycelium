@@ -11,9 +11,8 @@ from pathlib import Path
 from typing import Any
 
 import trafilatura
-
-from reishi.primitives import task as task_registry
 from reishi.primitives import dataset as dataset_registry
+from reishi.primitives import task as task_registry
 from reishi.primitives.trial import TrialManifest
 
 from physarum.objective import ProducerResult

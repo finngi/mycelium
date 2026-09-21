@@ -5,12 +5,10 @@ tests never need a GPU, a cluster, or the real ReaderLM-v2 weights.
 """
 
 import pytest
-
-from reishi import store
-from reishi.primitives import trial
-
 from enoki import driver
 from enoki.trainers import TRAINERS
+from reishi import store
+from reishi.primitives import trial
 
 RECIPE = """
 name: htmlmd-smoke

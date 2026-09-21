@@ -1,14 +1,12 @@
 """Contract tests for the scheduler: priority, fit, claim, retry, drain."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
-
-from reishi.primitives import trial as trial_store
-from reishi.primitives.recipe import Recipe
-
 from oyster import machine, queue, worker
 from oyster.trainers import TRAINERS
+from reishi.primitives import trial as trial_store
+from reishi.primitives.recipe import Recipe
 
 
 @pytest.fixture(autouse=True)
@@ -88,7 +86,7 @@ def test_fail_requeues_until_attempts_exhausted():
 
 def test_requeue_stale_reaps_dead_runners():
     fresh, stale, exhausted = plan_one("fresh"), plan_one("stale"), plan_one("gone")
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     old = (now - timedelta(hours=3)).isoformat(timespec="seconds")
     for t, hb, attempt in (
         (fresh, now.isoformat(timespec="seconds"), 1),

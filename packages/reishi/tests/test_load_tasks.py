@@ -5,7 +5,6 @@ import importlib
 from types import SimpleNamespace
 
 import pytest
-
 from reishi.primitives import task
 from reishi.tasks import discovery, load_tasks
 
