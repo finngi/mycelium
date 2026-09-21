@@ -4,7 +4,6 @@ task, and unknown manifest keys are tolerated.
 """
 
 import pytest
-
 from reishi.primitives import trial
 from reishi.primitives.dataset import Dataset
 from reishi.primitives.recipe import Recipe
