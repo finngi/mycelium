@@ -12,7 +12,7 @@ reishi.primitives.ratings).
 import uuid
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import NotRequired, TypedDict
 
 from reishi import store
@@ -82,7 +82,7 @@ def record(
 ) -> Comparison:
     if winner not in WINNERS:
         raise ValueError(f"winner must be one of {WINNERS}, got {winner!r}")
-    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    now = datetime.now(UTC).isoformat(timespec="seconds")
     return Comparison(
         id=f"cmp-{uuid.uuid4().hex[:8]}",
         trial_a=trial_a,

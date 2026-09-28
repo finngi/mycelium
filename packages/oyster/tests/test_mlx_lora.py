@@ -11,10 +11,9 @@ import pytest
 
 pytest.importorskip("mlx_lm", reason="mlx_lora trainer requires darwin+arm64 (mlx-lm)")
 
-from reishi.primitives import dataset as dataset_registry  # noqa: E402
-from reishi.primitives.dataset import Dataset  # noqa: E402
-
-from oyster.trainers import mlx_lora  # noqa: E402
+from oyster.trainers import mlx_lora
+from reishi.primitives import dataset as dataset_registry
+from reishi.primitives.dataset import Dataset
 
 ROWS = [
     {"input": "a", "target": json.dumps({"x": "a"})},
@@ -33,8 +32,7 @@ def _register_dataset(tmp_path) -> Dataset:
     data_dir.mkdir()
     for split in ("train", "val"):
         with open(data_dir / f"{split}.jsonl", "w") as f:
-            for row in ROWS:
-                f.write(json.dumps(row) + "\n")
+            f.writelines(json.dumps(row) + "\n" for row in ROWS)
     ds = Dataset(name="mlx-fixture", uri=str(data_dir), advisory_task="fixture")
     dataset_registry.save(ds)
     return ds

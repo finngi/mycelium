@@ -1,7 +1,6 @@
 """Contract tests for Sweep: what a sweep manifest must accept and reject."""
 
 import pytest
-
 from physarum.primitives.sweep import Sweep
 
 SWEEP_YAML = """
