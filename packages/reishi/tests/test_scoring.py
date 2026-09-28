@@ -1,7 +1,7 @@
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 import pytest
-
 from reishi.primitives.scoring import _render, rescore, run_eval
 
 
@@ -143,7 +143,7 @@ def test_aggregator_identity_distinguishes_custom_aggregator():
     def counts_only(scores: list[Mapping[str, object]]) -> dict:
         return {"n": len(scores)}
 
-    scorer = lambda pred, ref: {"ok": 1}  # noqa: E731
+    scorer = lambda pred, ref: {"ok": 1}
     default = Task(name="t", description="", score=scorer)
     custom = Task(name="t", description="", score=scorer, aggregator=counts_only)
 
