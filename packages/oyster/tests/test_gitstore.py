@@ -5,7 +5,6 @@ local claim that nothing upstream agrees with."""
 import subprocess
 
 import pytest
-
 from oyster import gitstore
 
 
