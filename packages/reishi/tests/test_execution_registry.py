@@ -4,7 +4,6 @@ ImportError, and the supported()/get() surface oyster.trainers established."""
 from types import SimpleNamespace
 
 import pytest
-
 from reishi.execution import registry
 
 
