@@ -4,12 +4,10 @@ without needing Optuna's sampler machinery or a real producer."""
 
 import optuna
 import pytest
-
-from reishi.primitives import trial as trial_store
-from reishi.primitives.recipe import Recipe
-
 from physarum.objective import build_recipe, make_trial_fn, resolve_metric, suggest
 from physarum.primitives.sweep import Sweep
+from reishi.primitives import trial as trial_store
+from reishi.primitives.recipe import Recipe
 
 TEMPLATE = Recipe(
     name="placeholder",

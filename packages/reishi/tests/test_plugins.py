@@ -2,7 +2,6 @@
 same disjointness law the built-ins live by."""
 
 import pytest
-
 from reishi.cli import grammar
 from reishi.cli.grammar import GrammarError, Verb, canonicalize
 

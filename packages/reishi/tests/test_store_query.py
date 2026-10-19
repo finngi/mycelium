@@ -8,7 +8,6 @@ StorageBackend protocol default.
 import json
 
 import pytest
-
 from reishi import store
 from reishi.store.base import StorageBackend
 
