@@ -1,7 +1,5 @@
 import pytest
-
 from reishi.cli.grammar import DOMAINS, VERBS, GrammarError, canonicalize
-
 
 CANONICALIZATION = [
     # typed -> (domain, action, objects)
