@@ -13,7 +13,6 @@ import tempfile
 from pathlib import Path
 
 import yaml
-
 from reishi.cli.grammar import Command
 from reishi.primitives.recipe import Recipe
 

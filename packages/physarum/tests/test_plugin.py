@@ -2,11 +2,9 @@
 `optimize` doesn't collide with `run` (already home to `recipe`)."""
 
 import pytest
-
+from physarum import mcm_plugin
 from reishi.cli import grammar
 from reishi.cli.grammar import canonicalize
-
-from physarum import mcm_plugin
 
 
 @pytest.fixture(autouse=True)
