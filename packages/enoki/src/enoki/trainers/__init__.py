@@ -214,10 +214,9 @@ def train_l4(trial_manifest: TrialManifest) -> ProducerResult:
     mcm-oyster's fake_trainer uses."""
     import torch
     from peft import LoraConfig, get_peft_model
+    from reishi.primitives import dataset as dataset_registry
     from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments
     from transformers import Trainer as HFTrainer
-
-    from reishi.primitives import dataset as dataset_registry
 
     spec = trial_manifest["spec"]
     hparams_cfg = spec.get("hparams") or {}
