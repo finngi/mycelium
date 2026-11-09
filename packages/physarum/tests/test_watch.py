@@ -3,13 +3,11 @@ pin how a Trial's recipe name (the only place sweep/trial-number lineage is
 recorded) gets parsed back into the shape the dashboard graphs."""
 
 import pytest
-
-from reishi.primitives import trial as trial_store
-from reishi.primitives.trial import Trial
-
 from physarum import mcm_plugin
 from physarum.objective import build_recipe
 from physarum.watch import trials_for_sweep
+from reishi.primitives import trial as trial_store
+from reishi.primitives.trial import Trial
 
 
 @pytest.fixture(autouse=True)
@@ -92,9 +90,8 @@ def test_trials_for_sweep_empty_when_none_saved(tmp_path):
 
 
 def test_sweep_sidecar_reads_what_optimize_writes(tmp_path):
-    from reishi import store as reishi_store
-
     from physarum.watch import _sweep_sidecar
+    from reishi import store as reishi_store
 
     assert _sweep_sidecar("my-sweep") == {"n_trials": None, "started_at": None}
     reishi_store.save(

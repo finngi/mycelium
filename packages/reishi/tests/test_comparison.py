@@ -4,7 +4,6 @@ unknown top-level keys survive a load/save cycle, and a key literally named
 """
 
 import pytest
-
 from reishi import store
 from reishi.primitives.comparison import Comparison, load, load_all, record, save
 
