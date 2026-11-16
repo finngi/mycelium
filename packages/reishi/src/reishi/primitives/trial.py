@@ -6,7 +6,7 @@ with metrics and artifact URIs filled in as it goes.
 import uuid
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import NotRequired, TypedDict
 
 from reishi import store
@@ -151,7 +151,7 @@ def record_scoring(trial: Trial, metrics: dict, info: ScoringInfo) -> None:
 
 def plan(recipe: Recipe) -> list[Trial]:
     recipe.validate()
-    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    now = datetime.now(UTC).isoformat(timespec="seconds")
     return [
         Trial(
             id=f"{recipe.name}-s{seed}-{uuid.uuid4().hex[:6]}",

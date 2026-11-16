@@ -25,18 +25,18 @@ from reishi.store.sqlite import SqliteBackend
 _safe_name = safe_name
 
 __all__ = [
-    "StorageBackend",
-    "StoreError",
     "LocalFilesystemBackend",
     "SqliteBackend",
-    "use_backend",
-    "save",
+    "StorageBackend",
+    "StoreError",
+    "artifact_root",
     "load",
     "load_all",
     "query",
-    "stream",
     "root",
-    "artifact_root",
+    "save",
+    "stream",
+    "use_backend",
 ]
 
 _backend: StorageBackend | None = None
