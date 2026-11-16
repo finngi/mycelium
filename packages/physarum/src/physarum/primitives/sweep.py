@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import NotRequired, TypedDict
 
 import yaml
-
 from reishi.primitives.recipe import RUNTIMES, Recipe, RecipeManifest
 
 

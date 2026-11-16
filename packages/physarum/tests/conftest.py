@@ -9,7 +9,6 @@ physarum to a specific experiment's task.
 """
 
 import pytest
-
 from reishi import store
 from reishi.primitives.task import ScoreCounts, Task, register
 
