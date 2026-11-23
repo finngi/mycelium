@@ -6,8 +6,8 @@ task only through the Scorable protocol, so nothing here is bound to a concrete
 row or task type.
 """
 
-from collections.abc import Iterable, Mapping
-from typing import Any, Callable, Literal, Protocol, runtime_checkable
+from collections.abc import Callable, Iterable, Mapping
+from typing import Any, Literal, Protocol, runtime_checkable
 
 from reishi.primitives.trial import ScoringInfo
 
