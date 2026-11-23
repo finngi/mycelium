@@ -5,7 +5,6 @@ captured output, and status reports installed producers."""
 import json
 
 import pytest
-
 from reishi import store
 from reishi.cli import commands
 from reishi.cli.grammar import Command

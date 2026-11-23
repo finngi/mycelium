@@ -13,7 +13,7 @@ import pytest
 
 psycopg = pytest.importorskip("psycopg")
 
-from enoki.store_backend import PostgresBackend  # noqa: E402
+from enoki.store_backend import PostgresBackend
 
 DSN = os.environ.get("MCM_PG_TEST_DSN")
 pytestmark = pytest.mark.skipif(

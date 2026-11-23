@@ -5,8 +5,9 @@ identity in both directions.
 """
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 
 from reishi._json_salvage import extract_first_json_object
 

@@ -9,7 +9,7 @@ import sys
 import time
 import traceback
 from contextlib import redirect_stderr, redirect_stdout
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TextIO
 
@@ -37,7 +37,7 @@ class _Tee:
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 def _log_root() -> Path | None:
